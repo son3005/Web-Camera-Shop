@@ -1,0 +1,65 @@
+# =========================
+# Python / Flask backend
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.env
+*.env
+*.env.*
+
+# Logs
+*.log
+*.pid
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database
+*.db
+*.sqlite3
+*.sql
+
+# Build / dist
+dist/
+build/
+*.egg-info/
+
+# =========================
+# NodeJS / React frontend
+# =========================
+node_modules/
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Coverage / test
+coverage/
+*.lcov
+
+# =========================
+# Editor / system files
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# =========================
+# Docker / runtime
+# =========================
+*.sock
