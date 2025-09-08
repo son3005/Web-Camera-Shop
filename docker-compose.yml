@@ -4,41 +4,28 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile # Dockerfile production cho Flask
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend:/app
     ports:
       - "5000:5000"
     environment:
       - FLASK_APP=app.main
-      - FLASK_ENV=production
+      - FLASK_ENV=development
       - MYSQL_HOST=db
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
       - MYSQL_DB=myshop
-    depends_on:
-      - db
-    command: gunicorn --bind 0.0.0.0:5000 "app.main:app"
+    command: gunicorn --bind 0.0.0.0:5000 --reload "app.main:app"
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile # Dockerfile production cho React + nginx
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-
-  db:
-    image: mysql:8.0
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: myshop
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
-    ports:
-      - "3306:3306"
+      dockerfile: Dockerfile.dev
     volumes:
-      - db_data:/var/lib/mysql
-
-volumes:
-  db_data:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://backend:5000
