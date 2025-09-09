@@ -10,7 +10,6 @@ COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
 # Copy toàn bộ source code
-COPY . .
 
 # Expose port Vite dev server
 EXPOSE 5173
