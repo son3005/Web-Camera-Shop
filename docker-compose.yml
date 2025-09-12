@@ -33,7 +33,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: sh -c "pnpm install && pnpm dev"
     environment:
       - VITE_API_URL=http://backend:5000
     depends_on:
