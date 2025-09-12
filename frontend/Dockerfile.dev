@@ -1,21 +1,15 @@
-# Stage: Dev 
+# Sử dụng image dựa trên Debian
 FROM node:22-slim
-
-
-RUN npm install -g pnpm
 
 WORKDIR /app
 
+# Copy script vào thư mục /app
+COPY entrypoint.sh .
 
-COPY entrypoint.sh /usr/local/bin/
+# Cấp quyền cho script ở đúng đường dẫn /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+# Chỉ định entrypoint bằng đường dẫn tuyệt đối
+ENTRYPOINT ["/app/entrypoint.sh"]
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-ENTRYPOINT ["entrypoint.sh"]
-
-
-# Expose port Vite dev server
-EXPOSE 5173
-
-# Chạy Vite server với host 0.0.0.0 để container có thể truy cập
+# Lệnh mặc định sẽ được truyền cho entrypoint
 CMD ["pnpm", "run", "dev", "--", "--host"]

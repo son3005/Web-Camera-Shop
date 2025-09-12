@@ -33,6 +33,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    command: sh -c "pnpm install && pnpm dev"
     environment:
       - VITE_API_URL=http://backend:5000
     depends_on:
@@ -51,7 +52,7 @@ services:
     ports:
       # Mở cổng 3306 để có thể kết nối vào DB từ máy thật
       # bằng các công cụ như DBeaver, MySQL Workbench để debug
-      - "3306:3306"
+      - "7777:3306"
     volumes:
       # Sử dụng named volume để dữ liệu DB không bị mất
       # mỗi khi container được tạo lại
