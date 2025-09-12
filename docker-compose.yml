@@ -27,6 +27,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    container_name: web-camera-shop-frontend-1
     ports:
       - "5173:5173"
     volumes:
