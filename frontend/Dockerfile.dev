@@ -1,19 +1,18 @@
-# Sử dụng image dựa trên Debian
-FROM node:22-slim
+# Stage: Dev 
+FROM node:22-alpine
 
 WORKDIR /app
 
-# ----> THÊM DÒNG NÀY ĐỂ CÀI PNPM <----
-RUN npm install -g pnpm
+# Copy package.json và package-lock.json trước để cache dependency
+COPY package*.json ./
 
-# Copy script vào thư mục /app
-COPY entrypoint.sh .
+# Cài dependencies (bao gồm devDependencies) + tránh lỗi peer deps
+RUN npm install --legacy-peer-deps
 
-# Cấp quyền cho script ở đúng đường dẫn /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Copy toàn bộ source code
 
-# Chỉ định entrypoint bằng đường dẫn tuyệt đối
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Expose port Vite dev server
+EXPOSE 5173
 
-# Lệnh mặc định sẽ được truyền cho entrypoint
-CMD ["pnpm", "run", "dev", "--", "--host"]
+# Chạy Vite server với host 0.0.0.0 để container có thể truy cập
+CMD ["npm", "run", "dev", "--", "--host"]
