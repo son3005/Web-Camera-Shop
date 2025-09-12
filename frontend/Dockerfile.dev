@@ -9,8 +9,7 @@ COPY package*.json ./
 # Cài dependencies (bao gồm devDependencies) + tránh lỗi peer deps
 RUN npm install --legacy-peer-deps
 
-# Copy toàn bộ source code
-
+# Copy toàn bộ source cod
 # Expose port Vite dev server
 EXPOSE 5173
 
