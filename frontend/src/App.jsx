@@ -7,11 +7,8 @@ function App() {
 
   return (
     <>
-
       <Dangnhap />
       <Dangky />
-
-
     </>
   );
 }
