@@ -21,9 +21,15 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile # Dockerfile production cho React + nginx
+      # 1. Trỏ tới Dockerfile dành cho development
+      dockerfile: Dockerfile.dev
     ports:
-      - "80:80"
+      # 2. Mở port 5173 của Vite dev server
+      - "5173:5173"
+    # 3. Thêm volumes để đồng bộ code và bật hot-reload
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
 

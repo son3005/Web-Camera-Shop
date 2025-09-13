@@ -1,30 +1,34 @@
-# Stage 1: Build React app
+# --- STAGE 1: Build ---
+# Stage này chịu trách nhiệm build code React ra các file tĩnh (HTML, CSS, JS).
 FROM node:22-alpine AS build
 WORKDIR /app
 
-# Copy package.json và package-lock.json trước để cache
+# Copy package.json và package-lock.json (hoặc yarn.lock)
 COPY package*.json ./
 
-# Cài dependencies (chỉ prod deps, nhanh và gọn nhẹ)
+# Dùng `npm ci` cho production. Nó nhanh hơn và đảm bảo cài đặt chính xác
+# các phiên bản trong package-lock.json. `--omit=dev` để bỏ qua devDependencies.
 RUN npm ci --omit=dev
 
-# Copy toàn bộ source code
+# Copy toàn bộ source code của project
 COPY . .
 
-# Build app ra thư mục dist
+# Build ứng dụng, kết quả sẽ nằm trong thư mục /app/dist
 RUN npm run build
 
-# Stage 2: Serve bằng nginx
-FROM nginx:alpine
+# --- STAGE 2: Serve ---
+# Stage này sử dụng một image Nginx siêu nhẹ để phục vụ các file tĩnh
+# đã được tạo ra ở Stage 1.
+FROM nginx:stable-alpine
 
-# Copy build output sang nginx
+# Sao chép các file đã build từ stage 'build' vào thư mục web root của Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Nếu bạn có custom config cho React Router, copy vào container
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Sao chép file cấu hình Nginx tùy chỉnh vào container.
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose cổng 80
+# Mở cổng 80 cho Nginx
 EXPOSE 80
 
-# Chạy nginx foreground
+# Lệnh để khởi động Nginx
 CMD ["nginx", "-g", "daemon off;"]

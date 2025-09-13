@@ -1,7 +1,32 @@
+# Môi trường ảo của Python
 venv/
+.venv
+
+# Python cache và file compiled
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Database file (ví dụ: SQLite)
 *.db
+
+# File biến môi trường (rất quan trọng)
 .env
+.env.*
+
+# Thư mục Git (cực kỳ quan trọng để giảm kích thước image)
+.git
+.gitignore
+
+# Cấu hình của IDE/Editor
+.vscode/
+.idea/
+
+# File và thư mục liên quan đến testing (không cần trong production)
+tests/
+.pytest_cache/
+
+# Các file cấu hình Docker
+Dockerfile
+Dockerfile.dev

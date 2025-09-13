@@ -1,3 +1,19 @@
 node_modules/
 dist/
 .env
+
+# Git
+.git
+.gitignore
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# Docker
+Dockerfile
+Dockerfile.dev

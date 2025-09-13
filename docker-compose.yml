@@ -1,31 +1,63 @@
-version: "3.9"
-
 services:
+  # --- Dịch vụ Backend ---
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    volumes:
-      - ./backend:/app
     ports:
       - "5000:5000"
+    volumes:
+      # Mount source code để bật hot-reload cho Python
+      - ./backend:/app
     environment:
-      - FLASK_APP=app.main
-      - FLASK_ENV=development
+      # Sử dụng FLASK_DEBUG=1 để bật chế độ debug và reloader của Flask
+      - FLASK_DEBUG=1
+
+      # Biến môi trường để kết nối tới service 'db'
       - MYSQL_HOST=db
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
       - MYSQL_DB=myshop
-    command: gunicorn --bind 0.0.0.0:5000 --reload "app.main:app"
+    depends_on:
+      # Đảm bảo service 'db' khởi động xong trước khi 'backend' khởi động
+      - db
 
+  # --- Dịch vụ Frontend ---
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    container_name: web-camera-shop-frontend-1
+    ports:
+      - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    ports:
-      - "5173:5173"
     environment:
       - VITE_API_URL=http://backend:5000
+    depends_on:
+      # Giúp xác định thứ tự khởi động, frontend phụ thuộc vào backend
+      - backend
+
+  # --- Dịch vụ Database (MỚI) ---
+  db:
+    # Sử dụng image MySQL phiên bản 8
+    image: mysql:8.0
+    # Cấu hình credentials cho database
+    # Các giá trị này PHẢI khớp với các biến MYSQL_* của backend
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: myshop
+    ports:
+      # Mở cổng 3306 để có thể kết nối vào DB từ máy thật
+      # bằng các công cụ như DBeaver, MySQL Workbench để debug
+      - "7777:3306"
+    volumes:
+      # Sử dụng named volume để dữ liệu DB không bị mất
+      # mỗi khi container được tạo lại
+      - mysql_data:/var/lib/mysql
+
+# --- Định nghĩa Named Volume ---
+# Khai báo volume được sử dụng bởi service 'db'
+volumes:
+  mysql_data:
