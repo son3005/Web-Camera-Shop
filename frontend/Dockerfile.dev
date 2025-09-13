@@ -1,5 +1,5 @@
 # Stage: Dev 
-FROM node:22-alpine
+FROM node:22-slim
 
 WORKDIR /app
 
@@ -8,6 +8,8 @@ COPY package*.json ./
 
 # Cài dependencies (bao gồm devDependencies) + tránh lỗi peer deps
 RUN npm install --legacy-peer-deps
+
+COPY . .
 
 # Copy toàn bộ source cod
 # Expose port Vite dev server
