@@ -1,7 +1,8 @@
 import React from "react";
 import {Menu,Search,Filter,Plus,Sun,Bell,Settings} from "lucide-react";
 
-function Header() {
+
+function Header({ sidebarColapsed, onToggleSidebar }) {
   return (
     <>
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4">
@@ -9,7 +10,9 @@ function Header() {
         {/* Left Section */}
         <div className="flex items-center space-x-4">
           <button className="p-2 rounded-lg text-slate-600 dark:text-slate-300
-           hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+           hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+           onClick={onToggleSidebar}
+           >
             <Menu className="w-5 h-5" />
           </button>
 
@@ -60,12 +63,12 @@ function Header() {
           </button>
 
           {/* Settings */}
-          <div className="p-2.5 rounded-xl test-state-600 dark:text-slate-300 
+          <div className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300
           hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
             <Settings className="w-5 h-5"/>
-
+          </div>
           {/* User profile */}
-          <div className="flex items-center space-x-3 pl-3 border-1 border-slate-200
+          <div className="flex items-center space-x-3 pl-3 border-1 border-slate-300
           dark:border-slate-700">
             <img 
             src="https://i.pinimg.com/1200x/1e/d0/2f/1ed02f1396fcf5662d0345aaeb408f18.jpg" 
@@ -78,7 +81,6 @@ function Header() {
               </p>
               <p className="text-xs">Administrator</p>
             </div>
-          </div>
           </div>
         </div>
       </div>
