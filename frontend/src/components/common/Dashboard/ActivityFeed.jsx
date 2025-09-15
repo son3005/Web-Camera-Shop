@@ -1,6 +1,8 @@
-import React from 'react';
-import { Clock,ShoppingCart, UserPlus, Package, CreditCard, Truck, CheckCircle2, XCircle, Star, MessageSquare, Settings } from 'lucide-react';
-
+import React, { useState } from 'react';
+import { 
+  Clock, ShoppingCart, UserPlus, Package, CreditCard, 
+  Truck, CheckCircle2, XCircle, Star, MessageSquare, Settings 
+} from 'lucide-react';
 
 const activities = [
   {
@@ -105,55 +107,128 @@ const activities = [
   },
 ];
 
+function ActivityFeed() {
+  const [viewAll, setViewAll] = useState(false);
+  const [page, setPage] = useState(1);
+  const [inputPage, setInputPage] = useState("");
+  const perPage = 6;
 
+  const totalPages = Math.ceil(activities.length / perPage);
+  const shownData = viewAll 
+    ? activities.slice((page - 1) * perPage, page * perPage)
+    : activities.slice(0, 5);
 
-function ActivityFeed(){
-    return (
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl
-        border border-slate-200/50 dark: border-slate-700/50">
-            <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50'>
-            <div>
-                <h3 className='text-lg font-bold text-slate-800 dark:border-slate-700/50'>
-                Activity Feed
-                </h3>
-                <p className='text-sm text-slate-500 dark:text-slate-400'>
-                    Recent System Activites
-                </p>
-            </div>
-            <button className='text-blue-500 hover:text-blue-700 font-medium'>
-                View All
-            </button>
-            </div>
-            <div className='p-6'>
-                <div className='space-y-4'>
-                    {activities.map((activity)=>{
-                        return(
-                            <div className='flex items-start space-x-4 p-3 rounded-xl hover:bg-slate-50
-                            dark:hover:bg-slate-800/50 transition-colors'>
-                                <div className={`p-2 rounded-lg ${activity.bgColor}`}>
-                                    <activity.icon className={`w-4 h-4 ${activity.color}`}/>
-                                </div>
-                                <div className='flex-1 min-w-0'>
-                                    <h4 className='text-sm font-semibold text-slate-800 dark:text-white'>
-                                        {activity.title}
-                                    </h4>
-                                    <p className='text-sm text-slate-600 dark:text-slate-400 truncate'>
-                                        {activity.description}
-                                    </p>
-                                    <div className='flex items-center-safe space-x-1 mt-1'>
-                                        <Clock className='w-3 h-3 text-slate-400'/>
-                                        <span className='text-xs text-slate-500 dark:text-slate-400'>
-                                            {activity.time}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            </div>
+  const goToPage = () => {
+    const target = parseInt(inputPage, 10);
+    if (!isNaN(target) && target >= 1 && target <= totalPages) {
+      setPage(target);
+      setInputPage("");
+    }
+  };
+
+  return (
+    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+      {/* Header */}
+      <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+            Activity Feed
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Recent System Activities
+          </p>
         </div>
-    );
-};
+        <button
+          onClick={() => {
+            setViewAll(!viewAll);
+            setPage(1);
+          }}
+          className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+        >
+          {viewAll ? "Collapse" : "View All"}
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="p-6 space-y-4">
+        {shownData.map((activity) => (
+          <div
+            key={activity.id}
+            className="flex items-start space-x-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+          >
+            <div className={`p-2 rounded-lg ${activity.bgColor}`}>
+              <activity.icon className={`w-4 h-4 ${activity.color}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-slate-800 dark:text-white">
+                {activity.title}
+              </h4>
+              <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+                {activity.description}
+              </p>
+              <div className="flex items-center space-x-1 mt-1">
+                <Clock className="w-3 h-3 text-slate-400" />
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {activity.time}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+        {/* 🔹 giữ khung 10 dòng */}
+        {viewAll &&
+          Array.from({ length: perPage - shownData.length }).map((_, idx) => (
+            <div key={`empty-${idx}`} className="p-6">&nbsp;</div>
+          ))}
+      </div>
+
+      {/* Pagination */}
+      {viewAll && (
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 border-t border-slate-200 dark:border-slate-700">
+          {/* Prev / Next */}
+          <div className="flex items-center space-x-2">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-md disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-md disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+
+          {/* Input Go to Page */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-slate-600 dark:text-slate-400">
+              Page {page} of {totalPages}
+            </span>
+            <input
+              type="number"
+              min="1"
+              max={totalPages}
+              value={inputPage}
+              onChange={(e) => setInputPage(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && goToPage()}
+              className="w-16 px-2 py-1 text-sm border rounded-md dark:bg-slate-800 dark:text-white"
+              placeholder="Go"
+            />
+            <button
+              onClick={goToPage}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Go
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default ActivityFeed;
