@@ -1,92 +1,70 @@
-// src/pages/Dangnhap.jsx
-import React, { useState } from "react";
+import React from "react";
+import { Link } from "react-router-dom";
+import loginImg from "../assets/images/Login.jpg";
 
-export default function Dangnhap() {
-  const [email, setEmail] = useState("");
-  const [matKhau, setMatKhau] = useState("");
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    console.log("Email:", email);
-    console.log("Mật khẩu:", matKhau);
-    alert("Đăng nhập thành công (demo)");
-  };
-
+function DangNhap() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="bg-gray-800 p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-white text-center mb-6">
-          Đăng Nhập
-        </h2>
+    <div className="flex h-screen overflow-hidden">
+      {/* Cột trái */}
+      <div className="hidden md:block w-1/2 animate-fadeIn">
+        <img
+          src={loginImg}
+          alt="login"
+          className="w-full h-full object-cover"
+        />
+      </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          {/* Email */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-300 mb-1"
+      {/* Cột phải */}
+      <div className="flex w-full md:w-1/2 items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 animate-slideIn">
+        <div className="bg-slate-800/90 p-8 rounded-2xl w-96 shadow-2xl hover:-translate-y-1 hover:shadow-3xl transition-all duration-300 animate-zoomIn">
+          <h2 className="text-white text-center text-2xl font-bold mb-2 tracking-wide animate-fadeInDown">
+            Đăng nhập
+          </h2>
+          <p className="text-center text-slate-300 text-sm mb-4">
+            Chưa có tài khoản?{" "}
+            <Link
+              to="/register"
+              className="text-blue-500 hover:text-blue-400 hover:underline"
             >
-              Email
-            </label>
+              Đăng ký
+            </Link>
+          </p>
+
+          <form>
+            <label className="block text-slate-200 text-sm mb-1">Email</label>
             <input
-              id="email"
               type="email"
-              placeholder="nhapemail@vidu.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="cavcoi@gmail.com"
+              className="w-full p-3 mb-4 rounded-lg bg-slate-900 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
-          </div>
 
-          {/* Mật khẩu */}
-          <div>
-            <label
-              htmlFor="matkhau"
-              className="block text-sm font-medium text-gray-300 mb-1"
-            >
-              Mật khẩu
-            </label>
+            <label className="block text-slate-200 text-sm mb-1">Mật khẩu</label>
             <input
-              id="matkhau"
               type="password"
-              placeholder="Nhập mật khẩu"
-              value={matKhau}
-              onChange={(e) => setMatKhau(e.target.value)}
-              required
-              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="********"
+              className="w-full p-3 mb-6 rounded-lg bg-slate-900 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
-          </div>
 
-          {/* Ghi nhớ */}
-          <div className="flex items-center">
-            <input
-              id="ghinho"
-              type="checkbox"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded"
-            />
-            <label htmlFor="ghinho" className="ml-2 block text-sm text-gray-300">
-              Ghi nhớ đăng nhập
-            </label>
-          </div>
+            <button
+              type="submit"
+              className="w-full py-3 rounded-lg font-bold text-white bg-blue-500 hover:bg-blue-600 transform hover:scale-105 transition-all"
+            >
+              ĐĂNG NHẬP
+            </button>
+          </form>
 
-          {/* Nút đăng nhập */}
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            Đăng Nhập
-          </button>
-        </form>
-
-        {/* Link tạo tài khoản */}
-        <p className="mt-6 text-center text-gray-400 text-sm">
-          Người dùng mới?{" "}
-          <a href="#" className="text-blue-400 hover:underline font-medium">
-            Tạo tài khoản
-          </a>
-        </p>
+          <p className="mt-4 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-blue-500 hover:text-blue-400 hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
+
+export default DangNhap;
