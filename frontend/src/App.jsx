@@ -21,6 +21,7 @@ function App() {
         <Route path="/forgot-password" element={<QuenMatKhau />} />
       </Routes>
     </Router>
+
   );
 }
 
