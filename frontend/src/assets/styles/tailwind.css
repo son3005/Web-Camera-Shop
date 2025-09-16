@@ -1,0 +1,24 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* palette variables */
+:root{
+  --xanhSang: #31A354;
+  --xamNhat: #6C757D;
+  --xanhLa: #4CC17B;
+  --xanhDam: #154734;
+  --denNhat: #0f1722;
+}
+
+/* base body */
+body { @apply bg-white; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+/* reusable buttons */
+.btn { @apply px-4 py-2 rounded-lg border font-medium transition-all duration-200; }
+.btn-primary { @apply bg-white border-xanhDam text-xanhDam hover:bg-xanhSang hover:text-white hover:scale-105; }
+.btn-secondary { @apply bg-xanhSang text-white hover:bg-xanhDam hover:scale-105; }
+
+/* navbar link hover */
+.nav-link:hover { @apply font-bold text-xanhSang; }
