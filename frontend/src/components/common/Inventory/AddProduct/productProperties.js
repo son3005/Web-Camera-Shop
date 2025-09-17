@@ -1,0 +1,42 @@
+// constants/productProperties.js
+export const propertyGroups = {
+  "Ánh sáng": [
+    "ISO",
+    "Tốc Độ Màn Trập",
+    "Đo Sáng",
+    "Cân Bằng Trắng",
+    "Tốc Độ Chụp Liên Tục",
+  ],
+  "Hình ảnh": [
+    "Định Dạng Cảm Biến",
+    "Độ Phân Giải",
+    "Kích Thước Ảnh",
+    "Tỷ Lệ Ảnh",
+    "Loại Cảm Biến",
+    "Định Dạng Ảnh",
+    "Chống Rung",
+    "Ngàm Ống Kính",
+  ],
+  Video: ["Mã Hóa Video", "Độ Phân Giải Video", "Micro", "Định Dạng Âm Thanh"],
+  "Lấy nét": ["Kiểu Lấy Nét", "Chế Độ Lấy Nét", "Số Điểm Lấy Nét"],
+  "Kính ngắm/Màn hình": [
+    "Loại kính ngắm",
+    "Đặc Tính Màn Hình",
+    "Độ Phân Giải Màn Hình",
+    "Kích Thước Màn Hình",
+    "Độ Phóng Đại Kính Ngắm",
+    "Độ Bao Phủ Kính Ngắm",
+    "Kích Thước Kính Ngắm",
+    "Độ Phân Giải Kính Ngắm",
+  ],
+  "Đèn Flash": [
+    "Đèn Flash",
+    "Chế Độ Flash",
+    "Tốc Độ Đánh Đèn",
+    "Chân Kết Nối",
+    "Độ Bù Sáng",
+    "Đồng Bộ Flash",
+  ],
+  "Kết Nối": ["GPS", "Kết Nối Không Dây", "Jack Cắm", "Số Khe Cắm Thẻ Nhớ"],
+  Khác: ["Trọng Lượng", "Kích Thước", "Pin"],
+};
