@@ -5,16 +5,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-
-  /* Áp dụng SVG filter tên là "noiseFilter" */
   filter: url(#noiseFilter);
-
-  /* Điều chỉnh độ đậm nhạt của hiệu ứng */
   opacity: 0.05;
-
-  /* Đảm bảo lớp phủ này không làm ảnh hưởng đến việc click chuột */
   pointer-events: none;
-
-  /* Để lớp phủ nằm trên nền gradient nhưng dưới nội dung chính */
   z-index: 0;
 }

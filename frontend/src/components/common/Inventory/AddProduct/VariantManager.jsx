@@ -119,11 +119,11 @@ const VariantManager = ({ variants = [], onChange, readOnly = false }) => {
           // --- Nút Add đã được cập nhật với theme màu Emerald ---
           className="w-full mt-4 px-5 py-2.5 font-bold rounded-lg 
                     text-white
-                    bg-gradient-to-br from-emerald-400 to-emerald-600      // Light mode gradient
-                    dark:from-emerald-500 dark:to-emerald-700                // Dark mode gradient
+                    bg-gradient-to-br from-emerald-400 to-emerald-600      
+                    dark:from-emerald-500 dark:to-emerald-700               
                     shadow-lg hover:shadow-xl
-                    hover:shadow-emerald-500/50                              // Light mode shadow on hover
-                    dark:hover:shadow-emerald-500/40                         // Dark mode shadow on hover
+                    hover:shadow-emerald-500/50                              
+                    dark:hover:shadow-emerald-500/40                         
                     hover:scale-105
                     transition-all duration-300"
         >

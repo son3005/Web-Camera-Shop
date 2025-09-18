@@ -41,13 +41,13 @@ function RevenueChart() {
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+            <div className="w-3 h-3 bg-gradient-to-r from-emerald-500 via-blue-400 to-purple-600 rounded-full"></div>
             <span className="text-sm text-slate-600 dark:text-slate-300">
               Revenue
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+            <div className="w-3 h-3 bg-gradient-to-r from-orange-400  to-slate-600 rounded-full"></div>
             <span className="text-sm text-slate-600 dark:text-slate-300">
               Expenses
             </span>
@@ -93,11 +93,11 @@ function RevenueChart() {
             />
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="0%" stopColor="#00FF33" />
                 <stop offset="100%" stopColor="#8b5cf6" />
               </linearGradient>
               <linearGradient id="expensesGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#94a3b8" />
+                <stop offset="0%" stopColor="#FF6600" />
                 <stop offset="100%" stopColor="#64748b" />
               </linearGradient>
             </defs>

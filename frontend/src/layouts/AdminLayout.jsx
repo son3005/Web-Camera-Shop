@@ -1,8 +1,8 @@
 // AdminLayout.jsx
 import { useState } from "react";
 import React from "react";
-import Sidebar from "../components/layout/Sidebar";
-import Header from "../components/layout/Header";
+import Sidebar from "../components/layout/Admin/Sidebar";
+import Header from "../components/layout/Admin/Header";
 import Dashboard from "../components/common/Dashboard/Dashboard";
 import Inventory from "../components/common/Inventory/Inventory";
 import '../assets/styles/AdminLayout.css';
@@ -31,7 +31,7 @@ function AdminLayout() {
       {/* 3. THÊM className "admin-layout-container" vào div ngoài cùng */}
       <div className="admin-layout-container min-h-screen relative overflow-hidden
                      bg-gradient-to-br 
-                     from-emerald-100 via-emerald-300 to-slate-300
+                     from-emerald-900/50 via-emerald-300/80 to-slate-600
                      dark:from-emerald-950 dark:via-emerald-800 dark:to-slate-900 
                      transition-all duration-500">
         
