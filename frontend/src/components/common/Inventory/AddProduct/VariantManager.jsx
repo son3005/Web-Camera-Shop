@@ -1,109 +1,135 @@
+// VariantManager.jsx
 import React from "react";
-import { Plus, Trash2 } from "lucide-react";
 import VariantImageUpload from "./VariantImageUpload";
 
-const VariantManager = ({ variants, onChange }) => {
-  const updateVariant = (index, key, value) => {
-    const updated = [...variants];
-    updated[index][key] = value;
-    onChange(updated);
+const VariantManager = ({ variants = [], onChange, readOnly = false }) => {
+  const handleVariantChange = (index, field, value) => {
+    const newVariants = [...variants];
+    newVariants[index] = { ...newVariants[index], [field]: value };
+    onChange && onChange(newVariants);
   };
 
-  const addVariant = () => {
-    onChange([
-      ...variants,
-      { style: "", color: "", price: "", quantity: "", images: [] },
-    ]);
+  const handleAddVariant = () => {
+    onChange &&
+      onChange([
+        ...variants,
+        { style: "", color: "", price: "", quantity: "", images: [] },
+      ]);
   };
 
-  const removeVariant = (index) => {
-    if (variants.length === 1) return;
-    const updated = variants.filter((_, i) => i !== index);
-    onChange(updated);
+  const handleRemoveVariant = (index) => {
+    onChange && onChange(variants.filter((_, i) => i !== index));
   };
+
+  // --- Tối ưu hóa class cho các input với Light & Dark mode ---
+  const inputBaseStyle =
+    "w-full rounded-lg px-3 py-2 focus:outline-none transition-all duration-300";
+
+  const lightInputStyle =
+    "bg-white/40 border border-black/20 text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500";
+
+  const darkInputStyle =
+    "dark:bg-black/20 dark:border dark:border-white/30 dark:text-white dark:placeholder:text-gray-300 dark:focus:ring-2 dark:focus:ring-cyan-400";
+  
+  const readOnlyInputStyle = "bg-gray-300/50 dark:bg-gray-500/20 cursor-not-allowed text-gray-500 dark:text-gray-400";
+
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-        Variants
+    <div className="space-y-6 p-4">
+      <h3 className="text-xl font-bold text-slate-800 dark:text-white drop-shadow-md">
+        Các biến thể sản phẩm
       </h3>
-
       {variants.map((variant, idx) => (
         <div
           key={idx}
-          className="relative rounded-xl p-5 space-y-4 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md shadow-md border border-white/20 dark:border-gray-700/20"
+          // --- CORE: Hiệu ứng Glassmorphism cho cả Light & Dark Mode ---
+          className="p-6 
+                     bg-white/30 dark:bg-black/20  // Nền kính
+                     backdrop-blur-lg              // Hiệu ứng mờ
+                     border border-black/10 dark:border-white/20 // Viền kính
+                     rounded-2xl shadow-lg space-y-4 transition-all duration-300"
         >
-          {/* Style + Color */}
-          <div className="grid grid-cols-10 gap-4">
-            <div className="col-span-7">
-              <input
-                type="text"
-                placeholder="Style"
-                value={variant.style}
-                onChange={(e) => updateVariant(idx, "style", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-white/20 dark:bg-gray-700/30 backdrop-blur-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-400"
-              />
-            </div>
-            <div className="col-span-3">
-              <input
-                type="text"
-                placeholder="Color"
-                value={variant.color}
-                onChange={(e) => updateVariant(idx, "color", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-white/20 dark:bg-gray-700/30 backdrop-blur-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-purple-400"
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Style (e.g., Body Only)"
+              value={variant.style}
+              disabled={readOnly}
+              onChange={(e) =>
+                handleVariantChange(idx, "style", e.target.value)
+              }
+              className={`${inputBaseStyle} ${lightInputStyle} ${darkInputStyle} ${readOnly ? readOnlyInputStyle : ""}`}
+            />
+            <input
+              type="text"
+              placeholder="Color (e.g., Black)"
+              value={variant.color}
+              disabled={readOnly}
+              onChange={(e) =>
+                handleVariantChange(idx, "color", e.target.value)
+              }
+              className={`${inputBaseStyle} ${lightInputStyle} ${darkInputStyle} ${readOnly ? readOnlyInputStyle : ""}`}
+            />
+            <input
+              type="number"
+              placeholder="Price"
+              value={variant.price}
+              disabled={readOnly}
+              onChange={(e) =>
+                handleVariantChange(idx, "price", e.target.value)
+              }
+              className={`${inputBaseStyle} ${lightInputStyle} ${darkInputStyle} ${readOnly ? readOnlyInputStyle : ""}`}
+            />
+            <input
+              type="number"
+              placeholder="Quantity"
+              value={variant.quantity}
+              disabled={readOnly}
+              onChange={(e) =>
+                handleVariantChange(idx, "quantity", e.target.value)
+              }
+              className={`${inputBaseStyle} ${lightInputStyle} ${darkInputStyle} ${readOnly ? readOnlyInputStyle : ""}`}
+            />
           </div>
 
-          {/* Price + Quantity */}
-          <div className="grid grid-cols-10 gap-4">
-            <div className="col-span-7">
-              <input
-                type="number"
-                placeholder="Price"
-                value={variant.price}
-                onChange={(e) => updateVariant(idx, "price", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-white/20 dark:bg-gray-700/30 backdrop-blur-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-400"
-              />
-            </div>
-            <div className="col-span-3">
-              <input
-                type="number"
-                placeholder="Quantity"
-                value={variant.quantity}
-                onChange={(e) => updateVariant(idx, "quantity", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-white/20 dark:bg-gray-700/30 backdrop-blur-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-purple-400"
-              />
-            </div>
-          </div>
-
-          {/* Upload images */}
           <VariantImageUpload
             images={variant.images}
-            onChange={(imgs) => updateVariant(idx, "images", imgs)}
+            onChange={(imgs) => handleVariantChange(idx, "images", imgs)}
+            readOnly={readOnly}
           />
 
-          {/* Delete button */}
-          {variants.length > 1 && (
-            <button
-              type="button"
-              onClick={() => removeVariant(idx)}
-              className="absolute top-3 right-3 text-red-400 hover:text-red-600"
-            >
-              <Trash2 size={18} />
-            </button>
+          {!readOnly && (
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => handleRemoveVariant(idx)}
+                // --- Nút Remove với style cho cả 2 mode ---
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 dark:bg-red-500/60 dark:hover:bg-red-500/90 transition-colors duration-300 shadow-md"
+              >
+                Remove Variant
+              </button>
+            </div>
           )}
         </div>
       ))}
-
-      {/* Add Variant Button */}
-      <button
-        type="button"
-        onClick={addVariant}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 shadow-md"
-      >
-        <Plus size={18} /> Add Variant
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={handleAddVariant}
+          // --- Nút Add đã được cập nhật với theme màu Emerald ---
+          className="w-full mt-4 px-5 py-2.5 font-bold rounded-lg 
+                    text-white
+                    bg-gradient-to-br from-emerald-400 to-emerald-600      // Light mode gradient
+                    dark:from-emerald-500 dark:to-emerald-700                // Dark mode gradient
+                    shadow-lg hover:shadow-xl
+                    hover:shadow-emerald-500/50                              // Light mode shadow on hover
+                    dark:hover:shadow-emerald-500/40                         // Dark mode shadow on hover
+                    hover:scale-105
+                    transition-all duration-300"
+        >
+          + Thêm biến thể mới
+        </button>
+      )}
     </div>
   );
 };

@@ -7,7 +7,7 @@ import AddProductModal from "./AddProduct/AddProductModal";
 
 
 
-const inventoryData = [
+const initialData  = [
     { id: "P001", name: "Canon EOS R5", brand: "Canon", quantity: 12, price: 3899 },
     { id: "P002", name: "Sony A7 IV", brand: "Sony", quantity: 8, price: 2499 },
     { id: "P003", name: "Nikon Z6 II", brand: "Nikon", quantity: 0, price: 1999 },
@@ -42,173 +42,110 @@ const inventoryData = [
 const ITEMS_PER_PAGE = 10;
 
 const Inventory = () => {
+  const [products, setProducts] = useState(initialData);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [goToPage, setGoToPage] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [modalMode, setModalMode] = useState(null);
+  const [modalData, setModalData] = useState(null);
 
-  // 👇 thêm state để toggle giữa Inventory và AddProductModal
-  const [showAddProduct, setShowAddProduct] = useState(false);
+  const handleDelete = (id) => setProducts((prev) => prev.filter((p) => p.id !== id));
+  const handleView = (product) => { setModalData(product); setModalMode("view"); };
+  const handleEdit = (product) => { setModalData(product); setModalMode("edit"); };
+  const handleAdd = () => { setModalData(null); setModalMode("add"); };
+  const handleSave = (form) => {
+    if (modalMode === "add") {
+      const maxNum = products.reduce((acc, p) => Math.max(acc, parseInt(p.id.replace(/[^\d]/g, "")) || 0), 0);
+      const newId = "P" + String(maxNum + 1).padStart(3, "0");
+      const price = form.variants?.[0]?.price || 0;
+      const qty = form.variants?.reduce((s, v) => s + (Number(v.quantity) || 0), 0) || 0;
+      const newProduct = { id: newId, name: form.name, brand: form.brand, quantity: qty, price: price, full: form };
+      setProducts((prev) => [newProduct, ...prev]);
+    } else if (modalMode === "edit") {
+      const price = form.variants?.[0]?.price || 0;
+      const qty = form.variants?.reduce((s, v) => s + (Number(v.quantity) || 0), 0) || 0;
+      setProducts((prev) => prev.map((p) => p.id === form.id ? { ...p, name: form.name, brand: form.brand, quantity: qty, price: price, full: form } : p));
+    }
+    setModalMode(null); setModalData(null);
+  };
 
-  // Filter
-  const filteredData = inventoryData.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredData = products.filter(
+    (item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+  const paginatedData = filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  
+  const handleGoToPage = (e) => {
+      e.preventDefault();
+      const num = parseInt(goToPage);
+      if (num >= 1 && num <= totalPages) {
+          setCurrentPage(num);
+      }
+      setGoToPage("");
+  };
 
-  // Pagination
-  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + ITEMS_PER_PAGE
-  );
-
-  // Fill dòng trống
-  while (paginatedData.length < ITEMS_PER_PAGE) {
-    paginatedData.push({
-      id: "",
-      name: "",
-      brand: "",
-      quantity: "",
-      price: "",
-      status: "",
-      empty: true,
-    });
-  }
+  const primaryButtonStyles = "flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-bold rounded-lg bg-gradient-to-br from-emerald-600 to-slate-800 hover:from-emerald-500 hover:to-slate-700 dark:from-emerald-500 dark:to-slate-700 dark:hover:from-emerald-400 dark:hover:to-slate-600 transition-all duration-300 shadow-md hover:shadow-lg";
+  const secondaryButtonStyles = "flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 hover:from-slate-500 hover:to-slate-700 dark:from-slate-700 dark:to-slate-800 dark:hover:from-slate-600 dark:hover:to-slate-700 transition-colors duration-300 shadow";
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto">
-      {/* Nếu đang mở AddProduct thì hiển thị form */}
-      {showAddProduct ? (
-        <AddProductModal onClose={() => setShowAddProduct(false)} />
-      ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b dark:border-gray-700">
-            <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-              Inventory Management
-            </h1>
+    <div className="w-full">
+      {modalMode && <AddProductModal onClose={() => { setModalMode(null); setModalData(null); }} mode={modalMode} product={modalData} onSave={handleSave} />}
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              {/* Search */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg flex-1 sm:flex-initial">
-                <Search size={18} className="text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="bg-transparent outline-none flex-1 text-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-
-              {/* Export */}
-              <div className="relative">
-                <button
-                  className="flex items-center gap-2 px-4 py-2 text-white text-sm rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90"
-                  onClick={() => setExportOpen(!exportOpen)}
-                >
-                  <Download size={16} /> Export
+      <div className="w-full mx-auto bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-slate-700 overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-5 border-b border-black/10 dark:border-white/10">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Quản lý kho hàng</h1>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="relative flex-grow sm:flex-grow-0">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input type="text" placeholder="Tìm kiếm sản phẩm..." className="w-full sm:w-64 bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/20 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+            <div className="relative">
+                <button className={secondaryButtonStyles} onClick={() => setExportOpen((s) => !s)}>
+                    <Download size={16} /> <span>Export</span>
                 </button>
                 {exportOpen && <ExportMenu onClose={() => setExportOpen(false)} />}
-              </div>
-
-              {/* Add Product */}
-              <button
-                className="flex items-center gap-2 px-4 py-2 text-white text-sm rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90"
-                onClick={() => setShowAddProduct(true)} // 👈 bật form AddProduct
-              >
-                <Plus size={16} /> Add Product
-              </button>
             </div>
+            <button className={`${primaryButtonStyles} hover:scale-105`} onClick={handleAdd}>
+              <Plus size={18} /> <span>Thêm sản phẩm</span>
+            </button>
           </div>
+        </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50 dark:bg-gray-700">
-                  <th className="px-4 py-3 text-center w-[10%]">ID</th>
-                  <th className="px-4 py-3 text-left w-[25%]">Product</th>
-                  <th className="px-4 py-3 text-center w-[15%]">Brand</th>
-                  <th className="px-4 py-3 text-center w-[10%]">Qty</th>
-                  <th className="px-4 py-3 text-center w-[15%]">Price</th>
-                  <th className="px-4 py-3 text-center w-[15%]">Status</th>
-                  <th className="px-4 py-3 text-center w-[10%]">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedData.map((item, idx) =>
-                  item.empty ? (
-                    <tr key={idx}>
-                      <td colSpan="7" className="h-[48px]"></td>
-                    </tr>
-                  ) : (
-                    <TableRow
-                      key={item.id}
-                      item={item}
-                      openMenuId={openMenuId}
-                      setOpenMenuId={setOpenMenuId}
-                    />
-                  )
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+             <thead className="bg-black/5 dark:bg-white/5">
+              <tr>
+                {["ID", "Sản phẩm", "Thương hiệu", "Số lượng", "Giá", "Trạng thái", "Hành động"].map((header, i) => (
+                  <th key={i} className={`px-4 py-3 font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider text-xs ${header === 'Sản phẩm' ? 'text-left' : 'text-center'}`}>
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedData.map((item) => ( <TableRow key={item.id} item={item} openMenuId={openMenuId} setOpenMenuId={setOpenMenuId} onDelete={handleDelete} onView={handleView} onEdit={handleEdit} /> ))}
+              {Array.from({ length: ITEMS_PER_PAGE - paginatedData.length }).map((_, idx) => ( <tr key={`empty-${idx}`} className="border-b border-black/5 dark:border-white/5 h-[69px]"><td colSpan="7"></td></tr> ))}
+            </tbody>
+          </table>
+        </div>
 
-          {/* Pagination */}
-          <div className="px-4 py-4 border-t flex justify-between items-center dark:border-gray-700">
+        <div className="px-5 py-4 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <span className="text-sm text-slate-800 dark:text-slate-400 font-medium">Hiển thị {paginatedData.length} trên tổng số {filteredData.length} sản phẩm</span>
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-2 text-white rounded bg-gradient-to-r from-blue-500 to-purple-600 disabled:opacity-50"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <span>
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 text-white rounded bg-gradient-to-r from-blue-500 to-purple-600 disabled:opacity-50"
-              >
-                <ChevronRight size={18} />
-              </button>
+                <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"> <ChevronLeft size={20} /> </button>
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200"> Trang {currentPage} / {totalPages} </span>
+                <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"> <ChevronRight size={20} /> </button>
             </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const num = parseInt(goToPage);
-                if (num >= 1 && num <= totalPages) setCurrentPage(num);
-                setGoToPage("");
-              }}
-              className="flex items-center gap-2"
-            >
-              <input
-                type="number"
-                min="1"
-                max={totalPages}
-                value={goToPage}
-                onChange={(e) => setGoToPage(e.target.value)}
-                className="w-16 px-2 py-1 border rounded text-sm"
-                placeholder="Page"
-              />
-              <button
-                type="submit"
-                className="px-4 py-1.5 text-white text-sm rounded bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90"
-              >
-                Go
-              </button>
+            <form onSubmit={handleGoToPage} className="flex items-center gap-2">
+                <input type="number" min="1" max={totalPages} value={goToPage} onChange={(e) => setGoToPage(e.target.value)} className="w-16 px-2 py-1.5 bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/20 rounded-lg text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500" placeholder="Trang"/>
+                <button type="submit" className={secondaryButtonStyles}>Go</button>
             </form>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
