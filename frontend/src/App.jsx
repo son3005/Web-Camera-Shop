@@ -1,27 +1,20 @@
-// App.jsx
+// src/App.jsx
 import React from "react";
-// Import React Router để chuyển trang giữa đăng nhập / đăng ký / quên mật khẩu
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-// Import các trang đã tạo
-import DangNhap from "./pages/DangNhap";
-import DangKy from "./pages/DangKy";
-import QuenMatKhau from "./pages/QuenMatKhau";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import DangNhap from "./pages/Dangnhap";
+import DangKy from "./pages/Dangky";
+import QuenMatKhau from "./pages/Quenmatkhau";
 
 function App() {
   return (
-    // Router giúp điều hướng giữa các trang
     <Router>
       <Routes>
-        {/* Khi mở trang chính thì vào trang đăng nhập */}
-        <Route path="/" element={<DangNhap />} />
-        {/* Trang đăng ký */}
-        <Route path="/register" element={<DangKy />} />
-        {/* Trang quên mật khẩu */}
-        <Route path="/forgot-password" element={<QuenMatKhau />} />
+        <Route path="/" element={<Navigate to="/dangnhap" replace />} />
+        <Route path="/dangnhap" element={<DangNhap />} />
+        <Route path="/dangky" element={<DangKy />} />
+        <Route path="/quenmatkhau" element={<QuenMatKhau />} />
       </Routes>
     </Router>
-
   );
 }
 
