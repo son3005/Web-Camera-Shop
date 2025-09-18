@@ -1,18 +1,9 @@
-import Dangnhap from "./pages/Dangnhap"
-import Dangky from "./pages/Dangky"
-
+// src/App.jsx
+import { RouterProvider } from "react-router-dom";
+import router from "./router";
 
 function App() {
-
-
-  return (
-    <>
-      <Dangnhap />
-      <Dangky />
-    </>
-  );
+  return <RouterProvider router={router} />;
 }
 
-
-export default App
-
+export default App;
