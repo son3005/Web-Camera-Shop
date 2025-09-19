@@ -25,7 +25,7 @@ const GrainyFilter = () => (
 
 function AdminLayout() {
   const [sidebarCollapsed, setSideBarCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState("orders");
+  const [currentPage, setCurrentPage] = useState("dashboard");
 
   return (
     <>

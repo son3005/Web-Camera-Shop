@@ -1,108 +1,122 @@
 // src/components/common/Inventory/AddProduct/AddProductModal.jsx
 
-import React, { useState, useEffect } from "react";
-import { X, Save, Ban } from "lucide-react";
-import DescriptionEditor from "./DescriptionEditor";
-import PropertyForm from "./PropertyForm";
-import VariantManager from "./VariantManager";
+import React, { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { X } from "lucide-react";
 
-const brandOptions = ["Canon", "Nikon", "Sony", "Fujifilm", "Panasonic", "Olympus"];
+import VariantManager from "./VariantManager";
+import PropertyForm from "./PropertyForm";
+import DescriptionEditor from "./DescriptionEditor";
+import { propertyGroups } from "./productProperties";
+
+const BRANDS = [
+  { value: "sony", label: "Sony" }, { value: "canon", label: "Canon" },
+  { value: "nikon", label: "Nikon" }, { value: "fujifilm", label: "Fujifilm" },
+  { value: "panasonic", label: "Panasonic" }, { value: "leica", label: "Leica" },
+];
+
+const StatusToggle = ({ label, enabled, onChange, readOnly }) => (
+    <div>
+        <label className="block text-sm font-medium mb-2 text-slate-800 dark:text-slate-200">{label}</label>
+        <div className="flex items-center gap-4">
+            <button type="button" onClick={() => !readOnly && onChange(!enabled)} disabled={readOnly} className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:ring-offset-slate-800 ${readOnly ? 'cursor-not-allowed' : 'cursor-pointer'} ${enabled ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-600'}`}>
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
+            <span className={`text-sm font-semibold ${enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                {enabled ? "Còn bán" : "Ngừng bán"}
+            </span>
+        </div>
+    </div>
+);
+
+const variantSchema = yup.object({
+  style: yup.string(), color: yup.string(),
+  costPrice: yup.number().typeError("Giá nhập phải là số").min(0).required("Bắt buộc"),
+  sellingPrice: yup.number().typeError("Giá bán phải là số").min(0).required("Bắt buộc"),
+  salePrice: yup.number().typeError("Giá KM phải là số").min(0).nullable().transform((v, o) => o === "" ? null : v).lessThan(yup.ref("sellingPrice"), "KM phải nhỏ hơn giá bán"),
+  quantity: yup.number().typeError("Số lượng phải là số").integer().min(0).required("Bắt buộc"),
+  images: yup.array().min(1, "Cần ít nhất 1 hình ảnh").required(),
+});
+const propertyKeys = Object.values(propertyGroups).flat().reduce((acc, key) => ({...acc, [key]: yup.string()}), {});
+const productSchema = yup.object({
+  name: yup.string().trim().required("Tên sản phẩm là bắt buộc"),
+  brand: yup.string().required("Vui lòng chọn thương hiệu"),
+  isActive: yup.boolean(),
+  description: yup.string().trim().test("is-not-empty", "Mô tả sản phẩm là bắt buộc", (v) => v && v !== "<p><br></p>").min(50, "Mô tả cần có ít nhất 50 ký tự").required("Mô tả sản phẩm là bắt buộc"),
+  variants: yup.array().of(variantSchema).min(1, "Phải có ít nhất một biến thể"),
+  properties: yup.object().shape(propertyKeys),
+}).required();
+const getDefaultProperties = () => Object.values(propertyGroups).flat().reduce((acc, key) => ({...acc, [key]: ""}), {});
+
 
 const AddProductModal = ({ onClose, mode = "add", product = null, onSave }) => {
-  const emptyForm = {
-    id: "", name: "", brand: "", description: "", specs: {},
-    variants: [{ style: "", color: "", price: "", quantity: "", images: [] }],
-  };
-
-  const [formData, setFormData] = useState(emptyForm);
+  const modalTitle = mode === "add" ? "Thêm Sản Phẩm Mới" : "Chỉnh Sửa Sản Phẩm";
+  const { register, control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    resolver: yupResolver(productSchema),
+  });
 
   useEffect(() => {
-    if (mode === "add") {
-      setFormData(emptyForm);
-    } else if (product) {
-      setFormData({ ...product });
+    if (mode === 'edit' && product) {
+      reset(product);
+    } else {
+      reset({
+        name: "", brand: "", isActive: true, description: "",
+        variants: [{ style: "", color: "", costPrice: "", sellingPrice: "", salePrice: "", quantity: "", images: [] }],
+        properties: getDefaultProperties()
+      });
     }
-  }, [mode, product]);
+  }, [product, mode, reset]);
 
-  const isView = mode === "view";
-
-  const saveHandler = () => {
-    if (!formData.name || !formData.brand) {
-      alert("Vui lòng nhập tên và thương hiệu sản phẩm.");
-      return;
-    }
-    const normalized = {
-      ...formData,
-      variants: (formData.variants || []).map((v) => ({
-        ...v,
-        price: Number(v.price) || 0,
-        quantity: Number(v.quantity) || 0,
-      })),
-    };
-    onSave && onSave(normalized);
-    onClose && onClose();
+  const onSubmit = (data) => {
+    onSave(data); 
+    onClose();
   };
-  
-  const baseInputStyle = "w-full px-3 py-2.5 rounded-lg border text-sm transition-colors duration-300 focus:outline-none focus:ring-2";
-  const activeInputStyle = "bg-black/5 dark:bg-white/10 border-black/20 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-emerald-500 dark:focus:ring-emerald-500";
-  const readOnlyInputStyle = "bg-gray-500/10 dark:bg-gray-700/20 cursor-not-allowed text-slate-500 dark:text-slate-400";
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true"></div>
-      <div className="relative max-w-6xl w-full mx-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-2xl shadow-2xl p-6 border border-white/20 dark:border-slate-700 z-10 max-h-[95vh] flex flex-col">
-        <div className="flex justify-between items-center mb-6 flex-shrink-0">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {mode === "add" ? "Thêm sản phẩm mới" : mode === "edit" ? "Chỉnh sửa sản phẩm" : "Chi tiết sản phẩm"}
-          </h2>
-          <button onClick={onClose} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-500/10 dark:hover:bg-slate-400/10 transition-colors">
-            <X size={24} />
-          </button>
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className={`w-full max-w-7xl max-h-[95vh] flex flex-col rounded-3xl shadow-2xl bg-slate-200/60 dark:bg-slate-800/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 text-slate-900 dark:text-slate-100`}>
+        <div className="flex justify-between items-center p-5 border-b border-black/10 dark:border-white/10 flex-shrink-0">
+          <h2 className="text-2xl font-bold">{modalTitle}</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><X size={24} /></button>
         </div>
-
-        <div className="flex-grow overflow-y-auto pr-2 -mr-2 scrollbar-thin scrollbar-thumb-gray-400/50 scrollbar-track-transparent dark:scrollbar-thumb-gray-500/50">
-          <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-            <div className="lg:col-span-6 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-10 gap-4 p-4 bg-white/50 dark:bg-white/5 rounded-xl">
-                <div className="sm:col-span-6">
-                  <input type="text" placeholder="Tên sản phẩm (ví dụ: Canon EOS R5)" value={formData.name} disabled={isView} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={`${baseInputStyle} ${isView ? readOnlyInputStyle : activeInputStyle}`} />
+        <div className="flex-grow p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-400/50 dark:scrollbar-thumb-slate-600/50">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
+              <div className="lg:col-span-5 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-800 dark:text-slate-200">Tên sản phẩm</label>
+                  <input {...register("name")} placeholder="VD: Máy ảnh Sony A7 IV" className={`w-full rounded-lg px-3 py-2 text-sm transition-all bg-white/50 dark:bg-slate-700/50 border ${errors.name ? 'border-red-500 focus:ring-red-500' : 'border-black/10 dark:border-white/10 focus:ring-cyan-500'} focus:outline-none focus:ring-2 placeholder:text-slate-500 dark:placeholder:text-slate-400`} />
+                  <p className="text-red-500 text-xs mt-1 h-4">{errors.name?.message}</p>
                 </div>
-                <div className="sm:col-span-4">
-                  <select value={formData.brand} disabled={isView} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} className={`${baseInputStyle} ${isView ? readOnlyInputStyle : activeInputStyle}`}>
-                    <option value="" disabled>Chọn thương hiệu</option>
-                    {brandOptions.map((b) => (<option key={b} value={b}>{b}</option>))}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-800 dark:text-slate-200">Thương hiệu</label>
+                  <select {...register("brand")} className={`w-full rounded-lg px-3 py-2 text-sm transition-all bg-white/50 dark:bg-slate-700/50 border ${errors.brand ? 'border-red-500 focus:ring-red-500' : 'border-black/10 dark:border-white/10 focus:ring-cyan-500'} focus:outline-none focus:ring-2`}>
+                    <option value="">-- Chọn thương hiệu --</option>
+                    {BRANDS.map((brand) => (<option key={brand.value} value={brand.value}>{brand.label}</option>))}
                   </select>
+                  <p className="text-red-500 text-xs mt-1 h-4">{errors.brand?.message}</p>
                 </div>
+                <Controller name="isActive" control={control} render={({ field }) => (<StatusToggle label="Tình trạng kinh doanh" enabled={field.value} onChange={field.onChange}/>)}/>
+                <VariantManager control={control} register={register} errors={errors} />
               </div>
-
-              <VariantManager variants={formData.variants} onChange={(variants) => setFormData({ ...formData, variants })} readOnly={isView} />
-
-              <div>
-                <h3 className="mb-2 text-xl font-bold text-slate-800 dark:text-white">Mô tả sản phẩm</h3>
-                <DescriptionEditor value={formData.description} onChange={(val) => setFormData({ ...formData, description: val })} readOnly={isView} />
-              </div>
+              <div className="lg:col-span-5"><PropertyForm register={register} /></div>
             </div>
-            <div className="lg:col-span-4">
-              <PropertyForm properties={formData.specs} onChange={(specs) => setFormData({ ...formData, specs })} readOnly={isView} />
+            <div>
+              <Controller name="description" control={control} defaultValue="" render={({ field }) => <DescriptionEditor value={field.value} onChange={field.onChange} />} />
+              <p className="text-red-500 text-xs mt-1 h-4">{errors.description?.message}</p>
             </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-black/10 dark:border-white/10 flex-shrink-0">
-          <button onClick={onClose} className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
-            <Ban size={18} />
-            {isView ? "Đóng" : "Hủy"}
-          </button>
-          {!isView && (
-            <button onClick={saveHandler} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-bold bg-gradient-to-br from-emerald-600 to-slate-800 hover:from-emerald-500 hover:to-slate-700 dark:from-emerald-500 dark:to-slate-700 dark:hover:from-emerald-400 dark:hover:to-slate-600 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105">
-              <Save size={18} />
-              Lưu thay đổi
-            </button>
-          )}
+            <div className="flex justify-end items-center gap-4 pt-6 border-t border-black/10 dark:border-white/10">
+              <button type="button" onClick={onClose} className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-slate-900/5 dark:bg-white/10 hover:bg-slate-900/10 dark:hover:bg-white/20 hover:shadow-md transition-all">Hủy</button>
+              <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:scale-110 hover:opacity-90 hover:shadow-lg hover:shadow-emerald-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                {isSubmitting ? 'Đang lưu...' : (mode === "add" ? "Thêm Sản Phẩm" : "Lưu Thay Đổi")}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   );
 };
-
 export default AddProductModal;

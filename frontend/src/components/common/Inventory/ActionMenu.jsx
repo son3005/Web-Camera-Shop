@@ -1,110 +1,51 @@
-// ActionMenu.jsx
-import React, { useEffect, useRef, useState } from "react";
+// src/components/ActionMenu.jsx
+
+import React, { useEffect, useRef } from "react";
 import { Eye, Edit, Trash2 } from "lucide-react";
 
-/**
- * ActionMenu
- * Props:
- *  - onClose: () => void
- *  - onDelete: () => void
- *  - onView: () => void
- *  - onEdit: () => void
- */
-const ActionMenu = ({ onClose, onDelete, onView, onEdit }) => {
-  const menuRef = useRef(null);
-  const [position, setPosition] = useState("down");
-  const [animate, setAnimate] = useState(false);
-
-  // close when click outside or press Escape
-  useEffect(() => {
-    const handleOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        onClose();
-      }
-    };
-    const handleEsc = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("touchstart", handleOutside);
-    document.addEventListener("keydown", handleEsc);
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("touchstart", handleOutside);
-      document.removeEventListener("keydown", handleEsc);
-    };
-  }, [onClose]);
-
-  // position calc for menu (up/down)
-  useEffect(() => {
-    if (menuRef.current) {
-      const rect = menuRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      setPosition(spaceBelow < 150 && spaceAbove > spaceBelow ? "up" : "down");
-      // animate in next frame
-      requestAnimationFrame(() => setAnimate(true));
-    }
-  }, []);
-
-  return (
-    <div
-      ref={menuRef}
-      className={`
-        absolute right-0 w-44 rounded-xl backdrop-blur-md
-        bg-white/90 dark:bg-gray-800/90 border border-white/20 shadow-xl
-        transform transition-all duration-150 ease-out z-50
-        ${position === "down" ? "top-full mt-2" : "bottom-full mb-2"}
-        ${animate
-          ? "opacity-100 translate-y-0 scale-100"
-          : position === "down"
-          ? "opacity-0 -translate-y-2 scale-95"
-          : "opacity-0 translate-y-2 scale-95"}
-      `}
-    >
-      <MenuItem
-        icon={<Eye size={16} />}
-        label="View Details"
-        onClick={() => {
-          onView && onView();
-          onClose && onClose();
-        }}
-      />
-      <MenuItem
-        icon={<Edit size={16} />}
-        label="Edit"
-        color="text-blue-600"
-        onClick={() => {
-          onEdit && onEdit();
-          onClose && onClose();
-        }}
-      />
-      <MenuItem
-        icon={<Trash2 size={16} />}
-        label="Delete"
-        color="text-red-600"
-        onClick={() => {
-          // optional: confirm before delete
-          if (window.confirm("Are you sure you want to delete this product?")) {
-            onDelete && onDelete();
-          }
-          onClose && onClose();
-        }}
-      />
-    </div>
-  );
-};
-
-const MenuItem = ({ icon, label, color = "text-gray-700 dark:text-gray-200", onClick }) => (
-  <button
-    onClick={onClick}
-    type="button"
-    className={`flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium transition-all duration-150 ${color}
-      hover:scale-105 hover:shadow-md rounded-lg text-left`}
-  >
-    {icon}
-    <span>{label}</span>
-  </button>
+// Component con cho từng mục trong menu
+const MenuItem = ({ icon, label, color = "dark:text-slate-200", onClick }) => (
+    <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2 text-sm ${color} hover:bg-black/5 dark:hover:bg-white/10 first:rounded-t-lg last:rounded-b-lg transition-colors`}>
+        {icon}
+        <span>{label}</span>
+    </button>
 );
+
+// Component ActionMenu chính
+const ActionMenu = ({ onClose, onView, onEdit, onDelete }) => {
+    const menuRef = useRef(null);
+
+    // Tự động đóng menu khi click ra ngoài hoặc nhấn phím Escape
+    useEffect(() => {
+        const handleOutsideClick = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                onClose();
+            }
+        };
+        const handleEscKey = (e) => {
+            if (e.key === "Escape") onClose();
+        };
+        
+        document.addEventListener("mousedown", handleOutsideClick);
+        document.addEventListener("keydown", handleEscKey);
+        return () => {
+            document.removeEventListener("mousedown", handleOutsideClick);
+            document.removeEventListener("keydown", handleEscKey);
+        };
+    }, [onClose]);
+
+    return (
+        <div ref={menuRef}
+             className="absolute top-full right-0 mt-2 w-36 z-20 
+                        rounded-lg shadow-xl border border-white/10
+                        bg-slate-200/60 dark:bg-slate-800/80 
+                        backdrop-blur-lg
+                        animate-fade-in-up"> {/* Thêm class animate */}
+            <MenuItem icon={<Eye size={16} />} label="Xem chi tiết" onClick={onView} />
+            <MenuItem icon={<Edit size={16} />} label="Chỉnh sửa" color="text-blue-600 dark:text-blue-400" onClick={onEdit} />
+            <MenuItem icon={<Trash2 size={16} />} label="Xóa" color="text-red-600 dark:text-red-400" onClick={onDelete} />
+        </div>
+    );
+};
 
 export default ActionMenu;
