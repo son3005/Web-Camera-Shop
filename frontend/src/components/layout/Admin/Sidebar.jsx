@@ -12,7 +12,6 @@ const menuItems = [
   {
     id: "ecommerce", icon: ShoppingBag, label: "E-commerce",
     submenu: [
-      { id: "products", label: "Products" },
       { id: "orders", label: "Orders" },
       { id: "customers", label: "Customers" },
     ],

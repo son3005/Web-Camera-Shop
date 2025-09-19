@@ -6,6 +6,7 @@ import Header from "../components/layout/Admin/Header";
 import Dashboard from "../components/common/Dashboard/Dashboard";
 import Inventory from "../components/common/Inventory/Inventory";
 import '../assets/styles/AdminLayout.css';
+import Orders from "../components/common/Ecomerce/Orders/Orders";
 
 const GrainyFilter = () => (
   <svg style={{ display: 'none' }}>
@@ -24,7 +25,7 @@ const GrainyFilter = () => (
 
 function AdminLayout() {
   const [sidebarCollapsed, setSideBarCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState("inventory");
+  const [currentPage, setCurrentPage] = useState("orders");
 
   return (
     <>
@@ -53,8 +54,14 @@ function AdminLayout() {
             />
             <main className="flex-1 overflow-y-auto bg-transparent">
               <div className="p-6 space-y-6">
+                {/* Chuyển đến trang DashBoard */}
                 {currentPage === "dashboard" && <Dashboard />}
+                {/* Chuyển đến trang Inventory */}
                 {currentPage === "inventory" && <Inventory />}
+                {/* Các submenu của E-commerce */}
+                {currentPage === "orders" && <Orders/>}
+                {currentPage === "customers" && <Oders/>}
+
               </div>
             </main>
           </div>
