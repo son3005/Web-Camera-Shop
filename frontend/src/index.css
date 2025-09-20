@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+/* Custom theme màu */
+:root {
+  --color-accent-green: #2e9d58;
+  --color-accent-green-600: #20884a;
+  --color-navy-800: #06283d;
+  --color-navy-600: #0f4b6e;
+  --color-muted: #f3f4f6;
+  --color-card-bg: #ffffff;
+}
+
+body {
+  @apply bg-[var(--color-muted)] text-gray-900 font-sans;
+}
