@@ -1,15 +1,15 @@
-// src/data/products.js
 // Đây là file dữ liệu chứa thông tin các sản phẩm
 // Chia theo thương hiệu (brand) để dễ quản lý
 // Các ảnh trong "src/assets/images" bạn thay thế theo tên ảnh tương ứng
 
+// 📌 Object chính chứa sản phẩm theo từng thương hiệu
 export const productsByBrand = {
   canon: [
     {
-      id: "canon1",
-      name: "Canon EOS R5",
-      price: 82000000,
-      image: "/src/assets/images/canon_r5.jpg",
+      id: "canon1", // ID duy nhất cho sản phẩm (rất quan trọng để React render list)
+      name: "Canon EOS R5", // Tên sản phẩm
+      price: 82000000, // Giá sản phẩm (đơn vị: VNĐ)
+      image: "/src/assets/images/canon_r5.jpg", // Đường dẫn ảnh (tạm thời đặt cứng)
     },
     {
       id: "canon2",
@@ -36,6 +36,7 @@ export const productsByBrand = {
       image: "/src/assets/images/canon_g7x.jpg",
     },
   ],
+
   sony: [
     {
       id: "sony1",
@@ -68,6 +69,7 @@ export const productsByBrand = {
       image: "/src/assets/images/sony_rx100.jpg",
     },
   ],
+
   nikon: [
     {
       id: "nikon1",
@@ -100,6 +102,7 @@ export const productsByBrand = {
       image: "/src/assets/images/nikon_d7500.jpg",
     },
   ],
+
   fujifilm: [
     {
       id: "fuji1",
@@ -134,7 +137,8 @@ export const productsByBrand = {
   ],
 };
 
-// Danh sách sản phẩm nổi bật (lấy từ nhiều thương hiệu khác nhau)
+// 📌 Danh sách sản phẩm nổi bật (Hot products)
+// lấy ra từ nhiều brand khác nhau để hiển thị ở carousel HotProducts
 export const hotProducts = [
   productsByBrand.canon[0], // Canon EOS R5
   productsByBrand.sony[0], // Sony A7 IV
@@ -145,4 +149,6 @@ export const hotProducts = [
   productsByBrand.nikon[1], // Nikon Z7 II
   productsByBrand.fujifilm[1], // Fujifilm X-S20
 ];
+
+// Export default để import kiểu "import products from '...'"
 export default { productsByBrand, hotProducts };
