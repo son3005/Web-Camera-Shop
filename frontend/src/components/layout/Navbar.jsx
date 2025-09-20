@@ -148,7 +148,7 @@ export default function Navbar() {
 }
 
 /*
-📌 Ghi chú cho partner:
+Ghi chú 
 - allProducts lấy từ src/data/products.js (gom tất cả brand).
 - Khi click icon search → mở modal search.
 - Overlay (bg đen mờ) đóng vai trò disable phần UI phía sau.

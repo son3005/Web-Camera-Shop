@@ -38,7 +38,7 @@ export default function SortOptions({ sortBy, setSortBy }) {
 }
 
 /*
-📌 Ghi chú cho partner:
+Ghi chú 
 - Component này **chỉ hiển thị select box**, không tự xử lý logic sort.
 - Logic sort (lọc sản phẩm theo giá, bán chạy) được viết trong ProductList.jsx.
 - Thuộc tính "sortBy" và "setSortBy" được truyền từ ProductList xuống.

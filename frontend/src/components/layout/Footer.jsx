@@ -70,7 +70,7 @@ export default function Footer() {
 }
 
 /*
-📌 Ghi chú cho partner:
+Ghi chú 
 - Footer được tái sử dụng trong MainLayout.jsx → hiển thị trên mọi trang.
 - Dùng grid để responsive: mobile (1 cột), desktop (3 cột).
 - Các link (#products, #about) cuộn xuống section tương ứng trong Home.

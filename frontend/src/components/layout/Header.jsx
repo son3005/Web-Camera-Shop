@@ -16,7 +16,7 @@ export default function Header() {
 }
 
 /*
-📌 Ghi chú cho partner:
+Ghi chú 
 - Header.jsx chỉ là "vỏ" để giữ Navbar cố định.
 - Nếu sau này có banner quảng cáo nhỏ trên Navbar (ví dụ free ship),
   thì thêm ở đây (trước <Navbar />).

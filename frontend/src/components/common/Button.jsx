@@ -1,5 +1,4 @@
 // src/components/common/Button.jsx
-// 👉 Đây là component Nút tái sử dụng (Reusable Button Component).
 // Toàn bộ dự án chỉ cần import Button này thay vì viết <button> thủ công.
 // Điều này giúp giao diện đồng bộ, dễ thay đổi style toàn cục khi cần.
 

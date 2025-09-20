@@ -1,5 +1,4 @@
 // src/components/common/CardProduct.jsx
-// 👉 Đây là component hiển thị mỗi sản phẩm (product card)
 // Bao gồm: ảnh sản phẩm, tên, giá, và 2 nút hành động ("Mua ngay" & "Thêm giỏ")
 
 import Button from "./Button"; // Dùng component Button tái sử dụng để tạo nút nhất quán toàn web
