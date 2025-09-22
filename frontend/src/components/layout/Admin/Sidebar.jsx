@@ -7,7 +7,7 @@ import {
   CreditCard, Zap, MessagesSquare, ChevronDown,
 } from "lucide-react";
 
-// Thêm thuộc tính `path` vào mỗi mục menu để React Router sử dụng
+// Dữ liệu menu không thay đổi
 const menuItems = [
   { id: "dashboard", path: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { id: "inventory", path: "/admin/inventory", icon: Box, label: "Inventory" },
@@ -33,8 +33,9 @@ const menuItems = [
 const avatar = "https://i.pinimg.com/736x/18/70/a0/1870a0c007dde45c3055ad5340ad09d3.jpg";
 
 function Sidebar({ collapsed }) {
+  // --- KHÔI PHỤC LẠI LOGIC GỐC: cho phép mở nhiều submenu ---
   const [expandedItems, setExpandedItems] = useState(new Set(["ecommerce"]));
-  const { pathname } = useLocation(); // Dùng hook để lấy URL hiện tại
+  const { pathname } = useLocation();
 
   const toggleExpanded = (itemId) => {
     setExpandedItems((prev) => {
@@ -73,6 +74,7 @@ function Sidebar({ collapsed }) {
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
         {menuItems.map((item) => {
           const hasSubmenu = !!item.submenu;
+          // Khôi phục lại logic kiểm tra isExpanded gốc
           const isExpanded = expandedItems.has(item.id);
 
           if (!hasSubmenu) {
@@ -137,7 +139,8 @@ function Sidebar({ collapsed }) {
                       key={sub.id}
                       to={sub.path}
                       className={({ isActive }) =>
-                        `w-full text-left p-2 text-sm rounded-lg transition-all
+                        // --- THAY ĐỔI DUY NHẤT: Thêm class `block` để mỗi mục xuống hàng ---
+                        `w-full text-left block p-2 text-sm rounded-lg transition-all
                          ${isActive
                           ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold"
                           : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"

@@ -1,6 +1,6 @@
-// src/components/ActionMenu.jsx
+// src/components/common/Inventory/ActionMenu.jsx
 
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Eye, Edit, Trash2 } from "lucide-react";
 
 // Component con cho từng mục trong menu
@@ -14,8 +14,11 @@ const MenuItem = ({ icon, label, color = "dark:text-slate-200", onClick }) => (
 // Component ActionMenu chính
 const ActionMenu = ({ onClose, onView, onEdit, onDelete }) => {
     const menuRef = useRef(null);
+    const [openUp, setOpenUp] = useState(false);
+    // 1. Thêm state để quản lý trạng thái hiển thị (cho animation)
+    const [isVisible, setIsVisible] = useState(false);
 
-    // Tự động đóng menu khi click ra ngoài hoặc nhấn phím Escape
+    // Bắt sự kiện click ra ngoài để đóng menu
     useEffect(() => {
         const handleOutsideClick = (e) => {
             if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -34,13 +37,40 @@ const ActionMenu = ({ onClose, onView, onEdit, onDelete }) => {
         };
     }, [onClose]);
 
+    // Kiểm tra vị trí của menu và kích hoạt animation
+    useEffect(() => {
+        // Kích hoạt animation ngay sau khi component được mount
+        setIsVisible(true);
+
+        if (menuRef.current) {
+            const rect = menuRef.current.getBoundingClientRect();
+            const isNearBottom = window.innerHeight - rect.bottom < 150; 
+            if (isNearBottom) {
+                setOpenUp(true);
+            }
+        }
+    }, []);
+
+    // Class CSS cho vị trí của menu
+    const menuPositionClass = openUp 
+        ? 'bottom-full mb-2' // Mở lên trên
+        : 'top-full mt-2';   // Mở xuống dưới (mặc định)
+
+    // 2. Class CSS cho hiệu ứng animation
+    const animationClass = isVisible 
+        ? 'opacity-100 translate-y-0' // Trạng thái cuối: Hiện rõ, đúng vị trí
+        : `opacity-0 ${openUp ? 'translate-y-2' : '-translate-y-2'}`; // Trạng thái đầu: Mờ, lệch vị trí
+
     return (
-        <div ref={menuRef}
-             className="absolute top-full right-0 mt-2 w-36 z-20 
-                        rounded-lg shadow-xl border border-white/10
-                        bg-slate-200/60 dark:bg-slate-800/80 
-                        backdrop-blur-lg
-                        animate-fade-in-up"> {/* Thêm class animate */}
+        <div 
+            ref={menuRef}
+            // 3. Áp dụng các class animation và transition
+            className={`absolute right-0 ${menuPositionClass} w-36 z-20 
+                       rounded-lg shadow-xl border border-white/10
+                       bg-slate-200/60 dark:bg-slate-800/80 
+                       backdrop-blur-lg
+                       transition-all duration-200 ease-out ${animationClass}`}
+        >
             <MenuItem icon={<Eye size={16} />} label="Xem chi tiết" onClick={onView} />
             <MenuItem icon={<Edit size={16} />} label="Chỉnh sửa" color="text-blue-600 dark:text-blue-400" onClick={onEdit} />
             <MenuItem icon={<Trash2 size={16} />} label="Xóa" color="text-red-600 dark:text-red-400" onClick={onDelete} />
