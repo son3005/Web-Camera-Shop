@@ -1,11 +1,17 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { RouterProvider } from 'react-router-dom';
 import './App.css'
-import AdminLayout from './layouts/AdminLayout.jsx'
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    {/* <App /> */}
-    <AdminLayout/>
-  </StrictMode>,
-)
+
+
+// --- Chỉ cần import duy nhất file router tổng ---
+import router from './router/index.jsx';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(
+  <React.StrictMode>
+    {/* Cung cấp router đã được cấu hình cho toàn bộ ứng dụng */}
+    <RouterProvider router={router} />
+  </React.StrictMode>
+);

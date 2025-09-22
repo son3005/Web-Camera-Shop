@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { Search, ChevronLeft, ChevronRight, Filter } from "lucide-react";
-import OrderRow from "./OrderRow";
-import OrderDetailsModal from "./OrderDetailsModal";
-import FilterMenu from "./FilterMenu"; //
+import OrderRow from "../../components/common/Ecomerce/Orders/OrderRow";
+import OrderDetailsModal from "../../components/common/Ecomerce/Orders/OrderDetailsModal";
+import FilterMenu from "../../components/common/Ecomerce/Orders/FilterMenu"; //
 
 // --- DỮ LIỆU MẪU ---
 const initialData = [

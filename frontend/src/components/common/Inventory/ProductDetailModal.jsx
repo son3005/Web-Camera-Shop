@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { X, LoaderCircle } from "lucide-react";
-import { fetchProductById } from ".././../../api/mockApi";
+import { fetchProductById } from "../../../api/mockApi";
 import VariantManager from "./AddProduct/VariantManager";
 import PropertyForm from "./AddProduct/PropertyForm";
-import DescriptionEditor from "./AddProduct/DescriptionEditor";
 
 const ProductDetailModal = ({ product: initialProduct, onClose }) => {
     const [product, setProduct] = useState(initialProduct);
@@ -15,7 +14,7 @@ const ProductDetailModal = ({ product: initialProduct, onClose }) => {
         const loadProductDetails = async () => {
             setIsLoading(true);
             const data = await fetchProductById(initialProduct.id);
-            setProduct(data || initialProduct); // Dùng data chi tiết nếu có
+            setProduct(data || initialProduct);
             setIsLoading(false);
         };
         loadProductDetails();
@@ -40,9 +39,15 @@ const ProductDetailModal = ({ product: initialProduct, onClose }) => {
                 </div>
                 <div className="flex-grow p-6 overflow-y-auto scrollbar-thin">
                     <div className="space-y-8">
-                        <DescriptionEditor value={product.description || "Chưa có mô tả chi tiết."} readOnly={true} />
-                        <PropertyForm properties={product.properties} readOnly={true} />
+                        
                         <VariantManager defaultVariants={product.variants} readOnly={true} />
+                        <PropertyForm properties={product.properties} readOnly={true} />
+                       
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Mô tả</h3>
+                            <div className="prose dark:prose-invert max-w-none p-4 rounded-2xl bg-white/20 dark:bg-black/10"
+                                 dangerouslySetInnerHTML={{ __html: product.description || "Chưa có mô tả chi tiết." }} />
+                        </div>
                     </div>
                 </div>
             </div>

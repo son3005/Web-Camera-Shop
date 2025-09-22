@@ -2,10 +2,10 @@
 
 import React, { useState, useMemo } from "react";
 import { Search, Plus, ChevronLeft, ChevronRight, Download, Inbox } from "lucide-react";
-import TableRow from "./TableRow";
-import ExportMenu from "./ExportMenu";
-import AddProductModal from "./AddProduct/AddProductModal";
-import ProductDetailModal from "./ProductDetailModal";
+import TableRow from "../../components/common/Inventory/TableRow";
+import ExportMenu from "../../components/common/Inventory/ExportMenu";
+import AddProductModal from "../../components/common/Inventory/AddProduct/AddProductModal";
+import ProductDetailModal from "../../components/common/Inventory/ProductDetailModal";
 
 const initialData = [
     { id: "P001", name: "Canon EOS R5", brand: "canon", quantity: 12, price: 3899, isActive: true },
