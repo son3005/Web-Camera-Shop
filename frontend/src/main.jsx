@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import './App.css'
 
-
 // --- Chỉ cần import duy nhất file router tổng ---
 import router from './router/index.jsx';
 

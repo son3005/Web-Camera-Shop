@@ -1,11 +1,19 @@
-// src/components/common/Orders/OrderRow.jsx
-
 import React from "react";
-import { MoreHorizontal, Trash2, Eye, Edit } from 'lucide-react'; // Thay Truck bằng Edit
+import { MoreHorizontal, Trash2, Eye, Edit } from 'lucide-react';
 
+/**
+ * OrderRow Component
+ * @param {object} props - Component props
+ * @param {object} props.item - Dữ liệu của một đơn hàng
+ * @param {string|null} props.openMenuId - ID của menu đang được mở
+ * @param {function} props.setOpenMenuId - Hàm để set ID của menu đang mở
+ * @param {function} props.onView - Hàm xử lý khi bấm "Xem chi tiết"
+ * @param {function} props.onUpdateStatus - Hàm xử lý khi cập nhật trạng thái
+ */
 export default function OrderRow({ item, openMenuId, setOpenMenuId, onView, onUpdateStatus }) {
   
-  // Component "badge" để hiển thị trạng thái đơn hàng (giữ nguyên)
+  // Component nội bộ "StatusBadge" để hiển thị trạng thái với màu sắc riêng.
+  // Giúp cho code JSX chính gọn gàng hơn.
   const StatusBadge = ({ status }) => {
     const statusStyles = {
       'Pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
@@ -20,85 +28,93 @@ export default function OrderRow({ item, openMenuId, setOpenMenuId, onView, onUp
       </span>
     );
   };
-  
-  const isMenuOpen = openMenuId === item.id;
 
-  // --- LOGIC MỚI: Xác định trạng thái tiếp theo và xử lý xác nhận ---
-  const nextStatusMap = {
+  // Logic để xác định trạng thái tiếp theo trong quy trình xử lý đơn hàng
+  const nextStatus = {
     'Pending': 'Processing',
     'Processing': 'Shipped',
     'Shipped': 'Delivered',
-  };
-  
-  const nextStatus = nextStatusMap[item.status];
+  }[item.status];
 
+  // Hàm xử lý khi bấm nút "Cập nhật trạng thái".
+  // Sẽ gọi hàm `onUpdateStatus` được truyền từ component cha (Orders.jsx).
   const handleStatusUpdate = () => {
     if (nextStatus) {
-      const confirmUpdate = window.confirm(`Bạn có chắc chắn muốn chuyển trạng thái đơn hàng #${item.id} thành "${nextStatus}" không?`);
-      if (confirmUpdate) {
-        onUpdateStatus(item.id, nextStatus);
-      }
+      onUpdateStatus(item.id, nextStatus);
     }
-    setOpenMenuId(null);
+    setOpenMenuId(null); // Đóng menu sau khi thực hiện hành động
   };
   
+  // Hàm xử lý khi bấm nút "Hủy đơn".
+  // Có một bước xác nhận để tránh người dùng bấm nhầm.
   const handleCancelOrder = () => {
-    const confirmCancel = window.confirm(`Bạn có chắc chắn muốn HỦY đơn hàng #${item.id} không? Hành động này không thể hoàn tác.`);
-    if (confirmCancel) {
+    if (window.confirm(`Bạn có chắc muốn hủy đơn hàng #${item.id} không?`)) {
       onUpdateStatus(item.id, 'Cancelled');
     }
-    setOpenMenuId(null);
-  }
-
+    setOpenMenuId(null); // Đóng menu sau khi thực hiện hành động
+  };
+  
   return (
-    <tr className="border-b border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200">
-      <td className="px-4 py-3 text-center">
-        <span className="font-semibold text-sky-600 dark:text-sky-400">#{item.id}</span>
-      </td>
-      <td className="px-4 py-3 text-left">
-        <span className="font-bold text-slate-900 dark:text-slate-100">{item.customerName}</span>
-      </td>
-      <td className="px-4 py-3 text-center text-slate-700 dark:text-slate-300">{item.orderDate}</td>
-      <td className="px-4 py-3 text-center font-medium text-slate-800 dark:text-slate-200">${item.totalAmount.toLocaleString()}</td>
-      <td className="px-4 py-3 text-center">
-        <StatusBadge status={item.status} />
-      </td>
-      <td className="px-4 py-3 text-center">
-        <div className="relative flex justify-center">
-          <button 
-            onClick={() => setOpenMenuId(isMenuOpen ? null : item.id)}
-            className="p-2 rounded-full hover:bg-slate-500/10"
-          >
-            <MoreHorizontal size={20} className="text-slate-700 dark:text-slate-300" />
-          </button>
-          {isMenuOpen && (
-             <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-lg shadow-xl border dark:border-slate-600 z-10">
-               <button onClick={() => { onView(item); setOpenMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 rounded-t-lg">
+    <tr className="border-b border-black/5 dark:border-white/5">
+        {/* ---- CÁC Ô DỮ LIỆU ĐÃ ĐƯỢC CĂN CHỈNH ---- */}
+
+        {/* Cột Mã ĐH: Căn giữa */}
+        <td className="px-4 py-3 font-bold text-slate-800 dark:text-slate-200 text-center">
+            #{item.id}
+        </td>
+
+        {/* Cột Khách hàng: Căn trái (mặc định) */}
+        <td className="px-4 py-3 text-left">
+            <div className="font-semibold text-slate-800 dark:text-slate-200">{item.customerName}</div>
+        </td>
+
+        {/* Cột Ngày đặt: Căn giữa */}
+        <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-center">
+            {item.orderDate}
+        </td>
+
+        {/* Cột Tổng tiền: Căn giữa */}
+        <td className="px-4 py-3 font-semibold text-emerald-600 dark:text-emerald-400 text-center">
+            ${item.totalAmount.toLocaleString()}
+        </td>
+
+        {/* Cột Trạng thái: Căn giữa */}
+        <td className="px-4 py-3 text-center">
+            <StatusBadge status={item.status} />
+        </td>
+
+        {/* Cột Hành động: Căn giữa */}
+        <td className="px-4 py-3 text-center relative">
+             {/* Nút ba chấm để mở/đóng menu hành động */}
+             <button onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                <MoreHorizontal size={18} />
+             </button>
+
+             {/* Menu hành động, chỉ hiển thị khi `openMenuId` trùng với id của hàng này */}
+             {openMenuId === item.id && (
+             <div className="absolute top-full right-5 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-black/5 dark:border-white/10 z-10 p-1">
+               <button onClick={() => { onView(item); setOpenMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md">
                  <Eye size={14}/> Xem chi tiết
                </button>
-               
-               {/* --- Nút Cập nhật trạng thái đã được nâng cấp --- */}
                <button 
                  onClick={handleStatusUpdate}
-                 // Vô hiệu hóa nút nếu không có trạng thái tiếp theo (đã giao hoặc đã hủy)
-                 disabled={!nextStatus}
-                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                 disabled={!nextStatus} // Vô hiệu hóa nếu không có trạng thái tiếp theo
+                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                >
                  <Edit size={14}/> Cập nhật trạng thái
                </button>
-
-               {/* --- Nút Hủy đơn cũng có xác nhận --- */}
+               <div className="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
                <button 
                 onClick={handleCancelOrder} 
-                disabled={item.status === 'Delivered' || item.status === 'Cancelled'}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-b-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={item.status === 'Delivered' || item.status === 'Cancelled'} // Vô hiệu hóa nếu đơn đã giao hoặc đã hủy
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                >
                  <Trash2 size={14}/> Hủy đơn
                </button>
              </div>
-           )}
-        </div>
-      </td>
+             )}
+        </td>
     </tr>
   );
-};
+}
+
