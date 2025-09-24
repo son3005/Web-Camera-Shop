@@ -219,7 +219,7 @@ const Inventory = () => {
         }
     };
 
-    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    // const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const emptyRows = products.length > 0 ? itemsPerPage - products.length : 0;
 
     const renderLoadingSkeleton = () => (

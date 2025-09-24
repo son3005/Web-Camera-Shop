@@ -1,4 +1,3 @@
-// src/components/common/Inventory/FilterPopup.jsx
 import React, { useRef, useEffect } from "react";
 import { X, ArrowDownUp, SlidersHorizontal, Boxes } from "lucide-react";
 
@@ -9,22 +8,29 @@ const SortButton = ({ onClick, isActive, children }) => (
       e.stopPropagation();
       onClick();
     }}
-    className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg border backdrop-blur-md transition-all duration-300
+    className={`w-full py-2 px-3 text-sm font-medium rounded-lg border backdrop-blur-md transition-all duration-300
       ${
         isActive
           ? "bg-gradient-to-r from-emerald-500 to-slate-600 text-white shadow-md shadow-emerald-500/30 border-transparent scale-[1.02]"
-          : "bg-white/40 dark:bg-slate-700/40 text-slate-700 dark:text-slate-200 border-slate-200/30 dark:border-slate-600/40 hover:bg-white/60 dark:hover:bg-slate-700/60"
+          : "bg-white/50 dark:bg-slate-700/40 text-slate-700 dark:text-slate-200 border-slate-200/30 dark:border-slate-600/40 hover:bg-white/70 dark:hover:bg-slate-700/60"
       }`}
   >
     {children}
   </button>
 );
 
-const brands = ["canon", "sony", "nikon", "fujifilm", "panasonic"];
-const stock_status = ["Còn hàng", "Sắp hết", "Hết hàng"];
+// Danh sách thương hiệu
+const brandOptions = ["canon", "sony", "nikon", "fujifilm", "panasonic"];
+
+// Danh sách trạng thái tồn kho
+const stockStatusOptions = [
+  { key: "in_stock", label: "Còn hàng" },
+  { key: "low_stock", label: "Sắp hết" },
+  { key: "out_of_stock", label: "Hết hàng" },
+];
 
 const CheckboxOption = ({ label, checked, onChange }) => (
-  <label className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-white/40 dark:bg-slate-700/40 hover:bg-white/60 dark:hover:bg-slate-700/60 transition">
+  <label className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-white/40 dark:bg-slate-700/40 hover:bg-white/80 dark:hover:bg-slate-700/80 transition">
     <input
       type="checkbox"
       className="h-4 w-4 rounded accent-emerald-500"
@@ -61,32 +67,32 @@ const FilterPopup = ({
   return (
     <div
       ref={popupRef}
-      className="absolute top-full right-0 mt-2 w-[500px] rounded-2xl border border-white/20 dark:border-slate-700/40
-                bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl shadow-2xl shadow-emerald-500/20
-                transition-all z-50"
+      className="absolute top-full right-0 mt-2 w-[280px] rounded-2xl border border-white/20 dark:border-slate-700/40
+                bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-2xl shadow-emerald-500/10
+                transition-all z-50 flex flex-col"
     >
       {/* Header */}
       <div className="p-4 border-b border-white/20 dark:border-slate-700/40 flex items-center justify-between">
-        <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-200">
-          <SlidersHorizontal size={20} /> Bộ lọc & Sắp xếp
+        <h3 className="text-base font-semibold flex items-center gap-2 text-slate-800 dark:text-slate-200">
+          <SlidersHorizontal size={18} /> Bộ lọc & Sắp xếp
         </h3>
         <button
           type="button"
           onClick={onClose}
           className="p-2 rounded-full hover:bg-white/40 dark:hover:bg-slate-700/60 transition"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
       </div>
 
       {/* Content */}
-      <div className="p-5 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-5 max-h-[35vh] overflow-y-auto scrollbar-thin">
         {/* Trạng thái kinh doanh */}
         <div>
-          <h4 className="font-semibold text-slate-700 dark:text-slate-300 mb-3">
+          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
             Trạng thái
           </h4>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <CheckboxOption
               label="Đang kinh doanh"
               checked={status.includes("active")}
@@ -102,10 +108,10 @@ const FilterPopup = ({
 
         {/* Thương hiệu */}
         <div>
-          <h4 className="font-semibold text-slate-700 dark:text-slate-300 mb-3">
+          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
             Thương hiệu
           </h4>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {brandOptions.map((brand) => (
               <CheckboxOption
                 key={brand}
@@ -119,10 +125,10 @@ const FilterPopup = ({
 
         {/* Trạng thái tồn kho */}
         <div>
-          <h4 className="font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
             <Boxes size={16} /> Tồn kho
           </h4>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {stockStatusOptions.map((state) => (
               <CheckboxOption
                 key={state.key}
@@ -136,10 +142,10 @@ const FilterPopup = ({
 
         {/* Sắp xếp */}
         <div>
-          <h4 className="font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
             <ArrowDownUp size={16} /> Sắp xếp theo
           </h4>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <SortButton
               onClick={() => handleSortChange("name", "asc")}
               isActive={sortBy.name === "asc"}
@@ -152,8 +158,6 @@ const FilterPopup = ({
             >
               Tên Z-A
             </SortButton>
-          </div>
-          <div className="flex gap-3 mt-3">
             <SortButton
               onClick={() => handleSortChange("price", "asc")}
               isActive={sortBy.price === "asc"}
@@ -171,10 +175,10 @@ const FilterPopup = ({
 
         {/* Khoảng giá */}
         <div>
-          <h4 className="font-semibold text-slate-700 dark:text-slate-300 mb-3">
+          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
             Khoảng giá
           </h4>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <input
               type="number"
               placeholder="Từ"
@@ -182,7 +186,7 @@ const FilterPopup = ({
               onChange={(e) =>
                 handleRangeChange("priceRange", "min", e.target.value || "")
               }
-              className="flex-1 px-4 py-2 rounded-lg border border-white/30 dark:border-slate-600/40
+              className="w-[100px] px-2 py-1.5 rounded-lg border border-white/30 dark:border-slate-600/40
                         bg-white/50 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200
                         placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
@@ -193,7 +197,7 @@ const FilterPopup = ({
               onChange={(e) =>
                 handleRangeChange("priceRange", "max", e.target.value || "")
               }
-              className="flex-1 px-4 py-2 rounded-lg border border-white/30 dark:border-slate-600/40
+              className="w-[100px] px-2 py-1.5 rounded-lg border border-white/30 dark:border-slate-600/40
                         bg-white/50 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200
                         placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
@@ -202,18 +206,18 @@ const FilterPopup = ({
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-white/20 dark:border-slate-700/40 bg-gradient-to-r from-emerald-500/20 to-slate-600/20 backdrop-blur-lg flex gap-4 rounded-b-2xl">
+      <div className="p-4 border-t border-white/20 dark:border-slate-700/40 bg-gradient-to-r from-emerald-500/20 to-slate-600/20 backdrop-blur-lg flex gap-3 rounded-b-2xl">
         <button
           type="button"
           onClick={onReset}
-          className="flex-1 py-2.5 rounded-lg font-semibold bg-white/50 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60 transition"
+          className="flex-1 py-2 rounded-lg font-medium bg-white/50 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60 transition"
         >
           Xóa lọc
         </button>
         <button
           type="button"
           onClick={onApply}
-          className="flex-1 py-2.5 rounded-lg font-semibold bg-gradient-to-r from-emerald-500 to-slate-600 text-white shadow-lg hover:opacity-90 transition"
+          className="flex-1 py-2 rounded-lg font-medium bg-gradient-to-r from-emerald-500 to-slate-600 text-white shadow-lg hover:scale-110 hover:shadow-emerald-500/30 transition"
         >
           Áp dụng
         </button>
