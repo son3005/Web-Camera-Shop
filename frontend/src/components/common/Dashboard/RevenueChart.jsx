@@ -1,82 +1,51 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  BarChart,
+  Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, BarChart,
 } from "recharts";
+import { fetchRevenueChartData } from "../../../api/dashboardApi"; // THÊM: Import API
 
 function RevenueChart() {
-  const data = [
-    { month: "Jan", revenue: 45000, expenses: 32000 },
-    { month: "Feb", revenue: 52000, expenses: 38000 },
-    { month: "Mar", revenue: 48000, expenses: 35000 },
-    { month: "Apr", revenue: 61000, expenses: 42000 },
-    { month: "May", revenue: 55000, expenses: 40000 },
-    { month: "Jun", revenue: 67000, expenses: 45000 },
-    { month: "Jul", revenue: 72000, expenses: 48000 },
-    { month: "Sep", revenue: 69000, expenses: 46000 },
-    { month: "Oct", revenue: 78000, expenses: 52000 },
-    { month: "Nov", revenue: 82000, expenses: 50000 },
-    { month: "Dec", revenue: 89000, expenses: 56000 },
-  ];
+    // THÊM: Logic gọi API bằng useQuery
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ['revenueChartData'],
+        queryFn: fetchRevenueChartData,
+    });
+
+    // THÊM: Xử lý trạng thái loading và error
+    if (isLoading) {
+      return (
+          <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl h-[400px] flex justify-center items-center animate-pulse">
+              <p className="text-slate-400">Loading Chart...</p>
+          </div>
+      );
+    }
+
+    if (isError) {
+      return <div className="text-red-500">Error fetching revenue data: {error.message}</div>;
+    }
 
   return (
     <div
-      className="bg-slate-50 dark:bg-slate-800 backdrop-blur-xl rounded-b-2xl 
-      border border-slate-200/50 dark:border-slate-700/50 p-6"
+      className="bg-slate-50 dark:bg-slate-800 backdrop-blur-xl rounded-b-2xl
+        border border-slate-200/50 dark:border-slate-700/50 p-6"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-            Revenue Chart
-          </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Monthly revenue and expense
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-gradient-to-r from-emerald-500 via-blue-400 to-purple-600 rounded-full"></div>
-            <span className="text-sm text-slate-600 dark:text-slate-300">
-              Revenue
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-gradient-to-r from-orange-400  to-slate-600 rounded-full"></div>
-            <span className="text-sm text-slate-600 dark:text-slate-300">
-              Expenses
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div className="h-80">
+      <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100">
+        Revenue vs Expenses
+      </h3>
+      <div className="h-[350px]">
+        {/* CHỈNH SỬA: Dùng dữ liệu `data` từ API */}
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="currentColor"
-              className="text-slate-200 dark:text-slate-700"
-              opacity={0.3}
-            />
-            <XAxis
-              dataKey="month"
-              stroke="currentColor"
-              className="text-slate-600 dark:text-slate-400"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
+          <BarChart
+            data={data}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.3}/>
+            <XAxis dataKey="month" tickLine={false} axisLine={false} />
             <YAxis
-              stroke="currentColor"
-              className="text-slate-600 dark:text-slate-400"
-              fontSize={12}
+              width={40}
+              tick={{ dx: -10 }}
+              tickCount={6}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => `$${value / 1000}k`}

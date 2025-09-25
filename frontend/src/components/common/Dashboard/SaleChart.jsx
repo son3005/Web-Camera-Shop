@@ -1,12 +1,7 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-
-const data = [
-  { name: "Sony", value: 45, color: "#3b82f6" },
-  { name: "Canon", value: 30, color: "#8b5cf6" },
-  { name: "Fujifilm", value: 15, color: "#10b981" },
-  { name: "Other", value: 10, color: "#f59e0b" },
-];
+import { fetchSaleChartData } from "../../../api/dashboardApi"; // THÊM: Import API
 
 // Custom Tooltip để hỗ trợ dark mode
 const CustomTooltip = ({ active, payload }) => {
@@ -24,6 +19,25 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 function SaleChart() {
+    // THÊM: Logic gọi API bằng useQuery
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ['saleChartData'],
+        queryFn: fetchSaleChartData
+    });
+
+    // THÊM: Xử lý trạng thái loading và error
+    if (isLoading) {
+      return (
+        <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl h-full flex justify-center items-center animate-pulse">
+            <p className="text-slate-400">Loading Chart...</p>
+        </div>
+      );
+    }
+    
+    if (isError) {
+        return <div className="text-red-500">Error fetching sales data: {error.message}</div>;
+    }
+
   return (
     <div
       className="bg-slate-50 dark:bg-slate-800 backdrop-blur-xl rounded-b-2xl
@@ -31,10 +45,7 @@ function SaleChart() {
     >
       {/* Title */}
       <div className="mb-6">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-          Sales by Category
-        </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
           Production Distribution
         </p>
       </div>
@@ -44,6 +55,7 @@ function SaleChart() {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
+              // CHỈNH SỬA: Dùng dữ liệu `data` từ API
               data={data}
               cx="50%"
               cy="50%"
@@ -52,7 +64,7 @@ function SaleChart() {
               paddingAngle={5}
               dataKey="value"
             >
-              {data.map((entry, index) => (
+              {data?.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
@@ -63,7 +75,7 @@ function SaleChart() {
 
       {/* Legend */}
       <div className="space-y-3 mt-6">
-        {data.map((item, index) => (
+        {data?.map((item, index) => (
           <div className="flex items-center justify-between" key={index}>
             {/* Bên trái: chấm + tên */}
             <div className="flex items-center space-x-2">

@@ -1,39 +1,29 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { MoreHorizontal, TrendingUp, TrendingDown } from "lucide-react";
+import { fetchPaginatedOrders, fetchTopProducts } from "../../../api/dashboardApi";
 
-// Dữ liệu mẫu
-const recentOrders = [
-  { id: "#1001", customer: "Nguyen Van A", product: "Sony A7 IV Camera", amount: "$2,499", status: "completed", date: "2025-09-01" },
-  { id: "#1002", customer: "Tran Thi B", product: "Canon EOS R6", amount: "$1,899", status: "pending", date: "2025-09-02" },
-  { id: "#1003", customer: "Le Van C", product: "Fujifilm X-T5", amount: "$1,699", status: "processing", date: "2025-09-03" },
-  { id: "#1004", customer: "Pham Thi D", product: "Sony ZV-E10", amount: "$799", status: "cancelled", date: "2025-09-03" },
-  { id: "#1005", customer: "Hoang Van E", product: "Nikon Z6 II", amount: "$1,599", status: "completed", date: "2025-09-04" },
-  { id: "#1006", customer: "Do Thi F", product: "Canon M50 Mark II", amount: "$699", status: "pending", date: "2025-09-04" },
-  { id: "#1007", customer: "Vu Van G", product: "GoPro Hero 12", amount: "$499", status: "completed", date: "2025-09-05" },
-  { id: "#1008", customer: "Nguyen Thi H", product: "DJI Mini 3 Pro Drone", amount: "$999", status: "processing", date: "2025-09-06" },
-  { id: "#1009", customer: "Pham Van I", product: "Sony FE 24-70mm Lens", amount: "$1,199", status: "completed", date: "2025-09-06" },
-  { id: "#1010", customer: "Tran Thi J", product: "Canon RF 50mm Lens", amount: "$399", status: "cancelled", date: "2025-09-07" },
-  { id: "#1011", customer: "Test User", product: "Extra Product", amount: "$250", status: "pending", date: "2025-09-07" },
-  { id: "#1012", customer: "Another User", product: "Extra Product 2", amount: "$350", status: "completed", date: "2025-09-07" },
-];
-
-const topProducts = [
-  { name: "Sony A7 IV Camera", sale: 320, revenue: "$799,000", trend: "up", change: "+12.5%" },
-  { name: "Canon EOS R6", sale: 280, revenue: "$530,000", trend: "down", change: "-5.2%" },
-  { name: "Fujifilm X-T5", sale: 210, revenue: "$356,000", trend: "up", change: "+8.1%" },
-  { name: "DJI Mini 3 Pro Drone", sale: 150, revenue: "$224,500", trend: "up", change: "+15.3%" },
-  { name: "GoPro Hero 12", sale: 190, revenue: "$142,000", trend: "down", change: "-3.7%" },
-];
-
-// 🔹 Component Recent Orders
-function RecentOrdersTable({ data }) {
+function RecentOrdersTable() {
   const [viewAll, setViewAll] = useState(false);
   const [page, setPage] = useState(1);
   const [inputPage, setInputPage] = useState("");
   const perPage = 10;
 
-  const totalPages = Math.ceil(data.length / perPage);
-  const shownData = viewAll ? data.slice((page - 1) * perPage, page * perPage) : data.slice(0, 5);
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: ["recentOrders", page],
+    queryFn: () => fetchPaginatedOrders({ page, limit: perPage }),
+    keepPreviousData: true,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const ordersData = data?.orders || [];
+  const totalPages = data?.totalPages || 1;
+  const shownData = viewAll ? ordersData : ordersData.slice(0, 5);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -57,10 +47,17 @@ function RecentOrdersTable({ data }) {
       setInputPage("");
     }
   };
+  
+  if (isLoading) {
+      return <div className="p-6 text-center dark:text-white rounded-2xl bg-white/80 dark:bg-slate-900">Loading Orders...</div>
+  }
+  
+  if (isError) {
+      return <div className="p-6 text-center text-red-500 rounded-2xl bg-red-100">Error loading orders.</div>
+  }
 
   return (
     <div className="bg-white/80 dark:bg-slate-900 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700 overflow-hidden">
-      {/* Header */}
       <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white">Recent Orders</h3>
@@ -77,7 +74,6 @@ function RecentOrdersTable({ data }) {
         </button>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -105,8 +101,7 @@ function RecentOrdersTable({ data }) {
                 <td className="p-4"><MoreHorizontal className="w-4 h-4 text-slate-500 dark:text-slate-400" /></td>
               </tr>
             ))}
-            {/* 🔹 Dòng trống để giữ khung */}
-            {viewAll &&
+            {viewAll && shownData.length < perPage &&
               Array.from({ length: perPage - shownData.length }).map((_, idx) => (
                 <tr key={`empty-${idx}`} className="border-b border-slate-200/50 dark:border-slate-700/50">
                   <td colSpan={6} className="p-4">&nbsp;</td>
@@ -116,14 +111,13 @@ function RecentOrdersTable({ data }) {
         </table>
       </div>
 
-      {/* Pagination */}
       {viewAll && (
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 border-t border-slate-200 dark:border-slate-700">
           <div className="flex items-center space-x-2">
-            <button disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-md disabled:opacity-50">
+            <button disabled={page === 1 || isFetching} onClick={() => setPage((p) => p - 1)} className="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-md disabled:opacity-50">
               Previous
             </button>
-            <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-md disabled:opacity-50">
+            <button disabled={page === totalPages || isFetching} onClick={() => setPage((p) => p + 1)} className="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-md disabled:opacity-50">
               Next
             </button>
           </div>
@@ -147,7 +141,6 @@ function RecentOrdersTable({ data }) {
   );
 }
 
-// 🔹 Component Top Products
 function TopProductsTable({ data }) {
   const [viewAll, setViewAll] = useState(false);
   const [page, setPage] = useState(1);
@@ -167,7 +160,6 @@ function TopProductsTable({ data }) {
 
   return (
     <div className="bg-white/80 dark:bg-slate-900 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700 overflow-hidden">
-      {/* Header */}
       <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-white">Top Products</h3>
@@ -184,7 +176,6 @@ function TopProductsTable({ data }) {
         </button>
       </div>
 
-      {/* Content */}
       <div className="p-6 space-y-4">
         {shownData.map((product, index) => (
           <div key={index} className="flex justify-between items-center p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
@@ -201,14 +192,12 @@ function TopProductsTable({ data }) {
             </div>
           </div>
         ))}
-        {/* 🔹 Dòng trống để giữ khung */}
         {viewAll &&
           Array.from({ length: perPage - shownData.length }).map((_, idx) => (
             <div key={`empty-${idx}`} className="p-4 rounded-xl">&nbsp;</div>
           ))}
       </div>
 
-      {/* Pagination */}
       {viewAll && (
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 border-t border-slate-200 dark:border-slate-700">
           <div className="flex items-center space-x-2">
@@ -240,10 +229,33 @@ function TopProductsTable({ data }) {
 }
 
 export default function TableSection() {
+    const { 
+        data: topProducts, 
+        isLoading: isLoadingProducts, 
+        isError: isErrorProducts 
+    } = useQuery({
+        queryKey: ['topProducts'],
+        queryFn: fetchTopProducts,
+        staleTime: 5 * 60 * 1000,
+    });
+    
+    if (isLoadingProducts) {
+        return (
+            <div className="space-y-6">
+                <div className="p-6 text-center dark:text-white rounded-2xl bg-white/80 dark:bg-slate-900">Loading Orders...</div>
+                <div className="p-6 text-center dark:text-white rounded-2xl bg-white/80 dark:bg-slate-900">Loading Top Products...</div>
+            </div>
+        );
+    }
+
+    if (isErrorProducts) {
+        return <div className="p-6 text-center text-red-500 rounded-2xl bg-red-100">Error loading data.</div>;
+    }
+
   return (
     <div className="space-y-6">
-      <RecentOrdersTable data={recentOrders} />
-      <TopProductsTable data={topProducts} />
+      <RecentOrdersTable />
+      <TopProductsTable data={topProducts || []} />
     </div>
   );
 }

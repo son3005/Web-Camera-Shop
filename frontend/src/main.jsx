@@ -1,16 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
-import './App.css'
-
-// --- Chỉ cần import duy nhất file router tổng ---
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import './App.css';
 import router from './router/index.jsx';
 
+// 1. Tạo một instance của QueryClient
+const queryClient = new QueryClient();
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
+// Render ứng dụng, cung cấp QueryClient cho toàn bộ cây component
 root.render(
   <React.StrictMode>
-    {/* Cung cấp router đã được cấu hình cho toàn bộ ứng dụng */}
-    <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </React.StrictMode>
 );
