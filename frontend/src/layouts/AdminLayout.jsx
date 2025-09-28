@@ -1,17 +1,13 @@
-// AdminLayout.jsx
-
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom'; // <<< Chỉ import thêm Outlet
+import React, { useState, useEffect } from 'react';
+import { Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Import các component và CSS của bạn
 import Sidebar from '../components/layout/Admin/Sidebar'; 
 import Header from '../components/layout/Admin/Header';
 import '../assets/styles/AdminLayout.css';
 
 const queryClient = new QueryClient();
 
-// Component GrainyFilter của bạn được giữ nguyên
 const GrainyFilter = () => (
   <svg style={{ display: 'none' }}>
     <filter id="noiseFilter">
@@ -28,46 +24,53 @@ const GrainyFilter = () => (
 );
 
 function AdminLayout() {
-  // State quản lý sidebar được giữ nguyên
   const [sidebarCollapsed, setSideBarCollapsed] = useState(false);
 
-  // --- THAY ĐỔI DUY NHẤT: BỎ STATE `currentPage` ---
-  // const [currentPage, setCurrentPage] = useState("dashboard");
-  // React Router sẽ quản lý trang nào được hiển thị thông qua URL.
+  // =================== LOGIC DUY NHẤT ĐIỀU KHIỂN THEME ===================
+  // State `theme` tại đây là "nguồn sự thật duy nhất".
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  // useEffect này sẽ thêm/xóa class 'dark' trên <html>, ảnh hưởng toàn trang.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // Hàm này được tạo ra để truyền xuống cho Header.
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+  };
+  // =======================================================================
 
   return (
-    // Bọc tất cả bằng QueryClientProvider
     <QueryClientProvider client={queryClient}>
       <div className="admin-layout-container min-h-screen relative overflow-hidden
-                       bg-gradient-to-br 
-                       from-emerald-900/50 via-emerald-300/80 to-slate-600
-                       dark:from-emerald-950 dark:via-emerald-800 dark:to-slate-900 
-                       transition-all duration-500">
+                      bg-gradient-to-br 
+                      from-emerald-900/50 via-emerald-300/80 to-slate-600
+                      dark:from-emerald-950 dark:via-emerald-800 dark:to-slate-900 
+                      transition-all duration-500">
         
         <GrainyFilter />
 
         <div className="flex h-screen overflow-hidden relative z-10">
-          
-          {/* Truyền props cho Sidebar, bỏ `currentPage` và `onPageChange` */}
-          <Sidebar 
-            collapsed={sidebarCollapsed} 
-            // onToggle không có trong file gốc của bạn, nhưng tôi thêm lại logic này cho Header
-          />
+          <Sidebar collapsed={sidebarCollapsed} />
 
           <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Truyền state `theme` và hàm `toggleTheme` xuống cho Header */}
             <Header 
               sidebarColapsed={sidebarCollapsed}
-              onToggleSidebar={() => { setSideBarCollapsed(!sidebarCollapsed) }} 
+              onToggleSidebar={() => setSideBarCollapsed(!sidebarCollapsed)} 
+              theme={theme}
+              onToggleTheme={toggleTheme}
             />
             <main className="flex-1 overflow-y-auto bg-transparent">
               <div className="p-6 space-y-6">
-
-                {/* --- THAY ĐỔI DUY NHẤT: THAY THẾ LOGIC RENDER BẰNG <Outlet /> --- */}
-                {/* Thay vì kiểm tra state `currentPage`, chúng ta để <Outlet /> ở đây. */}
-                {/* React Router sẽ tự động render component đúng (Dashboard, Inventory,...) */}
-                {/* vào vị trí này dựa trên URL. */}
-                <Outlet />
-                
+                <Outlet /> 
               </div>
             </main>
           </div>

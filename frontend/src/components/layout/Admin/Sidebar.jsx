@@ -19,14 +19,14 @@ const menuItems = [
     ],
   },
   { id: "transactions", path: "/admin/transactions", icon: CreditCard, label: "Transactions" },
-  {
-    id: "users", icon: Users, label: "Users", count: "2.4k",
-    submenu: [
-      { id: "all-users", path: "/admin/users/all", label: "All Users" },
-      { id: "roles", path: "/admin/users/roles", label: "Roles & Permissions" },
-    ],
-  },
-  { id: "messages", path: "/admin/messages", icon: MessagesSquare, label: "Messages", badge: "5" },
+  // {
+  //   id: "users", icon: Users, label: "Users", count: "2.4k",
+  //   submenu: [
+  //     { id: "all-users", path: "/admin/users/all", label: "All Users" },
+  //     { id: "roles", path: "/admin/users/roles", label: "Roles & Permissions" },
+  //   ],
+  // },
+  // { id: "messages", path: "/admin/messages", icon: MessagesSquare, label: "Messages", badge: "5" },
   { id: "settings", path: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
