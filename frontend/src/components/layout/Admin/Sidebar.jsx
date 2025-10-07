@@ -2,10 +2,13 @@
 
 import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import logo from "../../../assets/images/Logo.png";
 import {
   Settings, LayoutDashboard, Users, ShoppingBag, Box,
   CreditCard, Zap, MessagesSquare, ChevronDown,
 } from "lucide-react";
+
+
 
 // Dữ liệu menu không thay đổi
 const menuItems = [
@@ -30,10 +33,16 @@ const menuItems = [
   { id: "settings", path: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
-const avatar = "https://i.pinimg.com/736x/18/70/a0/1870a0c007dde45c3055ad5340ad09d3.jpg";
+
 
 function Sidebar({ collapsed }) {
   // --- KHÔI PHỤC LẠI LOGIC GỐC: cho phép mở nhiều submenu ---
+  const admin = {
+    name: "Sci Nguyen",
+    role: "Administrator",
+    avatar: "https://i.pinimg.com/1200x/1e/d0/2f/1ed02f1396fcf5662d0345aaeb408f18.jpg",
+  };
+  
   const [expandedItems, setExpandedItems] = useState(new Set(["ecommerce"]));
   const { pathname } = useLocation();
 
@@ -58,13 +67,19 @@ function Sidebar({ collapsed }) {
     >
       <div className="p-6 border-b border-slate-200/50 dark:border-slate-800">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-slate-700 rounded-xl
-                        flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Zap className="w-6 h-6 text-white" />
-          </div>
+          <div className="w-14 h-14 bg-white/80 rounded-2xl 
+              flex items-center justify-center shadow-lg shadow-emerald-500/30 overflow-hidden">
+              <img
+                src={logo}
+                alt="Logo"
+                className={`object-contain transition-all duration-300 ${
+                  collapsed ? "w-10 h-10" : "w-48 h-16"
+                }`}
+              />
+            </div>
           {!collapsed && (
             <div>
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">Nexus</h1>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">Bảng điều khiển</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">Admin Panel</p>
             </div>
           )}
@@ -160,10 +175,10 @@ function Sidebar({ collapsed }) {
       {!collapsed && (
         <div className="p-4 border-t border-slate-200/50 dark:border-slate-800">
           <div className="flex items-center space-x-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <img src={`${avatar}`} alt="user" className="w-10 h-10 rounded-full ring-2 ring-emerald-500" />
+            <img src={`${admin.avatar}`} alt="admin" className="w-10 h-10 rounded-full ring-2 ring-emerald-500" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 dark:text-white truncate">Sci Nguyen</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Administrator</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-white truncate">{admin.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{admin.role}</p>
             </div>
           </div>
         </div>

@@ -2,14 +2,14 @@
 import React from "react";
 import { Menu, Search, Filter, Sun, Moon } from "lucide-react";
 
-/**
- * Header component đã được sửa lại.
- * Nó không còn tự quản lý state 'theme' nữa.
- * Thay vào đó, nó nhận 'theme' và hàm 'onToggleTheme' từ props
- * do component cha (AdminLayout) truyền xuống.
- */
+
 function Header({ sidebarCollapsed, onToggleSidebar, theme, onToggleTheme }) {
-  
+
+  const admin = {
+    name: "Sci Nguyen",
+    role: "Administrator",
+    avatar: "https://i.pinimg.com/1200x/1e/d0/2f/1ed02f1396fcf5662d0345aaeb408f18.jpg",
+  };
   // TOÀN BỘ LOGIC QUẢN LÝ THEME (useState, useEffect) ĐÃ BỊ XÓA BỎ KHỎI ĐÂY.
 
   return (
@@ -55,13 +55,13 @@ function Header({ sidebarCollapsed, onToggleSidebar, theme, onToggleTheme }) {
           {/* Thông tin người dùng */}
           <div className="flex items-center space-x-3 pl-3 border-l border-slate-300 dark:border-slate-700">
             <img
-              src="https://i.pinimg.com/1200x/1e/d0/2f/1ed02f1396fcf5662d0345aaeb408f18.jpg"
+              src={admin.avatar}
               alt="Avatar"
               className="w-8 h-8 rounded-full ring-2 ring-emerald-500"
             />
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-300">Sci Nguyen</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Administrator</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-300">{admin.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{admin.role}</p>
             </div>
           </div>
         </div>
