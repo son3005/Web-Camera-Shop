@@ -270,7 +270,7 @@ const Inventory = () => {
                 />
             )}
 
-            <div className="w-full max-w-7xl mx-auto rounded-2xl shadow-xl bg-slate-200/50 dark:bg-slate-800/70 backdrop-blur-lg border border-white/20 dark:border-slate-700/50 p-6">
+            <div className="w-full max-w-7xl mx-auto rounded-2xl shadow-xl bg-slate-200/80 dark:bg-slate-800/70 backdrop-blur-lg border border-white/20 dark:border-slate-700/50 p-6">
                 <h1 className="text-3xl font-bold mb-6">Quản lý Kho hàng</h1>
 
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
@@ -311,7 +311,7 @@ const Inventory = () => {
                         {/* Nút thêm sản phẩm */}
                         <button
                             onClick={() => openModal('add')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold bg-gradient-to-r from-emerald-500 to-slate-600 shadow-lg shadow-emerald-500/30 hover:scale-105 transition-transform duration-300"
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold bg-gradient-to-r from-emerald-500 to-slate-600 shadow-lg hover:shadow-emerald-500/30 hover:scale-105 transition-transform duration-300"
                         >
                             <Plus size={20} /> Thêm Sản phẩm
                         </button>

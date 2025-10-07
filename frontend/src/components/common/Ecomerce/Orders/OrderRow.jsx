@@ -55,7 +55,7 @@ export default function OrderRow({ item, openMenuId, setOpenMenuId, onView, onUp
   };
   
   return (
-    <tr className="border-b border-black/5 dark:border-white/5">
+    <tr className="border-b border-black/5 dark:border-white/5 hover:bg-slate-200/50 dark:hover:bg-slate-200/50 transition-colors">
         {/* ---- CÁC Ô DỮ LIỆU ĐÃ ĐƯỢC CĂN CHỈNH ---- */}
 
         {/* Cột Mã ĐH: Căn giữa */}

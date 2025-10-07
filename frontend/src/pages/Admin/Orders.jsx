@@ -106,7 +106,7 @@ const Orders = () => {
         onStatusSelect={handleStatusSelect}
       />
 
-      <div className="w-full mx-auto bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-slate-700 overflow-hidden">
+      <div className="w-full mx-auto bg-white/80 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-slate-700 overflow-hidden">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-5 border-b border-black/10 dark:border-white/10">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Danh sách Đơn hàng</h1>
@@ -136,7 +136,6 @@ const Orders = () => {
                 <thead className="bg-black/5 dark:bg-white/5">
                     <tr>
                         {["Mã ĐH", "Khách hàng", "Ngày đặt", "Tổng tiền", "Trạng thái", "Hành động"].map((header) => {
-                          // Chỉ có cột "Khách hàng" là căn trái, các cột khác đều căn giữa
                           const alignmentClass = header === 'Khách hàng' ? 'text-left' : 'text-center';
                           return (
                             <th key={header} className={`px-4 py-3 font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider text-xs ${alignmentClass}`}>
