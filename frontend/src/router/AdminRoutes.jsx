@@ -28,7 +28,7 @@ const AdminRoutes = {
       path: 'orders', // 3. Kích hoạt route cho trang Orders
       element: <Orders />,
     },
-    //... Thêm các trang admin khác của bạn ở đây
+    
   ],
 };
 
