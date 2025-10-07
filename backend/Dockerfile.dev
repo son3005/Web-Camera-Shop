@@ -1,19 +1,29 @@
 FROM python:3.13-slim
 
+# Đặt thư mục làm việc
 WORKDIR /app
 
+# Cài đặt các gói cần thiết cho mysqlclient và dọn dẹp
 RUN apt-get update && apt-get install -y \
-    build-essential pkg-config default-libmysqlclient-dev gcc \
+    build-essential \
+    pkg-config \
+    default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy và cài đặt các thư viện Python (tận dụng cache)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-
+# Mở cổng 5000
 EXPOSE 5000
 
+# Thiết lập biến môi trường cho Flask
+# Trỏ đến file main.py bên trong thư mục app
 ENV FLASK_APP=app.main
-ENV FLASK_ENV=development
+# Dùng FLASK_DEBUG=1 để bật chế độ debug và reloader
+ENV FLASK_DEBUG=1
 
+# Lệnh khởi động server. Flask sẽ tự động theo dõi thay đổi
+# trong thư mục /app (đã được mount từ máy thật)
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+
