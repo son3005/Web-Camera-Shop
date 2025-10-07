@@ -6,6 +6,9 @@ import { createBrowserRouter } from 'react-router-dom';
 import AdminRoutes from './AdminRoutes';
 import MainLayout from '../layouts/MainLayout';
 import Home from '../pages/Home';
+import DangNhap from '../pages/Dangnhap';
+import DangKy from '../pages/Dangky';
+import QuenMatKhau from '../pages/QuenMatKhau';
 
 // --- Import các trang Public (trang của người dùng) ---
 // Giả sử đồng đội của bạn đã tạo các trang này
@@ -45,10 +48,18 @@ const router = createBrowserRouter([
   },
 
   // Nhóm 3: Các route khác như Login, 404
-  // {
-  //   path: '/login',
-  //   element: <LoginPage />
-  // },
+  {
+    path: '/dangnhap',
+    element: <DangNhap />
+  },
+  {
+    path: '/dangky',
+    element: <DangKy/>
+  },
+  {
+    path:"/quenmatkhau",
+    element:<QuenMatKhau/>
+  }
   // {
   //   path: '*', // Bắt các URL không khớp
   //   element: <NotFoundPage />
