@@ -12,16 +12,16 @@ import {
 
 // Dữ liệu menu không thay đổi
 const menuItems = [
-  { id: "dashboard", path: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-  { id: "inventory", path: "/admin/inventory", icon: Box, label: "Inventory" },
+  { id: "dashboard", path: "/admin", icon: LayoutDashboard, label: "Tổng quan" },
+  { id: "inventory", path: "/admin/inventory", icon: Box, label: "Kho hàng" },
   {
-    id: "ecommerce", icon: ShoppingBag, label: "E-commerce",
+    id: "ecommerce", icon: ShoppingBag, label: "Kinh doanh",
     submenu: [
-      { id: "orders", path: "/admin/orders", label: "Orders" },
-      { id: "customers", path: "/admin/customers", label: "Customers" },
+      { id: "orders", path: "/admin/orders", label: "Đặt hàng" },
+      { id: "customers", path: "/admin/customers", label: "Khách hàng" },
     ],
   },
-  { id: "transactions", path: "/admin/transactions", icon: CreditCard, label: "Transactions" },
+  { id: "transactions", path: "/admin/transactions", icon: CreditCard, label: "Giao dịch" },
   // {
   //   id: "users", icon: Users, label: "Users", count: "2.4k",
   //   submenu: [
@@ -30,7 +30,7 @@ const menuItems = [
   //   ],
   // },
   // { id: "messages", path: "/admin/messages", icon: MessagesSquare, label: "Messages", badge: "5" },
-  { id: "settings", path: "/admin/settings", icon: Settings, label: "Settings" },
+  { id: "settings", path: "/admin/settings", icon: Settings, label: "Cài Đặt" },
 ];
 
 
