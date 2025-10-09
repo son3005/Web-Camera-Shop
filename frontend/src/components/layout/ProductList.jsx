@@ -11,7 +11,8 @@ import SectionTitle from "../common/SectionTitle";
 // NOTE: Đã bỏ ProductDetailOverlay cục bộ — overlay hiện tại global (ProductDetailOverlay component được mount 1 lần ở MainLayout)
 export default function ProductList() {
   const [selectedBrand, setSelectedBrand] = useState("all");
-  const [visibleCount, setVisibleCount] = useState(6);
+  const sanphamhienthi = 8;
+  const [visibleCount, setVisibleCount] = useState(sanphamhienthi);
   const [sortBy, setSortBy] = useState("default");
 
   const allProducts = Object.values(productsByBrand).flat();
@@ -68,7 +69,7 @@ export default function ProductList() {
         <div className="flex justify-center mt-8">
           <Button
             type="primary"
-            onClick={() => setVisibleCount(visibleCount + 6)}
+            onClick={() => setVisibleCount(visibleCount + sanphamhienthi)}
           >
             Xem thêm
           </Button>
