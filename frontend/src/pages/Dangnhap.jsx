@@ -1,92 +1,83 @@
-// src/pages/Dangnhap.jsx
-import React, { useState } from "react";
+import React from "react";
+import { FaEnvelope, FaLock, FaArrowRight } from "react-icons/fa";
+import BG from "../assets/images/BG.jpg";      // ảnh nền toàn màn hình
+import LoginImage from "../assets/images/Login.jpg"; // ảnh login bên trái
 
-export default function Dangnhap() {
-  const [email, setEmail] = useState("");
-  const [matKhau, setMatKhau] = useState("");
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    console.log("Email:", email);
-    console.log("Mật khẩu:", matKhau);
-    alert("Đăng nhập thành công (demo)");
-  };
-
+function DangNhap() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="bg-gray-800 p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-white text-center mb-6">
-          Đăng Nhập
-        </h2>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Background toàn màn hình */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${BG})` }}
+      ></div>
+      {/* Overlay xanh + làm mờ ảnh nền */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/70 to-blue-700/80 backdrop-blur-sm"></div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          {/* Email */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-300 mb-1"
+      {/* Card */}
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl flex max-w-5xl w-full h-[600px] relative z-10 overflow-hidden border border-white/20">
+        
+        {/* Bên trái */}
+        <div className="w-1/2 flex flex-col items-center justify-center p-10 
+                        bg-gradient-to-b from-blue-600/90 to-blue-800/90 text-white rounded-l-2xl h-full relative overflow-hidden">
+          {/* Ảnh login riêng bên trong */}
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-30"
+            style={{ backgroundImage: `url(${LoginImage})` }}
+          ></div>
+          {/* Overlay xanh đậm cho ảnh login */}
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-700/70 to-blue-900/90"></div>
+
+          <div className="relative z-10 text-center">
+            <h1 className="text-4xl font-bold mb-4">Chào mừng trở lại 📷</h1>
+            <p className="text-lg">
+              Lưu giữ khoảnh khắc, bắt trọn cảm xúc. <br />
+              Đăng nhập để tiếp tục khám phá thế giới nhiếp ảnh.
+            </p>
+          </div>
+        </div>
+
+        {/* Bên phải */}
+        <div className="w-1/2 p-10 flex flex-col justify-center h-full 
+                        bg-white rounded-r-2xl shadow-xl">
+          <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Đăng nhập</h2>
+          <form className="flex flex-col space-y-4">
+            <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-blue-500">
+              <FaEnvelope className="text-gray-400 mr-3" />
+              <input 
+                type="email" 
+                placeholder="Nhập email" 
+                className="w-full outline-none"
+              />
+            </div>
+            <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-blue-500">
+              <FaLock className="text-gray-400 mr-3" />
+              <input 
+                type="password" 
+                placeholder="Nhập mật khẩu" 
+                className="w-full outline-none"
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold py-3 rounded-lg hover:shadow-xl transition"
             >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="nhapemail@vidu.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              Đăng nhập <FaArrowRight />
+            </button>
+          </form>
 
-          {/* Mật khẩu */}
-          <div>
-            <label
-              htmlFor="matkhau"
-              className="block text-sm font-medium text-gray-300 mb-1"
-            >
-              Mật khẩu
-            </label>
-            <input
-              id="matkhau"
-              type="password"
-              placeholder="Nhập mật khẩu"
-              value={matKhau}
-              onChange={(e) => setMatKhau(e.target.value)}
-              required
-              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Ghi nhớ */}
-          <div className="flex items-center">
-            <input
-              id="ghinho"
-              type="checkbox"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded"
-            />
-            <label htmlFor="ghinho" className="ml-2 block text-sm text-gray-300">
-              Ghi nhớ đăng nhập
-            </label>
-          </div>
-
-          {/* Nút đăng nhập */}
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            Đăng Nhập
-          </button>
-        </form>
-
-        {/* Link tạo tài khoản */}
-        <p className="mt-6 text-center text-gray-400 text-sm">
-          Người dùng mới?{" "}
-          <a href="#" className="text-blue-400 hover:underline font-medium">
-            Tạo tài khoản
-          </a>
-        </p>
+          <p className="text-center mt-4 text-sm text-gray-600">
+            Quên mật khẩu?{" "}
+            <a href="/quenmatkhau" className="text-blue-600 hover:underline">Khôi phục</a>
+          </p>
+          <p className="text-center text-sm text-gray-600">
+            Chưa có tài khoản?{" "}
+            <a href="/dangky" className="text-blue-600 hover:underline">Đăng ký</a>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
+
+export default DangNhap;

@@ -1,6 +1,3 @@
-// src/components/common/Button.jsx
-// Toàn bộ dự án chỉ cần import Button này thay vì viết <button> thủ công.
-// Điều này giúp giao diện đồng bộ, dễ thay đổi style toàn cục khi cần.
 
 // Hàm Component Button nhận props từ cha
 export default function Button({
@@ -9,12 +6,7 @@ export default function Button({
   onClick, // Hàm xử lý sự kiện khi click vào nút (truyền từ component cha).
   className = "", // Cho phép truyền thêm class CSS từ ngoài (nếu muốn tùy chỉnh thêm).
 }) {
-  // 🔹 Style cơ bản chung cho tất cả nút
-  // px-4 py-2: padding ngang/dọc
-  // rounded-md: bo góc
-  // font-medium: font chữ vừa
-  // transition: hiệu ứng mượt khi hover/active
-  // transform active:scale-95 → khi click thì nút thu nhỏ 95% tạo cảm giác nhấn
+ 
   const base =
     "px-4 py-2 rounded-md font-medium transition transform active:scale-95";
 

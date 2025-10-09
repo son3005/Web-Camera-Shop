@@ -1,10 +1,8 @@
-// src/components/common/SortOptions.jsx
 // Component dùng để hiển thị "Sort" (sắp xếp sản phẩm) với các lựa chọn:
 // - Giá thấp nhất
 // - Giá cao nhất
 // - Bán chạy nhất
 // - Mặc định
-
 import { motion } from "framer-motion";
 // Dùng motion để thêm animation khi select box hiện ra
 

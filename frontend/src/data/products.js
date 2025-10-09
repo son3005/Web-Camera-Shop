@@ -1,7 +1,3 @@
-// Đây là file dữ liệu chứa thông tin các sản phẩm
-// Chia theo thương hiệu (brand) để dễ quản lý
-// Các ảnh trong "src/assets/images" bạn thay thế theo tên ảnh tương ứng
-
 // 📌 Object chính chứa sản phẩm theo từng thương hiệu
 export const productsByBrand = {
   canon: [
