@@ -1,47 +1,65 @@
-// src/components/common/CardProduct.jsx
-// Bao gồm: ảnh sản phẩm, tên, giá, và 2 nút hành động ("Mua ngay" & "Thêm giỏ")
+// CardProduct.jsx
+// - Hiện thị card sản phẩm: ảnh, tên, giá, 2 nút hành động
+// - Khi click vào card (không phải nút), sẽ mở ProductDetailOverlay bằng openProductDetail
+import { openProductDetail } from "./ProductDetailOverlay"; // gọi event bus
+import Button from "./Button";
 
-import Button from "./Button"; // Dùng component Button tái sử dụng để tạo nút nhất quán toàn web
-
-// Hàm component CardProduct nhận vào 1 prop: product (đối tượng sản phẩm)
 export default function CardProduct({ product }) {
+  // Khi click vào thẻ (ngoại trừ nhấn vào nút "Thêm giỏ" hoặc "Mua ngay"), ta mở popup
+  const handleCardClick = () => {
+    openProductDetail(product);
+  };
+
   return (
-    // Thẻ div chứa toàn bộ card
-    // bg-white: nền trắng
-    // rounded-lg: bo góc lớn
-    // shadow: đổ bóng
-    // hover:shadow-xl → bóng đậm hơn khi hover
-    // transition: hiệu ứng mượt
-    // transform hover:-translate-y-1 → card nhích lên 1px khi hover
-    <div className="bg-white rounded-lg shadow hover:shadow-xl transition transform hover:-translate-y-1">
-      {/* Ảnh sản phẩm */}
-      {/* object-contain: giữ nguyên tỷ lệ ảnh, không bị crop xấu */}
+    <div
+      className="bg-white rounded-lg shadow hover:shadow-xl transition transform hover:-translate-y-1 cursor-pointer"
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") handleCardClick();
+      }}
+    >
+      {/* Ảnh */}
       <img
-        src={product.image} // đường dẫn ảnh sản phẩm
-        alt={product.name} // alt để SEO + hỗ trợ screen reader
+        src={product.image}
+        alt={product.name}
         className="w-full h-40 object-contain rounded-t"
       />
 
-      {/* Phần nội dung thông tin sản phẩm */}
-      <div className="p-4 flex flex-col items-center">
-        {/* Tên sản phẩm */}
+      {/* Nội dung */}
+      <div
+        className="p-4 flex flex-col items-center"
+        // Ngăn event bubbling khi click vào các nút bên trong (kẻo đóng overlay do onClick trên card)
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="text-lg font-semibold text-center">{product.name}</h3>
 
-        {/* Giá sản phẩm */}
-        {/* toLocaleString("vi-VN") → format số sang tiền Việt (có dấu chấm ngăn cách) */}
         <p className="text-red-600 font-bold mt-2">
-          {product.price.toLocaleString("vi-VN")} ₫
+          {product.price !== undefined
+            ? Number(product.price).toLocaleString("vi-VN") + " ₫"
+            : "Liên hệ"}
         </p>
 
-        {/* Các nút hành động */}
         <div className="mt-4 flex space-x-3">
-          {/* Nút mua ngay (primary → xanh lá theo Button.jsx) */}
-          <Button type="primary" onClick={() => console.log("Mua:", product)}>
+          <Button
+            type="primary"
+            onClick={() => {
+              // Mua ngay (placeholder) — mở overlay cũng hợp lý
+              openProductDetail(product);
+            }}
+          >
             Mua ngay
           </Button>
 
-          {/* Nút thêm vào giỏ (secondary → viền xám theo Button.jsx) */}
-          <Button type="secondary" onClick={() => console.log("Giỏ:", product)}>
+          <Button
+            type="secondary"
+            onClick={() => {
+              // Thêm vào giỏ (chưa có cart logic) — placeholder alert
+              // eslint-disable-next-line no-alert
+              alert(`Thêm vào giỏ: ${product.name}`);
+            }}
+          >
             Thêm giỏ
           </Button>
         </div>

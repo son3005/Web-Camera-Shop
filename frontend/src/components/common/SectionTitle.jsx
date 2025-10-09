@@ -1,6 +1,3 @@
-// src/components/common/SectionTitle.jsx
-// Mục đích: tái sử dụng để tất cả tiêu đề section có cùng style (font, màu, căn giữa)
-
 export default function SectionTitle({ children }) {
   // children: Nội dung text được truyền vào giữa component này (vd: <SectionTitle>Danh sách sản phẩm</SectionTitle>)
   return (
