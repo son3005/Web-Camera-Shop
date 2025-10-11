@@ -1,24 +1,33 @@
-from flask import Flask
-from .config import Config
-from .extensions import db, cors
-from .routes.xacthuc_routes import bp as auth_bp
-import os
+from flask import Flask, jsonify
+from app.config import Config
+from app.extensions import db, migrate, jwt, cors
+from app.models import User, Product, Category
+from dotenv import load_dotenv
 
-def create_app():
+
+def create_app(config_class=Config):
+    """
+    Hàm tạo ứng dụng Flask (Application Factory Pattern).
+    """
+    load_dotenv()
     app = Flask(__name__)
-    app.config.from_object(Config)
+
+    # 1. Load configuration
+    app.config.from_object(config_class)
+
+    # 2. Initialize Flask extensions
     db.init_app(app)
+    migrate.init_app(app, db)
+    jwt.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
 
-    with app.app_context():
-        # register blueprints
-        app.register_blueprint(auth_bp)
-        # tạo bảng nếu chưa có (chỉ dùng dev)
-        db.create_all()
+    # 3. Register Blueprints (sẽ thêm sau)
+    # from app.routes.product_routes import bp as product_bp
+    # app.register_blueprint(product_bp, url_prefix='/api/products')
+
+    # 4. Add a simple route for testing
+    @app.route('/')
+    def index():
+        return "Backend for Camera Shop is running!"
 
     return app
-
-app = create_app()
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
