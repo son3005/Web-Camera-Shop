@@ -1,7 +1,7 @@
 from flask import Flask
 from .config import Config
 from .extensions import db, cors
-from .routes.auth_routes import bp as auth_bp
+from .routes.xacthuc_routes import bp as auth_bp
 import os
 
 def create_app():
