@@ -1,59 +1,73 @@
+# app/models/nguoi_dung.py
+
 from datetime import datetime
 from app.extensions import db
+from werkzeug.security import generate_password_hash, check_password_hash
+import enum
+
+# Sử dụng Enum để định nghĩa các giá trị vai trò và trạng thái một cách cố định
+# Giúp tránh lỗi gõ sai chuỗi và làm code dễ đọc hơn.
+class VaiTroNguoiDung(enum.Enum):
+    KHACH_HANG = 'khachHang'
+    QUAN_TRI_VIEN = 'quanTriVien'
+
+class TrangThaiNguoiDung(enum.Enum):
+    KICH_HOAT = 'kích hoạt'
+    KHOA = 'khóa'
 
 class NguoiDung(db.Model):
-    # Tên bảng trong cơ sở dữ liệu
-    __tablename__ = 'nguoi_dung'
+    __tablename__ = 'NGUOIDUNG' # Tên bảng đã được Việt hóa
     
-    # Cấu hình cho Kế thừa Bảng Đơn (Single Table Inheritance)
     __mapper_args__ = {
-        # Định danh cho lớp cơ sở
-        'polymorphic_identity': 'nguoi_dung',
-        
-        # Sử dụng cột 'vai_tro' để phân biệt các lớp con
-        'polymorphic_on': 'vai_tro'
+        'polymorphic_identity': 'nguoidung',
+        'polymorphic_on': 'vaitro' # Cột dùng để phân biệt các lớp con
     }
 
-    # Các cột chung cho tất cả người dùng
-    id = db.Column(db.Integer, primary_key=True)
+    # Giữ nguyên tên cột của bạn, chỉ thay đổi kiểu dữ liệu của mã người dùng
+    # Sử dụng Integer và để nó tự động tăng là một thông lệ tốt hơn String(13)
+    maNguoiDung = db.Column(db.String(13), primary_key=True)
+    hoTen = db.Column(db.String(40), nullable=True)
+    soDienThoai = db.Column(db.String(13), unique=True, index=True, nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    ten_dang_nhap = db.Column(db.String(80), unique=True, nullable=False, index=True)
-    mat_khau_bam = db.Column(db.String(256), nullable=False) # "password_hash"
-    vai_tro = db.Column(db.String(20), nullable=False) # "role"
+    tenDangNhap = db.Column(db.String(30), unique=True, nullable=False, index=True)
     
-    ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
-    ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # CỘT QUAN TRỌNG: Đổi tên thành 'matKhauHash' để thể hiện rõ nó chứa hash, không phải mật khẩu thô
+    matKhauHash = db.Column(db.String(256), nullable=False)
+    
+    # Sử dụng db.Enum để ràng buộc giá trị cho cột 'vaitro' và 'trangthai'
+    vaitro = db.Column(db.Enum(VaiTroNguoiDung), nullable=False, default=VaiTroNguoiDung.KHACH_HANG)
+    trangthai = db.Column(db.Enum(TrangThaiNguoiDung), default=TrangThaiNguoiDung.KICH_HOAT)
+    
+    ngayTao = db.Column(db.DateTime, default=datetime.utcnow)
+    ngayCapNhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # --- Các mối quan hệ chung ---
-    
-    # Mỗi người dùng (khách hàng) có một giỏ hàng
-    gio_hang = db.relationship('GioHang', back_populates='nguoi_dung', uselist=False, cascade="all, delete-orphan")
-    
-    # Mỗi người dùng có thể có nhiều đơn hàng
-    cac_don_hang = db.relationship('DonHang', back_populates='nguoi_dung', lazy='dynamic')
-    
-    # Mỗi người dùng có thể có nhiều đánh giá
-    cac_danh_gia = db.relationship('DanhGia', back_populates='nguoi_dung', lazy='dynamic')
-    
-    # Mỗi người dùng có thể có nhiều địa chỉ
-    cac_dia_chi = db.relationship('DiaChi', back_populates='nguoi_dung', lazy='dynamic', cascade="all, delete-orphan")
+    # --- Các mối quan hệ ---
+    gioHang = db.relationship('GioHang', back_populates='nguoiDung', uselist=False, cascade="all, delete-orphan")
+    cacDonHang = db.relationship('DonHang', back_populates='nguoiDung', lazy='dynamic')
+    cacDanhGia = db.relationship('DanhGia', back_populates='nguoiDung', lazy='dynamic')
+    cacDiaChi = db.relationship('DiaChi', back_populates='nguoiDung', lazy='dynamic', cascade="all, delete-orphan")
+
+    # --- CÁC PHƯƠNG THỨC XỬ LÝ MẬT KHẨU ---
+    def datMatKhau(self, matkhau):
+        """Tạo hash từ mật khẩu người dùng cung cấp."""
+        self.matKhauHash = generate_password_hash(matkhau)
+
+    def kiemTraMatKhau(self, matkhau):
+        """So sánh mật khẩu người dùng nhập với hash đã lưu trong CSDL."""
+        return check_password_hash(self.matKhauHash, matkhau)
 
     def __repr__(self):
-        return f'<Người dùng {self.ten_dang_nhap}>'
+        return f'<Người dùng {self.tenDangNhap}>'
 
 # Lớp con cho Khách Hàng
 class KhachHang(NguoiDung):
     __mapper_args__ = {
-        # Giá trị của cột 'vai_tro' cho lớp này sẽ là 'khach_hang'
-        'polymorphic_identity': 'khach_hang'
+        # Dùng Enum để đảm bảo giá trị luôn nhất quán
+        'polymorphic_identity': VaiTroNguoiDung.KHACH_HANG
     }
-    # Không cần định nghĩa lại các cột chung, chúng được kế thừa từ NguoiDung.
-    # Có thể thêm các cột riêng cho KhachHang nếu cần.
 
 # Lớp con cho Quản Trị Viên
 class QuanTriVien(NguoiDung):
     __mapper_args__ = {
-        # Giá trị của cột 'vai_tro' cho lớp này sẽ là 'quan_tri_vien'
-        'polymorphic_identity': 'quan_tri_vien'
+        'polymorphic_identity': VaiTroNguoiDung.QUAN_TRI_VIEN
     }
-    # Tương tự, kế thừa tất cả các cột từ NguoiDung.
