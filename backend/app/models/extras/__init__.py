@@ -1,4 +1,4 @@
 # from .coupon import Coupon
-from .review import Review
+from .DanhGia import DanhGia
 # from .wishlist import Wishlist
 # from .wishlist_item import WishlistItem

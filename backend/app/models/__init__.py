@@ -1,19 +1,19 @@
 
 # ===== USER & ROLE =====
-from .user import User
-from .user import Customer, Admin
-from .user import Address
+from .nguoidung import NguoiDung, KhachHang, QuanTriVien
+
+from .nguoidung import DiaChi
 # from .user import UserRole, Address, Role
 
 # ===== PRODUCT & CATEGORY =====
-from .product import Product
-from .product import Brand
-from .product import ProductImage, ProductSpec, ProductVariant
+from .sanpham import SanPham
+from .sanpham import ThuongHieu
+from .sanpham import HinhAnhSanPham, BienTheSanPham, ThongSoSanPham
 
 
 # ===== CART & ORDER =====
-from .cart_order import Cart, CartItem, Order, OrderItem, Payment
+from .giohang_dathang import GioHang, MucGioHang, DonHang, ChiTietDonHang, ThanhToan
 
 # ===== COUPON, REVIEW, WISHLIST =====
 # from .extras import Coupon, Review,Wishlist, WishlistItem 
-from .extras import Review
+from .extras import DanhGia
