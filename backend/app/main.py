@@ -2,7 +2,7 @@ from flask import Flask, jsonify
 from app.config import Config
 from app.extensions import db, migrate, jwt, cors
 # Import models để Flask-Migrate có thể nhận diện được chúng
-from app.models import User, Product, Category
+from app.models import User, Product
 from dotenv import load_dotenv
 
 def create_app(config_class=Config):
