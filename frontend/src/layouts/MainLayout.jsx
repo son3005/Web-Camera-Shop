@@ -1,24 +1,56 @@
-// MainLayout.jsx
-// - Layout chính cho trang public (Header, Footer, SocialBar, Outlet)
-// - Mount ProductDetailOverlay ở đây 1 lần để overlay luôn có mặt trên trang public
+// frontend/src/layouts/MainLayout.jsx
+import { Outlet, ScrollRestoration } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
-import SocialBar from "../components/layout/SocialBar";
-import ProductDetailOverlay from "../components/common/ProductDetailOverlay"; // render overlay 1 lần
-// MainLayout chỉ nhận children (các trang con sẽ render ở đây)
 
-export default function MainLayout({ children }) {
+const GrainyFilter = () => (
+  <svg style={{ display: "none" }}>
+    <filter id="noiseFilter">
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.8"
+        numOctaves="3"
+        stitchTiles="stitch"
+      />
+      <feColorMatrix type="saturate" values="0" />
+      <feComposite operator="in" in2="SourceGraphic" result="monoNoise" />
+      <feComposite operator="atop" in="SourceGraphic" in2="monoNoise" />
+    </filter>
+  </svg>
+);
+
+export default function MainLayout() {
+  // Dark/Light toggle giống Admin
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light"
+  );
+  useEffect(() => {
+    const root = document.documentElement;
+    theme === "dark"
+      ? root.classList.add("dark")
+      : root.classList.remove("dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1 mt-20">{children}</main>
-      <Footer />
-      <SocialBar />
+    <div className="relative min-h-screen overflow-hidden app-bg transition-all duration-500">
+      <GrainyFilter />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-5"
+        style={{ filter: "url(#noiseFilter)" }}
+      />
 
-      {/* ProductDetailOverlay được mount 1 lần trên trang public.
-          Khi có event openProductDetail(product) từ bất kỳ component nào,
-          overlay sẽ hiển thị. */}
-      <ProductDetailOverlay />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header theme={theme} onToggleTheme={toggleTheme} />
+        <main className="flex-1 mt-16">
+          <Outlet />
+        </main>
+        <Footer />
+      </div>
+
+      <ScrollRestoration />
     </div>
   );
 }
