@@ -1,26 +1,20 @@
+# app/models/hinh_anh_san_pham.py
 from app.extensions import db
 
 class HinhAnhSanPham(db.Model):
-    # Tên bảng trong cơ sở dữ liệu
-    __tablename__ = 'hinh_anh_san_pham'
-    
+    __tablename__ = 'hinh_anh_san_pham' # ĐỀ XUẤT: Dùng snake_case
+
     id = db.Column(db.Integer, primary_key=True)
     
-    # Khóa ngoại, liên kết tới bảng 'bien_the_san_pham'
-    ma_bien_the_san_pham = db.Column(db.Integer, db.ForeignKey('bien_the_san_pham.id'), nullable=False)
+    # SỬA LỖI: Khớp kiểu dữ liệu khóa ngoại
+    bien_the_id = db.Column(db.Integer, db.ForeignKey('bien_the_san_pham.id'), nullable=False, index=True)
     
-    # Đường dẫn URL của hình ảnh
-    duong_dan_hinh_anh = db.Column(db.String(512), nullable=False)
+    url = db.Column(db.String(512), nullable=False)
+    alt_text = db.Column(db.String(200), nullable=True) # "alt" text cho SEO
+    la_anh_dai_dien = db.Column(db.Boolean, default=False)
     
-    # Văn bản thay thế cho hình ảnh (dùng cho SEO và hỗ trợ người dùng)
-    van_ban_thay_the = db.Column(db.String(200), nullable=True)
-    
-    # --- Mối quan hệ (Relationship) ---
-    
-    # Mỗi hình ảnh thuộc về một biến thể sản phẩm.
-    # 'BienTheSanPham' là tên class ProductVariant đã Việt hóa.
-    # 'cac_hinh_anh' là tên thuộc tính trong class BienTheSanPham để gọi lại.
-    bien_the = db.relationship('BienTheSanPham', back_populates='cac_hinh_anh')
+    # --- Mối quan hệ ---
+    bien_the = db.relationship('BienTheSanPham', back_populates='hinh_anhs')
     
     def __repr__(self):
-        return f'<Hình ảnh sản phẩm {self.id} cho Biến thể ID {self.ma_bien_the_san_pham}>'
+        return f'<Hình ảnh {self.id} cho Biến thể ID {self.bien_the_id}>'
