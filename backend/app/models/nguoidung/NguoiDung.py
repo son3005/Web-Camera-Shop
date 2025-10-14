@@ -5,68 +5,76 @@ from app.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 import enum
 
-# Sử dụng Enum để định nghĩa các giá trị vai trò và trạng thái một cách cố định
-# Giúp tránh lỗi gõ sai chuỗi và làm code dễ đọc hơn.
+# CẢI TIẾN: Sử dụng giá trị snake_case cho Enum để nhất quán
 class VaiTroNguoiDung(enum.Enum):
-    KHACH_HANG = 'khachHang'
-    QUAN_TRI_VIEN = 'quanTriVien'
+    KHACH_HANG = 'khach_hang'
+    QUAN_TRI_VIEN = 'quan_tri_vien'
 
 class TrangThaiNguoiDung(enum.Enum):
-    KICH_HOAT = 'kích hoạt'
-    KHOA = 'khóa'
+    KICH_HOAT = 'kich_hoat'
+    KHOA = 'khoa'
 
 class NguoiDung(db.Model):
-    __tablename__ = 'NGUOIDUNG' # Tên bảng đã được Việt hóa
+    # CẢI TIẾN: Tên bảng snake_case
+    __tablename__ = 'nguoi_dung'
     
+    # CẢI TIẾN QUAN TRỌNG NHẤT:
+    # 1. Dùng Integer làm khóa chính (PK) cho hiệu năng và tính nhất quán.
+    #    Database sẽ tự động quản lý việc tăng giá trị này.
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 2. Giữ lại `ma_nguoi_dung` như một mã định danh duy nhất, dễ đọc cho người dùng.
+    #    Mã này có thể được tạo tự động hoặc thủ công.
+    ma_nguoi_dung = db.Column(db.String(20), unique=True, nullable=False, index=True)
+
+    # CẢI TIẾN: Chuẩn hóa tất cả tên cột sang snake_case
+    ho_ten = db.Column(db.String(100), nullable=True)
+    so_dien_thoai = db.Column(db.String(15), unique=True, index=True, nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    ten_dang_nhap = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    
+    # Tên cột `mat_khau_hash` thể hiện rõ nó chứa giá trị đã được băm
+    mat_khau_hash = db.Column(db.String(256), nullable=False)
+    
+    # Cột `vai_tro` dùng để phân biệt các lớp con (polymorphism)
+    vai_tro = db.Column(db.Enum(VaiTroNguoiDung), nullable=False, default=VaiTroNguoiDung.KHACH_HANG)
+    trang_thai = db.Column(db.Enum(TrangThaiNguoiDung), default=TrangThaiNguoiDung.KICH_HOAT, nullable=False)
+    
+    ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
+    ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # --- Cấu hình Polymorphism ---
     __mapper_args__ = {
-        'polymorphic_identity': 'nguoidung',
-        'polymorphic_on': 'vaitro' # Cột dùng để phân biệt các lớp con
+        'polymorphic_identity': 'nguoi_dung',
+        'polymorphic_on': vai_tro
     }
 
-    # Giữ nguyên tên cột của bạn, chỉ thay đổi kiểu dữ liệu của mã người dùng
-    # Sử dụng Integer và để nó tự động tăng là một thông lệ tốt hơn String(13)
-    maNguoiDung = db.Column(db.String(13), primary_key=True)
-    hoTen = db.Column(db.String(40), nullable=True)
-    soDienThoai = db.Column(db.String(13), unique=True, index=True, nullable=True)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    tenDangNhap = db.Column(db.String(30), unique=True, nullable=False, index=True)
-    
-    # CỘT QUAN TRỌNG: Đổi tên thành 'matKhauHash' để thể hiện rõ nó chứa hash, không phải mật khẩu thô
-    matKhauHash = db.Column(db.String(256), nullable=False)
-    
-    # Sử dụng db.Enum để ràng buộc giá trị cho cột 'vaitro' và 'trangthai'
-    vaitro = db.Column(db.Enum(VaiTroNguoiDung), nullable=False, default=VaiTroNguoiDung.KHACH_HANG)
-    trangthai = db.Column(db.Enum(TrangThaiNguoiDung), default=TrangThaiNguoiDung.KICH_HOAT)
-    
-    ngayTao = db.Column(db.DateTime, default=datetime.utcnow)
-    ngayCapNhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
     # --- Các mối quan hệ ---
-    gioHang = db.relationship('GioHang', back_populates='nguoiDung', uselist=False, cascade="all, delete-orphan")
-    cacDonHang = db.relationship('DonHang', back_populates='nguoiDung', lazy='dynamic')
-    cacDanhGia = db.relationship('DanhGia', back_populates='nguoiDung', lazy='dynamic')
-    cacDiaChi = db.relationship('DiaChi', back_populates='nguoiDung', lazy='dynamic', cascade="all, delete-orphan")
+    # Cải tiến tên relationship cho rõ ràng
+    gio_hang = db.relationship('GioHang', back_populates='nguoi_dung', uselist=False, cascade="all, delete-orphan")
+    don_hangs = db.relationship('DonHang', back_populates='nguoi_dung', lazy='dynamic')
+    danh_gias = db.relationship('DanhGia', back_populates='nguoi_dung', lazy='dynamic')
+    dia_chis = db.relationship('DiaChi', back_populates='nguoi_dung', lazy='dynamic', cascade="all, delete-orphan")
 
-    # --- CÁC PHƯƠNG THỨC XỬ LÝ MẬT KHẨU ---
-    def datMatKhau(self, matkhau):
-        """Tạo hash từ mật khẩu người dùng cung cấp."""
-        self.matKhauHash = generate_password_hash(matkhau)
+    # --- Phương thức xử lý mật khẩu ---
+    def set_password(self, matkhau):
+        """Tạo hash từ mật khẩu."""
+        self.mat_khau_hash = generate_password_hash(matkhau)
 
-    def kiemTraMatKhau(self, matkhau):
-        """So sánh mật khẩu người dùng nhập với hash đã lưu trong CSDL."""
-        return check_password_hash(self.matKhauHash, matkhau)
+    def check_password(self, matkhau):
+        """Kiểm tra mật khẩu với hash đã lưu."""
+        return check_password_hash(self.mat_khau_hash, matkhau)
 
     def __repr__(self):
-        return f'<Người dùng {self.tenDangNhap}>'
+        return f'<Người dùng {self.ten_dang_nhap}>'
 
-# Lớp con cho Khách Hàng
+# Lớp con KhachHang
 class KhachHang(NguoiDung):
     __mapper_args__ = {
-        # Dùng Enum để đảm bảo giá trị luôn nhất quán
         'polymorphic_identity': VaiTroNguoiDung.KHACH_HANG
     }
 
-# Lớp con cho Quản Trị Viên
+# Lớp con QuanTriVien
 class QuanTriVien(NguoiDung):
     __mapper_args__ = {
         'polymorphic_identity': VaiTroNguoiDung.QUAN_TRI_VIEN

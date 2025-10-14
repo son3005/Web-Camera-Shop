@@ -1,46 +1,48 @@
+# app/models/don_hang.py
+
 from datetime import datetime
 from app.extensions import db
 import enum
 
-# Enum cho các trạng thái của đơn hàng
 class TrangThaiDonHang(enum.Enum):
-    CHO_THANH_TOAN = "Chờ thanh toán"
-    DA_THANH_TOAN = "Đã thanh toán"
-    DANG_GIAO_HANG = "Đang giao hàng"
-    HOAN_THANH = "Hoàn thành"
-    DA_HUY = "Đã hủy"
+    # Dùng giá trị snake_case cho Enum để nhất quán
+    CHO_XAC_NHAN = "cho_xac_nhan"
+    DA_XAC_NHAN = "da_xac_nhan"
+    DANG_GIAO_HANG = "dang_giao_hang"
+    HOAN_THANH = "hoan_thanh"
+    DA_HUY = "da_huy"
+    YEU_CAU_TRA_HANG = "yeu_cau_tra_hang"
+    DA_TRA_HANG = "da_tra_hang"
 
 class DonHang(db.Model):
-    # Tên bảng trong cơ sở dữ liệu
     __tablename__ = 'don_hang'
 
     id = db.Column(db.Integer, primary_key=True)
-    ma_don_hang = db.Column(db.String(50), unique=True, nullable=False)
+    # Mã đơn hàng để người dùng và admin dễ tra cứu
+    ma_don_hang = db.Column(db.String(50), unique=True, nullable=False, index=True)
     
-    # Khóa ngoại, liên kết tới bảng 'nguoi_dung'
-    ma_nguoi_dung = db.Column(db.Integer, db.ForeignKey('nguoi_dung.id'), nullable=False)
+    nguoi_dung_id = db.Column(db.Integer, db.ForeignKey('nguoi_dung.id'), nullable=False, index=True)
     
-    trang_thai = db.Column(db.Enum(TrangThaiDonHang), default=TrangThaiDonHang.CHO_THANH_TOAN, nullable=False)
-    tong_tien = db.Column(db.Float, nullable=False)
+    trang_thai = db.Column(db.Enum(TrangThaiDonHang), default=TrangThaiDonHang.CHO_XAC_NHAN, nullable=False)
+    
+    # Dùng Numeric cho tất cả các giá trị tiền tệ
+    tam_tinh = db.Column(db.Numeric(12, 2), nullable=False)
+    phi_van_chuyen = db.Column(db.Numeric(12, 2), default=0)
+    giam_gia = db.Column(db.Numeric(12, 2), default=0)
+    tong_tien = db.Column(db.Numeric(12, 2), nullable=False)
+    
+    # "Đóng băng" thông tin giao hàng tại thời điểm đặt
+    ten_nguoi_nhan = db.Column(db.String(100))
+    so_dien_thoai_nhan = db.Column(db.String(15))
+    dia_chi_giao_hang = db.Column(db.String(500)) # Lưu địa chỉ đầy đủ dưới dạng text
+    ghi_chu = db.Column(db.Text, nullable=True)
 
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
     ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # --- Các mối quan hệ (Relationships) ---
     
-    # Mỗi đơn hàng thuộc về một người dùng.
-    # 'NguoiDung' là tên class Người Dùng.
-    # 'cac_don_hang' là tên thuộc tính trong class NguoiDung để gọi lại.
-    nguoi_dung = db.relationship('NguoiDung', back_populates='cac_don_hang')
-    
-    # Một đơn hàng có nhiều mục (sản phẩm).
-    # 'MucDonHang' là tên class chứa các mục trong đơn hàng.
-    # 'don_hang' là tên thuộc tính trong class MucDonHang để gọi lại.
-    cac_muc = db.relationship('MucDonHang', back_populates='don_hang', cascade="all, delete-orphan")
-
-    # Một đơn hàng có một giao dịch thanh toán.
-    # 'ThanhToan' là tên class Thanh Toán.
-    # 'don_hang' là tên thuộc tính trong class ThanhToan để gọi lại.
+    # --- Mối quan hệ ---
+    nguoi_dung = db.relationship('NguoiDung', back_populates='don_hangs')
+    items = db.relationship('ChiTietDonHang', back_populates='don_hang', cascade="all, delete-orphan")
     thanh_toan = db.relationship('ThanhToan', back_populates='don_hang', uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
