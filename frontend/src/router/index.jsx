@@ -5,8 +5,10 @@ import { createBrowserRouter } from "react-router-dom";
 import AdminRoutes from "./AdminRoutes";
 // import MainRoutes from './MainRoutes';
 import MainLayout from "../layouts/MainLayout";
-import Home from "../pages/Home";
 
+import HomePage from "../pages/HomePage";
+import ProductListPage from "../pages/ProductListPage";
+import ProductDetailPage from "../pages/ProductDetailPage";
 // const NotFoundPage = () => <div>404 - Page Not Found</div>; // Placeholder cho trang 404
 const DangNhap = lazy(() => import("../pages/Dangnhap"));
 const DangKy = lazy(() => import("../pages/Dangky"));
@@ -18,26 +20,20 @@ const router = createBrowserRouter([
   AdminRoutes,
 
   // Nhóm 2: Các route Public
+  // Public
   {
     path: "/",
+    element: (
+      <MainLayout>
+        {/* Header/Footer đã nằm trong MainLayout của bạn */}
+      </MainLayout>
+    ),
     children: [
-      {
-        index: true,
-        element: (
-          <MainLayout>
-            <Home />
-          </MainLayout>
-        ), // Placeholder
-      },
-      {
-        path: "products/:productId", // ví dụ: /products/canon-eos-r5
-        // element: <ProductDetailPage />,
-        element: <div>Đây là trang chi tiết sản phẩm</div>, // Placeholder
-      },
-      // ... Các trang public khác
+      { index: true, element: <HomePage /> },
+      { path: "products", element: <ProductListPage /> },
+      { path: "products/:productId", element: <ProductDetailPage /> },
     ],
   },
-  // MainRoutes,
 
   // Nhóm 3: Các route khác như Login, 404
   {

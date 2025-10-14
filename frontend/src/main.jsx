@@ -1,13 +1,14 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { RouterProvider } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import './App.css';
-import router from './router/index.jsx';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "./App.css";
+// import "./styles/MainLayout.css";
+import router from "./router/index.jsx";
 
 // 1. Tạo một instance của QueryClient
 const queryClient = new QueryClient();
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 
 // Render ứng dụng, cung cấp QueryClient cho toàn bộ cây component
 root.render(
