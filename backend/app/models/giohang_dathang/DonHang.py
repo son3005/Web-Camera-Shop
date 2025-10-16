@@ -20,9 +20,7 @@ class DonHang(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # Mã đơn hàng để người dùng và admin dễ tra cứu
     ma_don_hang = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    
     nguoi_dung_id = db.Column(db.Integer, db.ForeignKey('nguoi_dung.id'), nullable=False, index=True)
-    
     trang_thai = db.Column(db.Enum(TrangThaiDonHang), default=TrangThaiDonHang.CHO_XAC_NHAN, nullable=False)
     
     # Dùng Numeric cho tất cả các giá trị tiền tệ
@@ -34,7 +32,7 @@ class DonHang(db.Model):
     # "Đóng băng" thông tin giao hàng tại thời điểm đặt
     ten_nguoi_nhan = db.Column(db.String(100))
     so_dien_thoai_nhan = db.Column(db.String(15))
-    dia_chi_giao_hang = db.Column(db.String(500)) # Lưu địa chỉ đầy đủ dưới dạng text
+    dia_chi_giao_hang = db.Column(db.String(500))
     ghi_chu = db.Column(db.Text, nullable=True)
 
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
@@ -46,4 +44,4 @@ class DonHang(db.Model):
     thanh_toan = db.relationship('ThanhToan', back_populates='don_hang', uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f'<Đơn hàng {self.ma_don_hang}>'
+        return f'<Đơn hàng {self.ma_don_hang}> - Trạng thái: {self.trang_thai.name}'

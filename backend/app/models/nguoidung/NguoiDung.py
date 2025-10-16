@@ -1,5 +1,3 @@
-# app/models/nguoi_dung.py
-
 from datetime import datetime
 from app.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15,25 +13,12 @@ class TrangThaiNguoiDung(enum.Enum):
     KHOA = 'khoa'
 
 class NguoiDung(db.Model):
-    # CẢI TIẾN: Tên bảng snake_case
     __tablename__ = 'nguoi_dung'
     
-    # CẢI TIẾN QUAN TRỌNG NHẤT:
-    # 1. Dùng Integer làm khóa chính (PK) cho hiệu năng và tính nhất quán.
-    #    Database sẽ tự động quản lý việc tăng giá trị này.
     id = db.Column(db.Integer, primary_key=True)
-    
-    # 2. Giữ lại `ma_nguoi_dung` như một mã định danh duy nhất, dễ đọc cho người dùng.
-    #    Mã này có thể được tạo tự động hoặc thủ công.
-    ma_nguoi_dung = db.Column(db.String(20), unique=True, nullable=False, index=True)
-
-    # CẢI TIẾN: Chuẩn hóa tất cả tên cột sang snake_case
     ho_ten = db.Column(db.String(100), nullable=True)
     so_dien_thoai = db.Column(db.String(15), unique=True, index=True, nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    ten_dang_nhap = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    
-    # Tên cột `mat_khau_hash` thể hiện rõ nó chứa giá trị đã được băm
     mat_khau_hash = db.Column(db.String(256), nullable=False)
     
     # Cột `vai_tro` dùng để phân biệt các lớp con (polymorphism)
@@ -50,7 +35,6 @@ class NguoiDung(db.Model):
     }
 
     # --- Các mối quan hệ ---
-    # Cải tiến tên relationship cho rõ ràng
     gio_hang = db.relationship('GioHang', back_populates='nguoi_dung', uselist=False, cascade="all, delete-orphan")
     don_hangs = db.relationship('DonHang', back_populates='nguoi_dung', lazy='dynamic')
     danh_gias = db.relationship('DanhGia', back_populates='nguoi_dung', lazy='dynamic')
@@ -66,7 +50,7 @@ class NguoiDung(db.Model):
         return check_password_hash(self.mat_khau_hash, matkhau)
 
     def __repr__(self):
-        return f'<Người dùng {self.ten_dang_nhap}>'
+        return f'<Người dùng {self.email} - Vai trò: {self.vai_tro.value}>'
 
 # Lớp con KhachHang
 class KhachHang(NguoiDung):

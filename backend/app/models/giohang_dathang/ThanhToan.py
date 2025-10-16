@@ -23,7 +23,7 @@ class ThanhToan(db.Model):
     # Liên kết một-một với Đơn hàng
     don_hang_id = db.Column(db.Integer, db.ForeignKey('don_hang.id'), nullable=False, unique=True)
 
-    so_tien = db.Column(db.Numeric(12, 2), nullable=False)
+    so_tien = db.Column(db.Numeric(14, 2), nullable=False)
     phuong_thuc = db.Column(db.Enum(PhuongThucThanhToan), nullable=False)
     trang_thai = db.Column(db.Enum(TrangThaiThanhToan), default=TrangThaiThanhToan.CHO_THANH_TOAN, nullable=False)
     ma_giao_dich_ben_thu_3 = db.Column(db.String(255), nullable=True, index=True)

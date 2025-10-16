@@ -3,18 +3,14 @@ from app.extensions import db
 from app.utils.slug import generate_slug # Giả sử bạn có một hàm tạo slug
 
 class DanhMuc(db.Model):
-    __tablename__ = 'danh_muc' # ĐỀ XUẤT: Dùng snake_case cho tên bảng
+    __tablename__ = 'danh_muc'
 
-    # ĐỀ XUẤT: Dùng Integer làm khóa chính cho nhất quán và hiệu năng
-    # Ví dụ: new_category = DanhMuc(id='MAYAN', ten_danh_muc='Máy Ảnh')
     id = db.Column(db.Integer, primary_key=True)
     ma_danh_muc = db.Column(db.String(10), unique=True, nullable=False, index=True)
     ten_danh_muc = db.Column(db.String(100), unique=True, nullable=False)
     slug = db.Column(db.String(150), unique=True, nullable=False, index=True)
 
     # --- Mối quan hệ ---
-    # lazy='dynamic' tốt khi bạn muốn thêm các filter trên tập hợp sản phẩm này
-    # Ví dụ: category.san_phams.filter_by(trang_thai='DANG_BAN').all()
     san_phams = db.relationship('SanPham', back_populates='danh_muc', lazy='dynamic')
 
     def __repr__(self):
