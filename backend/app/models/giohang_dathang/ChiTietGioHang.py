@@ -19,5 +19,6 @@ class ChiTietGioHang(db.Model):
     gio_hang = db.relationship('GioHang', back_populates='items')
     bien_the_san_pham = db.relationship('BienTheSanPham') # Thêm relationship này để dễ dàng truy cập thông tin biến thể
     
+    
     def __repr__(self):
         return f'<Mục giỏ hàng {self.id}: {self.so_luong} x Biến thể ID {self.bien_the_san_pham_id}>'

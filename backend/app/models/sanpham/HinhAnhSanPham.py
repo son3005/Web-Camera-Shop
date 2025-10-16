@@ -2,15 +2,12 @@
 from app.extensions import db
 
 class HinhAnhSanPham(db.Model):
-    __tablename__ = 'hinh_anh_san_pham' # ĐỀ XUẤT: Dùng snake_case
+    __tablename__ = 'hinh_anh_san_pham'
 
     id = db.Column(db.Integer, primary_key=True)
-    
-    # SỬA LỖI: Khớp kiểu dữ liệu khóa ngoại
     bien_the_id = db.Column(db.Integer, db.ForeignKey('bien_the_san_pham.id'), nullable=False, index=True)
-    
     url = db.Column(db.String(512), nullable=False)
-    alt_text = db.Column(db.String(200), nullable=True) # "alt" text cho SEO
+    alt_text = db.Column(db.String(200), nullable=True) 
     la_anh_dai_dien = db.Column(db.Boolean, default=False)
     
     # --- Mối quan hệ ---

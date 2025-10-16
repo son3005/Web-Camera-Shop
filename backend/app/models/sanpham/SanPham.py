@@ -44,7 +44,7 @@ class SanPham(db.Model):
     cac_bien_the = db.relationship('BienTheSanPham', back_populates='san_pham_goc', cascade="all, delete-orphan")
     
     # Giữ lại lazy='dynamic' nếu bạn cần query thêm trên các đánh giá
-    # cac_danh_gia = db.relationship('DanhGia', back_populates='san_pham', lazy='dynamic')
+    danh_gias = db.relationship('DanhGia', back_populates='san_pham', lazy='dynamic')
     
     def __repr__(self):
         return f'<Sản phẩm {self.ten_san_pham}>'

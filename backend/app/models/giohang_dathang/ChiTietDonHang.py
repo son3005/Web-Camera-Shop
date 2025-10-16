@@ -7,12 +7,9 @@ class ChiTietDonHang(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     don_hang_id = db.Column(db.Integer, db.ForeignKey('don_hang.id'), nullable=False, index=True)
-    
-    # Liên kết tới biến thể sản phẩm để biết đó là sản phẩm nào, nhưng không phụ thuộc vào nó
-    bien_the_san_pham_id = db.Column(db.Integer, db.ForeignKey('bien_the_san_pham.id'), nullable=True) # Dùng nullable=True phòng trường hợp sản phẩm bị xóa
+    bien_the_san_pham_id = db.Column(db.Integer, db.ForeignKey('bien_the_san_pham.id'), nullable=True) 
     
     # --- "ĐÓNG BĂNG" DỮ LIỆU TẠI THỜI ĐIỂM MUA ---
-    # Đây là phần cải tiến quan trọng nhất cho một hệ thống TMĐT chuyên nghiệp.
     sku_luc_mua = db.Column(db.String(150), nullable=False)
     ten_san_pham_luc_mua = db.Column(db.String(255), nullable=False)
     ten_bien_the_luc_mua = db.Column(db.String(150), nullable=True)
@@ -23,6 +20,8 @@ class ChiTietDonHang(db.Model):
     don_hang = db.relationship('DonHang', back_populates='items')
     # Liên kết "mềm" tới biến thể, không cần back_populates
     bien_the_san_pham = db.relationship('BienTheSanPham') 
+    # Mối quan hệ một-một với DanhGia
+    danh_gia = db.relationship('DanhGia', back_populates='chi_tiet_don_hang', uselist=False)
 
     def __repr__(self):
         return f'<Chi tiết Đơn hàng {self.id}: {self.so_luong} x {self.sku_luc_mua}>'

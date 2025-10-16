@@ -14,7 +14,7 @@ class DiaChi(db.Model):
     so_dien_thoai = db.Column(db.String(15), nullable=False)
     
     # Chia nhỏ địa chỉ là một thực hành rất tốt
-    dia_chi_cu_the = db.Column(db.String(255), nullable=False) # Ví dụ: Số 123, đường ABC
+    dia_chi_cu_the = db.Column(db.String(255), nullable=False)
     phuong_xa = db.Column(db.String(100), nullable=False)
     tinh_thanh = db.Column(db.String(100), nullable=False)
     ma_buu_dien = db.Column(db.String(20), nullable=True)

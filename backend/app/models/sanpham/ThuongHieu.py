@@ -3,10 +3,8 @@ from app.extensions import db
 from app.utils.slug import generate_slug # Giả sử bạn có một hàm tạo slug
 
 class ThuongHieu(db.Model):
-    __tablename__ = 'thuong_hieu' # ĐỀ XUẤT: Dùng snake_case cho tên bảng
+    __tablename__ = 'thuong_hieu'
 
-    # ĐỀ XUẤT: Dùng Integer làm khóa chính
-    # THAY ĐỔI: Khóa chính là String(5).
     id = db.Column(db.Integer, primary_key=True)
     ma_thuong_hieu = db.Column(db.String(20), unique=True, nullable=False, index=True)
     ten_thuong_hieu = db.Column(db.String(100), unique=True, nullable=False)
