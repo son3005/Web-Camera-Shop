@@ -11,12 +11,9 @@ class Config:
     Các cấu hình khác (Development, Production) sẽ kế thừa từ lớp này.
     """
     # Lấy khóa bí mật từ biến môi trường, nếu không có thì dùng một giá trị mặc định.
-    # Khóa này rất quan trọng để bảo mật session và ký JWT.
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'b3bccc3498a97d10d5b8f9e96232006535981e9e41852b74a4f57b989ac8c937')
 
-    # --- ĐÂY LÀ DÒNG SỬA LỖI QUAN TRỌNG NHẤT ---
     # Đọc chuỗi kết nối database từ biến môi trường 'DATABASE_URL'
-    # và gán nó vào key 'SQLALCHEMY_DATABASE_URI' mà Flask-SQLAlchemy yêu cầu.
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     
     # Tắt tính năng theo dõi sửa đổi của SQLAlchemy để tiết kiệm tài nguyên.
@@ -26,9 +23,14 @@ class Config:
     CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
     CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
 
-# Bạn có thể tạo thêm các lớp cấu hình riêng cho từng môi trường nếu cần
-# class DevelopmentConfig(Config):
-#     DEBUG = True
+    # Cấu hình Cloudinary
+    CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
+    CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY')
+    CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
 
-# class ProductionConfig(Config):
-#     DEBUG = False
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+class ProductionConfig(Config):
+    DEBUG = False

@@ -1,3 +1,4 @@
+# /backend/app/schemas/Shared.py
 import enum
 from typing import List, TypeVar, Generic
 from pydantic import BaseModel, Field
@@ -48,9 +49,14 @@ class PhuongThucThanhToanEnum(str, enum.Enum):
     CHUYEN_KHOAN = 'chuyen_khoan'
     VNPAY = 'vnpay'
 
-# --- SCHEMA PHÂN TRANG CHUNG ---
+# --- SCHEMA PHÂN TRANG CHUNG (TỐI ƯU) ---
 class PaginatedResponse(GenericModel, Generic[ItemType]):
-    total: int = Field(..., description="Tổng số lượng items")
-    page: int = Field(..., description="Trang hiện tại")
-    size: int = Field(..., description="Số lượng items trên mỗi trang")
-    items: List[ItemType] = Field(..., description="Danh sách các items")
+    items: List[ItemType] = Field(..., description="Danh sách các items của trang hiện tại")
+    page: int = Field(..., description="Trang hiện tại (bắt đầu từ 1)")
+    per_page: int = Field(..., description="Số lượng items trên mỗi trang")
+    total_items: int = Field(..., description="Tổng số lượng items trong toàn bộ kết quả")
+    total_pages: int = Field(..., description="Tổng số trang")
+
+    # Thêm class Config để cho phép đọc từ đối tượng (orm_mode)
+    class Config:
+        orm_mode = True

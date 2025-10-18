@@ -1,53 +1,50 @@
 from datetime import datetime
-from sqlalchemy import event, select, func
+from sqlalchemy import event, select, func, Index
 from app.extensions import db
 from app.utils.slug import generate_slug # Giả sử bạn có một hàm tạo slug
 from app.models.sanpham.DanhMuc import DanhMuc
 from app.models.sanpham.ThuongHieu import ThuongHieu
 import enum
 
-class TrangThaiSanPham(enum.Enum):
-    DANG_BAN = 'đang bán'
-    AN = 'ẩn'
-    HET_HANG = 'hết hàng'
+from app.schemas.Shared import TrangThaiSanPhamEnum as TrangThaiSanPham
 
 class SanPham(db.Model):
-    __tablename__ = 'san_pham' # ĐỀ XUẤT: Dùng snake_case cho tên bảng
+    __tablename__ = 'san_pham'
 
- # THAY ĐỔI: Khóa chính là String, độ dài đủ lớn
     id = db.Column(db.Integer, primary_key=True)
-    # Thêm cột mã sản phẩm để người dùng xem, duy nhất và không thay đổi
     ma_san_pham = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    # THAY ĐỔI QUAN TRỌNG: Kiểu dữ liệu của khóa ngoại
-    # phải khớp với kiểu dữ liệu của khóa chính mà nó trỏ tới.
     danh_muc_id = db.Column(db.Integer, db.ForeignKey('danh_muc.id'), nullable=False, index=True)
     thuong_hieu_id = db.Column(db.Integer, db.ForeignKey('thuong_hieu.id'), nullable=False, index=True)
     
     ten_san_pham = db.Column(db.String(200), nullable=False, index=True)
     slug = db.Column(db.String(255), unique=True, nullable=False, index=True)
     mo_ta = db.Column(db.Text, nullable=True)
-    
-    # Dùng JSON cho thông số kỹ thuật là một lựa chọn rất tốt!
     thong_so_ky_thuat = db.Column(db.JSON, nullable=True)
     
+    # (CẢI TIẾN) Dùng Enum đã import
     trang_thai = db.Column(db.Enum(TrangThaiSanPham), nullable=False, default=TrangThaiSanPham.DANG_BAN)
 
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
     ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # --- Mối quan hệ ---
-    # Đổi tên thuộc tính relationship cho nhất quán
     danh_muc = db.relationship('DanhMuc', back_populates='san_phams')
     thuong_hieu = db.relationship('ThuongHieu', back_populates='san_phams')
-
-    # `cac_bien_the` vẫn là một tên tốt
-    cac_bien_the = db.relationship('BienTheSanPham', back_populates='san_pham_goc', cascade="all, delete-orphan")
-    
-    # Giữ lại lazy='dynamic' nếu bạn cần query thêm trên các đánh giá
+    cac_bien_the = db.relationship('BienTheSanPham', back_populates='san_pham', cascade="all, delete-orphan")
     danh_gias = db.relationship('DanhGia', back_populates='san_pham', lazy='dynamic')
     
     def __repr__(self):
         return f'<Sản phẩm {self.ten_san_pham}>'
+        
+    # (CẢI TIẾN) Thêm Full-Text Search Index (cho Giải pháp 1 ở câu trước)
+    __table_args__ = (
+        Index(
+            'idx_sanpham_fts',
+            'ten_san_pham',
+            'mo_ta',
+            mysql_with_parser='ngram'
+        ),
+    )
 
 # Event listener bây giờ sẽ tạo `ma_san_pham` thay vì `id`
 @event.listens_for(SanPham, 'before_insert')

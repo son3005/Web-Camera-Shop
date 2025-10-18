@@ -1,8 +1,6 @@
 /* frontend/src/App.css — Storefront Theme (match Admin Dashboard) */
 @import "tailwindcss";
-
-/* ========= THEME TOKENS ========= */
-:root {
+========= THEME TOKENS ========= :root {
   --color-accent-green: #10b981;
   --color-accent-green-600: #059669;
   --color-muted: #f8fafc;

@@ -2,13 +2,9 @@ from pydantic import BaseModel, Field, EmailStr, validator
 from typing import Optional, List
 from datetime import date, datetime
 
-# Import các schema và enum cần thiết
-from backend.app.schemas.Shared import VaiTroNguoiDungEnum, TrangThaiNguoiDungEnum, GioiTinhEnum
+# Import enums and schemas khác
+from app.schemas.Shared import VaiTroNguoiDungEnum, TrangThaiNguoiDungEnum, GioiTinhEnum
 from .DiaChi import DiaChiResponse
-
-# ===================================================================
-# Schemas cho Người Dùng
-# ===================================================================
 
 class NguoiDungBase(BaseModel):
     email: EmailStr = Field(..., description="Email phải là duy nhất")
@@ -19,11 +15,9 @@ class NguoiDungBase(BaseModel):
     anh_dai_dien_url: Optional[str] = Field(None, max_length=512, description="URL ảnh đại diện")
 
 class NguoiDungCreate(NguoiDungBase):
-    ma_nguoi_dung: str = Field(..., max_length=20, description="Mã người dùng duy nhất")
     mat_khau: str = Field(..., min_length=8, description="Mật khẩu phải có ít nhất 8 ký tự")
-    xac_nhan_mat_khau: str = Field(..., description="Nhập lại mật khẩu để xác nhận")
+    xac_nhan_mat_khau: str = Field(..., description="Xác nhận lại mật khẩu")
 
-    # Validator để kiểm tra mật khẩu và xác nhận mật khẩu có trùng khớp không
     @validator('xac_nhan_mat_khau')
     def passwords_match(cls, v, values, **kwargs):
         if 'mat_khau' in values and v != values['mat_khau']:
@@ -31,7 +25,6 @@ class NguoiDungCreate(NguoiDungBase):
         return v
 
 class NguoiDungUpdate(BaseModel):
-    # Người dùng có thể cập nhật các thông tin này
     ho_ten: Optional[str] = Field(None, max_length=100)
     so_dien_thoai: Optional[str] = Field(None, max_length=15)
     ngay_sinh: Optional[date] = None
@@ -44,23 +37,17 @@ class NguoiDungResponse(NguoiDungBase):
     vai_tro: VaiTroNguoiDungEnum
     trang_thai: TrangThaiNguoiDungEnum
     ngay_tao: datetime
-    # Nested response: Trả về danh sách địa chỉ của người dùng
-    dia_chis: List[DiaChiResponse] = []
+    dia_chis: List[DiaChiResponse] = [] # Giữ nguyên
 
     class Config:
         orm_mode = True
-        # Quan trọng: Không bao giờ trả về mật khẩu hash cho client
-        exclude = {'mat_khau_hash'}
 
-# ===================================================================
-# Schemas cho Xác thực (Authentication)
-# ===================================================================
 
-class LoginSchema(BaseModel):
-    email: EmailStr = Field(..., description="Email dùng để đăng nhập")
-    mat_khau: str = Field(..., description="Mật khẩu")
+# Định nghĩa schema thu gọn
+class NguoiDungCoBanResponse(BaseModel):
+    id: int
+    ho_ten: str = Field(..., description="Họ và tên người dùng")
+    anh_dai_dien_url: Optional[str] = None
 
-class TokenSchema(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
+    class Config:
+        orm_mode = True
