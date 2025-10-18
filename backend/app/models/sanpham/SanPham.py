@@ -42,6 +42,7 @@ class SanPham(db.Model):
             'idx_sanpham_fts',
             'ten_san_pham',
             'mo_ta',
+             mysql_prefix='FULLTEXT',
             mysql_with_parser='ngram'
         ),
     )
