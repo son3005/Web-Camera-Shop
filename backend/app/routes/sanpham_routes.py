@@ -177,7 +177,7 @@ def get_all_products():
             total_pages=pagination.pages
         )
         
-        return pag_response, 200
+        return jsonify(pag_response.dict()), 200
         
     except Exception as e:
         return jsonify(error=f"Lỗi máy chủ: {str(e)}"), 500
