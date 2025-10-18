@@ -3,7 +3,7 @@ from .DanhMuc import DanhMucCreate, DanhMucUpdate, DanhMucResponse
 from .ThuongHieu import ThuongHieuCreate, ThuongHieuUpdate, ThuongHieuResponse
 from .HinhAnhSanPham import HinhAnhCreate, HinhAnhUpdate, HinhAnhResponse
 from .BienTheSanPham import BienTheCreate, BienTheUpdate, BienTheResponse
-from .SanPham import SanPhamCreate, SanPhamUpdate, SanPhamResponse, SanPhamPublic
+from .SanPham import SanPhamCreate, SanPhamUpdate, SanPhamResponse, SanPhamPublic, TrangThaiUpdate
 
 # Bạn có thể định nghĩa __all__ để kiểm soát những gì được import với `from .schemas import *`
 __all__ = [
