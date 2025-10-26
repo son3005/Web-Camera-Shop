@@ -43,7 +43,7 @@ def create_app(config_class=DevelopmentConfig):
             with app.app_context():
                 return self.run(*args, **kwargs)
     celery.Task = ContextTask
-
+    
     
     # 3. Register Blueprints
     app.register_blueprint(product_api) 

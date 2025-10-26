@@ -1,5 +1,3 @@
-# /backend/app/routes/upload_routes.py
-
 from flask import Blueprint, request, jsonify
 import cloudinary
 import cloudinary.uploader
@@ -11,10 +9,12 @@ from pydantic import BaseModel, Field
 # Tạo một blueprint mới cho việc upload
 upload_api = Blueprint('upload_api', __name__, url_prefix='/api/upload')
 
+# === SỬA ĐỔI 1: Thêm 'public_id' vào Pydantic schema ===
 # Định nghĩa Pydantic schema cho response trả về
 class UploadResponse(BaseModel):
     message: str = Field(default="Upload thành công!")
     url: str = Field(..., description="URL an toàn (https) của ảnh đã được upload")
+    public_id: str = Field(..., description="ID định danh file trên Cloudinary (dùng để xóa)") # <-- THÊM DÒNG NÀY
 
 @upload_api.route('/image', methods=['POST'])
 @admin_required() # Chỉ có admin mới được upload ảnh sản phẩm
@@ -42,11 +42,13 @@ def upload_product_image():
             folder="san_pham" # Ví dụ: lưu tất cả ảnh sản phẩm vào thư mục 'san_pham'
         )
         
-        # 4. Trả về response thành công với URL an toàn (https)
+        # === SỬA ĐỔI 2: Trả về 'public_id' trong response ===
+        # 4. Trả về response thành công với URL an toàn (https) và public_id
         # Pydantic sẽ tự động validate response này theo schema UploadResponse
         return jsonify({
             "message": "Upload thành công!",
-            "url": upload_result.get('secure_url')
+            "url": upload_result.get('secure_url'),
+            "public_id": upload_result.get('public_id') # <-- THÊM DÒNG NÀY
         }), 201
 
     except Exception as e:
