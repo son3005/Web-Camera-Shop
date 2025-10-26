@@ -5,6 +5,7 @@ from app.config import DevelopmentConfig
 from app.extensions import db, migrate, jwt, cors, spec, celery
 import cloudinary
 import app.models
+from app.routes.auth_routes import auth_api
 from dotenv import load_dotenv
 
 # Import các routes (blueprints)
@@ -50,6 +51,7 @@ def create_app(config_class=DevelopmentConfig):
     app.register_blueprint(upload_api) 
     app.register_blueprint(public_review_api)
     app.register_blueprint(private_review_api)
+    app.register_blueprint(auth_api)
     
     
     # 4. Add routes

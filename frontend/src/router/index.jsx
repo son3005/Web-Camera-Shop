@@ -12,7 +12,7 @@ import ProductDetailPage from "../pages/ProductDetailPage";
 // const NotFoundPage = () => <div>404 - Page Not Found</div>; // Placeholder cho trang 404
 const DangNhap = lazy(() => import("../pages/Dangnhap"));
 const DangKy = lazy(() => import("../pages/Dangky"));
-const QuenMatKhau = lazy(() => import("../pages/QuenMatKhau"));
+const QuenMatKhau = lazy(() => import("../pages/Quenmatkhau"));
 
 // --- Tạo Router tổng hợp ---
 const router = createBrowserRouter([
