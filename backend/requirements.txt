@@ -44,6 +44,8 @@ redis==5.0.7
 ##############################
 Flask-Mailman==1.1.0
 email-validator==2.1.1
+Flask-Mail==0.9.1
+
 
 ##############################
 # File Upload / Cloud Storage

@@ -5,10 +5,8 @@ import app.models.nguoidung
 # ===== PRODUCT & CATEGORY =====
 import app.models.sanpham
 
-
 # ===== CART & ORDER =====
 import app.models.giohang_dathang
 
 # ===== COUPON, REVIEW, WISHLIST =====
-# from .extras import Coupon, Review,Wishlist, WishlistItem 
 import app.models.extras
