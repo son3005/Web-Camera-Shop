@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import "../assets/styles/MainLayout.css";
-
 const GrainyFilter = () => (
   <svg style={{ display: "none" }}>
     <filter id="noiseFilter">
