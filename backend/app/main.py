@@ -2,9 +2,10 @@
 
 from flask import Flask, jsonify
 from app.config import DevelopmentConfig
-from app.extensions import db, migrate, jwt, cors, spec, celery
+from app.extensions import db, migrate, jwt, cors, spec, celery, mail  
 import cloudinary
 import app.models
+from app.routes.auth_routes import auth_api
 from dotenv import load_dotenv
 
 # Import các routes (blueprints)
@@ -26,14 +27,20 @@ def create_app(config_class=DevelopmentConfig):
     migrate.init_app(app, db)
     jwt.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+<<<<<<< HEAD
     spec.register(app) 
+=======
+    spec.register(app)
+    mail.init_app(app)  
+>>>>>>> 065e4df95b0c94892e9ca6c7eb2975a7d1b2f83c
 
+    # Cấu hình Cloudinary
     cloudinary.config(
         cloud_name=app.config['CLOUDINARY_CLOUD_NAME'],
         api_key=app.config['CLOUDINARY_API_KEY'],
         api_secret=app.config['CLOUDINARY_API_SECRET']
     )
-    
+
     # Cấu hình Celery
     celery.config_from_object(app.config, namespace='CELERY')
     celery.autodiscover_tasks(['app.services'])
@@ -43,16 +50,19 @@ def create_app(config_class=DevelopmentConfig):
             with app.app_context():
                 return self.run(*args, **kwargs)
     celery.Task = ContextTask
-    
-    
+        
     # 3. Register Blueprints
-    app.register_blueprint(product_api) 
-    app.register_blueprint(upload_api) 
+    app.register_blueprint(product_api)
+    app.register_blueprint(upload_api)
     app.register_blueprint(public_review_api)
     app.register_blueprint(private_review_api)
+<<<<<<< HEAD
     app.register_blueprint(cart_api)
     app.register_blueprint(order_api)
     
+=======
+    app.register_blueprint(auth_api)
+>>>>>>> 065e4df95b0c94892e9ca6c7eb2975a7d1b2f83c
     
     # 4. Add routes
     @app.route('/')
@@ -68,3 +78,4 @@ def create_app(config_class=DevelopmentConfig):
         return jsonify(spec.generate_swagger())
 
     return app
+
