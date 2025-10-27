@@ -7,7 +7,7 @@ import { Provider } from 'react-redux';
 import { store } from './redux/store'; 
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import "./App.css";
-import "./assets/styles/MainLayout.css";
+// import "./assets/styles/MainLayout.css";
 import router from "./router/index.jsx"; 
 
 const queryClient = new QueryClient();
