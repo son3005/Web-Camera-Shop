@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 from app.routes.sanpham_routes import product_api
 from app.routes.upload_routes import upload_api
 from app.routes.danggia_routes import public_review_api, private_review_api 
+from app.routes.giohang_routes import cart_api
+from app.routes.donhang_routes import order_api
 
 def create_app(config_class=DevelopmentConfig):
     load_dotenv()
@@ -24,8 +26,6 @@ def create_app(config_class=DevelopmentConfig):
     migrate.init_app(app, db)
     jwt.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
-    
-    # (CẢI TIẾN) Dùng .register(app) thay vì .init_app(app)
     spec.register(app) 
 
     cloudinary.config(
@@ -50,6 +50,8 @@ def create_app(config_class=DevelopmentConfig):
     app.register_blueprint(upload_api) 
     app.register_blueprint(public_review_api)
     app.register_blueprint(private_review_api)
+    app.register_blueprint(cart_api)
+    app.register_blueprint(order_api)
     
     
     # 4. Add routes
