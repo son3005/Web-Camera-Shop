@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getProduct } from "../api/publicApi";
 import PriceTag from "../components/common/priceTag";
 import RatingStars from "../components/common/RatingStars";
-import ProductTabs from "../components/product/ProductTabs"; // ✅ Tabs mới (Tổng quan / Specs / Đánh giá)
+import ProductTabs from "../components/product/ProductTabs";
 import { useState } from "react";
 
 export default function ProductDetailPage() {
@@ -27,14 +27,12 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Lấy giá theo biến thể (nếu có)
   const v = data.variants?.[vIdx];
   const price = v?.price ?? v?.sale_price ?? data.price ?? data.price_from;
   const compareAt = v?.compareAt ?? v?.selling_price ?? data.compareAt;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* === Thông tin cơ bản === */}
       <div className="surface-panel p-4 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* === Gallery === */}
@@ -75,7 +73,6 @@ export default function ProductDetailPage() {
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
               {data.name}
             </h1>
-
             <div className="mt-1 text-sm text-gray-500 dark:text-slate-300">
               {data.brand}
             </div>
@@ -95,7 +92,6 @@ export default function ProductDetailPage() {
               <div className="mt-2 badge">{data.promoText}</div>
             )}
 
-            {/* === Variants === */}
             {!!data.variants?.length && (
               <div className="mt-6">
                 <div className="text-sm font-medium mb-2">Chọn biến thể</div>
@@ -117,16 +113,6 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* === Description ngắn === */}
-            {data.shortDescription && (
-              <div className="mt-6">
-                <div className="text-sm text-gray-700 dark:text-slate-300">
-                  {data.shortDescription}
-                </div>
-              </div>
-            )}
-
-            {/* === Buttons === */}
             <div className="mt-6 flex items-center gap-3">
               <button className="btn-emerald">Mua ngay</button>
               <button className="btn-outline">Thêm vào giỏ</button>
@@ -135,11 +121,11 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* === Tabs: Tổng quan / Thông số / Đánh giá === */}
+      {/* Tabs: Tổng quan / Specs / Đánh giá */}
       <ProductTabs
+        productId={String(productId)}
         description={data.description}
         specs={data.specs}
-        reviews={data.reviews || []}
       />
     </div>
   );

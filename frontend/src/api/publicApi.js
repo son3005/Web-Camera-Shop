@@ -4,14 +4,14 @@
 import axios from "axios";
 
 // --- CHẾ ĐỘ DEV / PROD ---
-const USE_MOCK_API = true;
+export const USE_MOCK_API = true; // <- export để reviewsApi dùng cùng chế độ
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || "http://localhost:5000/api",
 });
 
-// === Tiện ích ===
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+// tiện ích delay dùng chung (mock)
+export const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ========================= MOCK DATA (DEV) =========================
 const brands = ["Sony", "Canon", "Nikon", "Fujifilm", "Panasonic", "Leica"];
@@ -87,9 +87,7 @@ const MOCK_PRODUCTS = Array.from({ length: 20 }, (_, i) => {
       jacks: "USB-C, HDMI, 3.5mm Mic",
       card_slots: "2 x SD (UHS-II)",
     },
-    other: {
-      battery: "NP-FZ100 Lithium-Ion",
-    },
+    other: { battery: "NP-FZ100 Lithium-Ion" },
   };
 
   return {
@@ -146,8 +144,6 @@ const normalizeProduct = (p) => ({
 });
 
 // ========================= PUBLIC API =========================
-
-// Lấy danh sách sản phẩm
 export async function getProducts({
   page = 1,
   limit = 12,
@@ -197,7 +193,6 @@ export async function getProducts({
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  // === API thật ===
   const res = await api.get("/products", {
     params: {
       page,
@@ -215,7 +210,6 @@ export async function getProducts({
   };
 }
 
-// Chi tiết sản phẩm
 export async function getProduct(id) {
   if (USE_MOCK_API) {
     await delay(300);
@@ -227,7 +221,6 @@ export async function getProduct(id) {
   return normalizeProduct(res.data);
 }
 
-// Banner trang chủ
 export async function getBanners() {
   if (USE_MOCK_API) {
     await delay(200);
