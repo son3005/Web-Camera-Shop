@@ -1,4 +1,4 @@
-/* MainLayout.css — Storefront DARK-ONLY (không phụ thuộc html.dark) */
+/* MainLayout.css — Storefront DARK-ONLY */
 @import "tailwindcss";
 
 /* ========= BASE ========= */
@@ -28,20 +28,22 @@
 
 /* ========= COMPONENTS ========= */
 @layer components {
-  /* Nền trang (nếu dùng) */
+  /* Background */
   .app-bg {
     @apply bg-gradient-to-br from-emerald-950 via-emerald-800 to-slate-900;
   }
 
-  /* Header / Footer / Surfaces */
+  /* Header / Footer */
   .site-header {
-    @apply fixed top-0 left-0 w-full z-50 bg-slate-900/85 backdrop-blur-md border-b border-slate-700 shadow-sm;
+    @apply fixed top-0 left-0 w-full z-50 bg-slate-900/85 backdrop-blur-md
+           border-b border-slate-700 shadow-sm;
     height: 64px;
   }
   .site-footer {
     @apply bg-slate-900 border-t border-slate-700 text-slate-300;
   }
 
+  /* Surfaces */
   .surface-panel {
     @apply rounded-2xl border border-slate-700/50 bg-slate-800/70 backdrop-blur-md shadow;
   }
@@ -49,29 +51,44 @@
     @apply bg-slate-800 border border-slate-700 rounded-2xl shadow-sm hover:shadow-lg transition;
   }
 
-  /* Buttons */
+  /* ---------- Buttons ---------- */
+  /* Core utilities dùng chung cho tất cả biến thể nút */
+  .btn,
+  .btn-primary,
+  .btn-emerald,
+  .btn-outline,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5
+           font-semibold text-sm transition active:scale-95;
+  }
+
+  /* Biến thể (không dùng @apply btn nữa) */
   .btn {
-    @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5 font-semibold text-sm transition active:scale-95;
+    @apply bg-slate-800 text-slate-100 hover:bg-slate-700;
   }
   .btn-primary {
-    @apply btn bg-black text-white hover:bg-gray-900 shadow-md hover:shadow-lg;
+    @apply bg-black text-white hover:bg-gray-900 shadow-md hover:shadow-lg;
   }
   .btn-emerald {
-    @apply btn bg-emerald-500 text-white hover:bg-emerald-600 shadow-md hover:shadow-lg;
+    @apply bg-emerald-500 text-white hover:bg-emerald-600 shadow-md hover:shadow-lg;
   }
   .btn-outline {
-    @apply btn border border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700;
+    @apply border border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700;
   }
   .btn-ghost {
-    @apply btn text-slate-200 hover:bg-slate-800;
+    @apply text-slate-200 hover:bg-slate-800;
   }
 
   /* Inputs / Selects */
   .ui-input {
-    @apply w-full rounded-xl border border-slate-600 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-800 text-slate-100 shadow-sm placeholder-slate-400;
+    @apply w-full rounded-xl border border-slate-600 px-4 py-2 text-sm outline-none
+           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
+           bg-slate-800 text-slate-100 shadow-sm placeholder-slate-400;
   }
   .ui-select {
-    @apply rounded-xl border border-slate-600 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-800 text-slate-100 shadow-sm;
+    @apply rounded-xl border border-slate-600 px-4 py-2 text-sm outline-none
+           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
+           bg-slate-800 text-slate-100 shadow-sm;
   }
 
   /* Card image */
@@ -79,12 +96,12 @@
     @apply aspect-square overflow-hidden rounded-t-2xl bg-slate-900;
   }
 
-  /* Badges */
+  /* Badge */
   .badge {
     @apply inline-block text-xs px-2 py-1 rounded-full bg-emerald-900/40 text-emerald-300 font-medium;
   }
 
-  /* Prose (mô tả sản phẩm) */
+  /* Prose (mô tả) */
   .prose {
     @apply text-slate-200 leading-relaxed;
   }
@@ -100,13 +117,13 @@
     @apply text-emerald-400 underline decoration-emerald-600/40 hover:text-emerald-300;
   }
 
-  /* Skeleton */
+  /* Skeleton container */
   .skeleton {
     @apply relative overflow-hidden bg-slate-700 rounded-xl;
   }
 }
 
-/* Skeleton shimmer (pseudo-element không thể @apply) */
+/* Skeleton shimmer (pseudo-element – không dùng @apply được) */
 .skeleton::after {
   content: "";
   position: absolute;
@@ -128,8 +145,7 @@
   }
 }
 
-/* ========= UTILITIES BỔ SUNG ========= */
-/* Ẩn scrollbar nhưng vẫn cuộn được */
+/* ========= UTILITIES ========= */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -138,7 +154,6 @@
   scrollbar-width: none;
 }
 
-/* Carousel kéo ngang (HomePage ProductCarousel) */
 .grid-carousel {
   grid-auto-flow: column;
   grid-auto-columns: minmax(240px, 1fr);
