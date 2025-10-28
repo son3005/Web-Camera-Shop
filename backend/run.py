@@ -1,8 +1,11 @@
+from dotenv import load_dotenv
 
+load_dotenv()
 
 from app.main import create_app
 from app.config import DevelopmentConfig, ProductionConfig 
 import os
+
 
 config_name = os.getenv('FLASK_CONFIG', 'development')
 if config_name == 'production':

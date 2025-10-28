@@ -2,11 +2,11 @@
 
 from flask import Flask, jsonify
 from app.config import DevelopmentConfig
-from app.extensions import db, migrate, jwt, cors, spec, celery, mail  
+from app.extensions import db, migrate, jwt, cors, spec, celery, mail
+from flask_cors import CORS
 import cloudinary
 import app.models
 from app.routes.auth_routes import auth_api
-from dotenv import load_dotenv
 
 # Import các routes (blueprints)
 from app.routes.sanpham_routes import product_api
@@ -16,7 +16,6 @@ from app.routes.giohang_routes import cart_api
 from app.routes.donhang_routes import order_api
 
 def create_app(config_class=DevelopmentConfig):
-    load_dotenv()
     app = Flask(__name__)
     
     # 1. Load configuration
@@ -26,13 +25,15 @@ def create_app(config_class=DevelopmentConfig):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
-<<<<<<< HEAD
-    spec.register(app) 
-=======
+    cors.init_app(
+        app, 
+        resources={r"/api/*": {"origins": "http://localhost:5173"}}, 
+        supports_credentials=True,
+        allow_headers=["Authorization", "Content-Type"] 
+    )
     spec.register(app)
     mail.init_app(app)  
->>>>>>> 065e4df95b0c94892e9ca6c7eb2975a7d1b2f83c
+
 
     # Cấu hình Cloudinary
     cloudinary.config(
@@ -56,13 +57,9 @@ def create_app(config_class=DevelopmentConfig):
     app.register_blueprint(upload_api)
     app.register_blueprint(public_review_api)
     app.register_blueprint(private_review_api)
-<<<<<<< HEAD
     app.register_blueprint(cart_api)
     app.register_blueprint(order_api)
-    
-=======
     app.register_blueprint(auth_api)
->>>>>>> 065e4df95b0c94892e9ca6c7eb2975a7d1b2f83c
     
     # 4. Add routes
     @app.route('/')

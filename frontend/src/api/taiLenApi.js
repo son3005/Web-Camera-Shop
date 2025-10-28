@@ -10,7 +10,13 @@ import axios from "axios"; // Import axios GỐC
 export const layChuKyTaiLen = async () => {
   // POST /api/upload/signature
   const res = await apiPrivate.post("/upload/signature");
-  return res.data;
+
+  // ✅ SỬA ĐỔI: Nếu bạn dùng interceptor trả về response.data
+  // thì file axios.js của bạn đã làm điều đó (trả về res.data)
+  // nên ở đây chỉ cần `return res;` (vì res đã là data rồi)
+  // Nếu axios.js không trả về res.data, thì dùng `return res.data;`
+  // Dựa trên file axios.js, bạn chỉ cần:
+  return res;
 };
 
 /**
@@ -29,12 +35,12 @@ export const taiLenCloudinary = async (file, chuKyData) => {
   formData.append("folder", chuKyData.folder);
 
   // Lấy cloud_name từ biến môi trường
+  // ✅ SỬA ĐỔI: Sửa lại template literal bị hỏng
   const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${
     import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
   }/image/upload`;
 
+  // Gửi bằng axios gốc
   const res = await axios.post(CLOUDINARY_UPLOAD_URL, formData);
-
-  // Trả về { secure_url, public_id }
-  return res.data;
+  return res.data; // Trả về data từ Cloudinary
 };

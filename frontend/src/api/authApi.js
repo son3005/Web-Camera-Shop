@@ -1,39 +1,36 @@
-// src/api/authApi.js
-import { apiPublic } from "../lib/axios";
+// frontend/src/api/authApi.js
+import { apiPublic } from "../lib/axios"; // đảm bảo file trên tồn tại
 
+// --- ĐĂNG NHẬP ---
 export const login = async (credentials) => {
-  // Đăng nhập là hành động public (chưa có token)
-  const res = await apiPublic.post("/auth/dangnhap", credentials);
-  // res.data sẽ chứa { user, token }
-  return res.data;
+  // credentials: { email, mat_khau }
+  const res = await apiPublic.post("/auth/login", credentials);
+  return res.data; // { user, token }
 };
 
+// --- ĐĂNG KÝ ---
+// Export theo 2 tên để tránh mismatch import
 export const register = async (userData) => {
-  const res = await apiPublic.post("/auth/dangky", userData);
+  // userData: { ho_ten, email, mat_khau, xac_nhan_mat_khau? }
+  const res = await apiPublic.post("/auth/register", userData);
   return res.data;
 };
 
-import axios from "axios";
+export const registerUser = register; // alias để tương thích
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || "http://localhost:5000/api/auth",
-});
-
-// Đăng ký
-export async function registerUser({ email, ho_ten, mat_khau }) {
-  const res = await api.post("/register", { email, ho_ten, mat_khau });
+// --- QUÊN MẬT KHẨU ---
+export const forgotPassword = async (emailData) => {
+  // emailData: { email }
+  const res = await apiPublic.post("/auth/forgot-password", emailData);
   return res.data;
-}
+};
 
-// Đăng nhập
-export async function loginUser({ email, mat_khau }) {
-  const res = await api.post("/login", { email, mat_khau });
-  localStorage.setItem("access_token", res.data.access_token);
+// --- ĐẶT LẠI MẬT KHẨU ---
+export const resetPassword = async (token, passwordData) => {
+  // token: string, passwordData: { mat_khau: "..." }
+  const res = await apiPublic.post(
+    `/auth/reset-password/${token}`,
+    passwordData
+  );
   return res.data;
-}
-
-// Quên mật khẩu
-export async function forgotPassword({ email }) {
-  const res = await api.post("/forgot-password", { email });
-  return res.data;
-}
+};

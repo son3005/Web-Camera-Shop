@@ -121,7 +121,7 @@ const Orders = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-100 dark:bg-slate-900 min-h-screen">
+    <div className="p-6  min-h-screen">
       <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-6">
         Quản lý Đơn hàng
       </h1>

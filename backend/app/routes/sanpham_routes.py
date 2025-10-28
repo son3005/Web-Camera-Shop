@@ -23,10 +23,9 @@ from app.schemas.Shared import PaginatedResponse, TrangThaiSanPhamEnum
 # Tạo Blueprint
 product_api = Blueprint('product_api', __name__, url_prefix='/api/products')
 
-
 # --- ROUTE CHO ADMIN (Quản lý) ---
 
-@product_api.route('/', methods=['POST'])
+@product_api.route('', methods=['POST'])
 @admin_required()  # Yêu cầu quyền admin
 @spec.validate(
     body=Request(SanPhamCreate), 

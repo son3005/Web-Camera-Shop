@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { FaEnvelope, FaLock, FaArrowRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../api/authApi";
+import { login } from "../api/authApi"; // ✅ dùng đúng hàm từ file bạn gửi
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import BG from "../assets/images/BG.jpg";
 import LoginImage from "../assets/images/Login.jpg";
 
@@ -14,12 +17,24 @@ function DangNhap() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      await loginUser({ email, mat_khau: matKhau });
-      alert("🎉 Đăng nhập thành công!");
-      navigate("/"); // chuyển về trang chủ
+      // Gọi API đăng nhập
+      const data = await login({ email, mat_khau: matKhau });
+
+      // Lưu token và user vào localStorage
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      toast.success("🎉 Đăng nhập thành công!", { position: "top-center" });
+      setTimeout(() => navigate("/"), 1000); // Chuyển về trang chủ sau 1s
     } catch (err) {
-      alert(err.response?.data?.error || "❌ Email hoặc mật khẩu không đúng!");
+      console.error("Đăng nhập lỗi:", err);
+      toast.error(err.response?.data?.error || "❌ Email hoặc mật khẩu không đúng!", {
+        position: "top-center",
+      });
     } finally {
       setLoading(false);
     }
@@ -27,6 +42,8 @@ function DangNhap() {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      <ToastContainer />
+
       {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -83,7 +100,9 @@ function DangNhap() {
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold py-3 rounded-lg hover:shadow-xl transition"
+              className={`flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold py-3 rounded-lg hover:shadow-xl transition ${
+                loading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
             >
               {loading ? "Đang đăng nhập..." : <>Đăng nhập <FaArrowRight /></>}
             </button>

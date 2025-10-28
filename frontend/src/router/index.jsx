@@ -1,60 +1,73 @@
-import React, { lazy } from "react";
+// src/router/index.jsx
+import React, { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
-// --- Import các cấu hình route riêng lẻ ---
-import AdminRoutes from "./AdminRoutes";
-import MainLayout from "../layouts/MainLayout";
+// --- Import Layout gốc ---
+import App from "../App"; // Component gốc chứa <Outlet/> và ToastContainer
 
+// --- Import các cấu hình route con ---
+import AdminRoutes from "./AdminRoutes"; // Object cấu hình route admin
+import MainRoutes from "./MainRoutes"; // Object cấu hình route public
 
-// --- Import các trang ---
-import HomePage from "../pages/HomePage";
-import ProductListPage from "../pages/ProductListPage";
-import ProductDetailPage from "../pages/ProductDetailPage";
-
-// --- Lazy load các trang khác ---
+// --- Lazy load các trang Auth (không dùng layout) ---
 const DangNhap = lazy(() => import("../pages/Dangnhap"));
-const DangKy = lazy(() => import("../pages/Dangky"));
+const DangKy = lazy(() => import("../pages/Dangky")); // Giả sử có trang Dangky
 const QuenMatKhau = lazy(() => import("../pages/Quenmatkhau"));
-const DoiMatKhau = lazy(() => import("../pages/Doimatkhau")); 
+const DoiMatKhau = lazy(() => import("../pages/Doimatkhau"));
 
 // --- Tạo Router tổng hợp ---
 const router = createBrowserRouter([
-  // Nhóm 1: Route của Admin
-  AdminRoutes,
-
-  // Nhóm 2: Public routes (dùng MainLayout)
   {
+    // Route gốc sử dụng App layout
     path: "/",
-    element: <MainLayout />, // MainLayout đã chứa Header/Footer
+    element: <App />, // App chứa <Outlet/>
     children: [
-      { index: true, element: <HomePage /> },
-      { path: "products", element: <ProductListPage /> },
-      { path: "products/:productId", element: <ProductDetailPage /> },
+      // Nhánh 1: Các route public (sẽ dùng MainLayout bên trong MainRoutes)
+      MainRoutes,
+      // Nhánh 2: Các route admin (sẽ dùng AdminLayoutWrapper bên trong AdminRoutes)
+      AdminRoutes,
     ],
   },
 
-  // Nhóm 3: Auth routes (login, register, forgot password, reset password)
+  // --- Các route không dùng layout chung (App layout) ---
+  // Ví dụ: Trang đăng nhập, đăng ký...
   {
     path: "/dangnhap",
-    element: <DangNhap />,
+    element: (
+      <Suspense fallback={<div>Đang tải...</div>}>
+        <DangNhap />
+      </Suspense>
+    ),
   },
   {
-    path: "/dangky",
-    element: <DangKy />,
+    path: "/dangky", // Ví dụ
+    element: (
+      <Suspense fallback={<div>Đang tải...</div>}>
+        <DangKy />
+      </Suspense>
+    ),
   },
-  {
+   {
     path: "/quenmatkhau",
-    element: <QuenMatKhau />,
+    element: (
+      <Suspense fallback={<div>Đang tải...</div>}>
+        <QuenMatKhau />
+      </Suspense>
+    ),
   },
   {
-    path: "/doimatkhau/:token",
-    element: <DoiMatKhau />, // ✅ dùng component đúng
+    path: "/doimatkhau/:token", // Sửa lại tên route nếu cần
+    element: (
+      <Suspense fallback={<div>Đang tải...</div>}>
+        <DoiMatKhau />
+      </Suspense>
+    ),
   },
 
-  // Có thể thêm trang 404 nếu cần
+  // (Tùy chọn) Route bắt lỗi 404
   // {
   //   path: "*",
-  //   element: <NotFoundPage />,
+  //   element: <div>Trang không tồn tại (404)</div>,
   // },
 ]);
 

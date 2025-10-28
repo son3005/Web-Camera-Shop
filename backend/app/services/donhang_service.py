@@ -1,7 +1,8 @@
 # /backend/app/services/donhang_service.py
 from app.extensions import db
 from sqlalchemy.orm import Session, joinedload, selectinload
-from sqlalchemy import func, or_ # Thêm 'or_' cho tìm kiếm
+# --- (THÊM) Import func để dùng count ---
+from sqlalchemy import func, or_
 from decimal import Decimal
 import uuid # Để tạo mã đơn hàng
 from typing import Dict, Any, List
@@ -14,8 +15,7 @@ from app.models.nguoidung import DiaChi, NguoiDung
 # --- Import Enum từ file mới ---
 from app.models.enums import TrangThaiDonHangEnum, TrangThaiThanhToanEnum, PhuongThucThanhToanEnum
 
-# Import Schemas
-# (Sửa lại đường dẫn import schema DonHang cho đúng)
+# Import Schemas (Sửa đường dẫn nếu cần)
 from app.schemas.giohang_dathang import DonHangCreate, DonHangUpdate
 
 # Import lỗi từ các service khác
@@ -54,10 +54,8 @@ class DonHangService:
     def create_order_from_cart(user_id: int, data: DonHangCreate) -> DonHang:
         """
         Nghiệp vụ cốt lõi: Tạo đơn hàng từ giỏ hàng của người dùng.
-        Đây là một giao dịch (transaction) phức tạp.
         """
-
-        # 1. Lấy giỏ hàng của người dùng (tải kèm biến thể và sản phẩm)
+        # ... (Code create_order_from_cart của bạn giữ nguyên) ...
         cart = GioHang.query.options(
             selectinload(GioHang.items).options(
                 joinedload(ChiTietGioHang.bien_the).options(
@@ -69,13 +67,11 @@ class DonHangService:
         if not cart or not cart.items:
             raise CartIsEmptyError("Giỏ hàng của bạn đang trống.")
 
-        # 2. Lấy địa chỉ giao hàng (và kiểm tra xem có thuộc user này không)
         address = DiaChi.query.filter_by(id=data.dia_chi_id, nguoi_dung_id=user_id).first()
 
         if not address:
             raise AddressNotFoundError("Địa chỉ giao hàng không hợp lệ.")
 
-        # 3. KIỂM TRA TỒN KHO & KHÓA DATABASE (RẤT QUAN TRỌNG)
         variant_ids = [item.bien_the_san_pham_id for item in cart.items]
         variants = BienTheSanPham.query.filter(BienTheSanPham.id.in_(variant_ids)).with_for_update().all()
         variants_map = {v.id: v for v in variants}
@@ -83,7 +79,6 @@ class DonHangService:
         tam_tinh = Decimal(0)
         cac_chi_tiet_don_hang = []
 
-        # 4. Tính toán giá trị đơn hàng và kiểm tra lại tồn kho
         for item in cart.items:
             variant = variants_map.get(item.bien_the_san_pham_id)
 
@@ -107,11 +102,8 @@ class DonHangService:
                     so_luong=item.so_luong
                 )
             )
-
-            # 5. TRỪ KHO
             variant.so_luong_ton -= item.so_luong
 
-        # 6. Tạo Đơn hàng (DonHang)
         phi_van_chuyen = Decimal(0) # TODO: Logic tính phí vận chuyển
         tong_tien = tam_tinh + phi_van_chuyen
 
@@ -121,7 +113,8 @@ class DonHangService:
             trang_thai=TrangThaiDonHangEnum.CHO_XAC_NHAN,
             ten_nguoi_nhan=address.ten_nguoi_nhan,
             so_dien_thoai_nhan=address.so_dien_thoai,
-            dia_chi_giao_hang=address.get_full_address(),
+            # Sử dụng getattr để phòng trường hợp hàm không tồn tại
+            dia_chi_giao_hang=getattr(address, 'get_full_address', lambda: f"{address.dia_chi_cu_the}, {address.phuong_xa}, {address.quan_huyen}, {address.tinh_thanh}")(),
             ghi_chu=data.ghi_chu,
             tam_tinh=tam_tinh,
             phi_van_chuyen=phi_van_chuyen,
@@ -130,7 +123,6 @@ class DonHangService:
 
         new_order.cac_chi_tiet.extend(cac_chi_tiet_don_hang)
 
-        # 7. Tạo Thanh toán (ThanhToan)
         new_payment = ThanhToan(
             so_tien=tong_tien,
             phuong_thuc=data.phuong_thuc_thanh_toan,
@@ -138,20 +130,18 @@ class DonHangService:
         )
         new_order.thanh_toan = new_payment
 
-        # 8. XÓA GIỎ HÀNG
         ChiTietGioHang.query.filter_by(gio_hang_id=cart.id).delete()
 
-        # 9. Thêm vào session
         db.session.add(new_order)
-        # db.session.add(new_payment) # Không cần add thanh toán vì đã cascade
-
         return new_order
+
 
     @staticmethod
     def update_order_status(order_id: int, data: DonHangUpdate) -> DonHang:
         """
         (Admin) Cập nhật trạng thái đơn hàng.
         """
+        # ... (Code update_order_status của bạn giữ nguyên) ...
         order = db.session.get(DonHang, order_id)
         if not order:
             raise OrderNotFoundError("Không tìm thấy đơn hàng.")
@@ -174,13 +164,16 @@ class DonHangService:
         """
         (Internal) Hoàn lại số lượng tồn kho khi đơn hàng bị hủy.
         """
-        variant_ids_to_refund = [item.bien_the_id for item in order.cac_chi_tiet]
-        variants = BienTheSanPham.query.filter(BienTheSanPham.id.in_(variant_ids_to_refund)).with_for_update().all()
-        variants_map = {v.id: v for v in variants}
+        # ... (Code _refund_stock_for_order của bạn giữ nguyên) ...
+        variant_ids_quantities = {item.bien_the_id: item.so_luong for item in order.cac_chi_tiet}
+        if not variant_ids_quantities:
+            return
 
-        for item in order.cac_chi_tiet:
-            if item.bien_the_id in variants_map:
-                variants_map[item.bien_the_id].so_luong_ton += item.so_luong
+        variants = BienTheSanPham.query.filter(BienTheSanPham.id.in_(variant_ids_quantities.keys())).with_for_update().all()
+
+        for variant in variants:
+            if variant.id in variant_ids_quantities:
+                variant.so_luong_ton += variant_ids_quantities[variant.id]
 
         print(f"Đã hoàn kho cho đơn hàng {order.ma_don_hang}")
 
@@ -192,6 +185,7 @@ class DonHangService:
         """
         Lấy chi tiết 1 đơn hàng.
         """
+        # ... (Code get_order_details của bạn giữ nguyên) ...
         order = DonHang.query.options(
             selectinload(DonHang.cac_chi_tiet),
             joinedload(DonHang.thanh_toan),
@@ -211,18 +205,19 @@ class DonHangService:
         """
         Lấy lịch sử đơn hàng của người dùng (phân trang).
         """
+        # ... (Code get_orders_for_user của bạn giữ nguyên) ...
         query = DonHang.query.filter_by(nguoi_dung_id=user_id)\
                 .order_by(DonHang.ngay_tao.desc())
 
         paginated_result = query.paginate(page=page, per_page=per_page, error_out=False)
         return paginated_result
 
-    # --- (ĐÂY LÀ PHƯƠNG THỨC ĐƯỢC CẬP NHẬT) ---
     @staticmethod
     def get_all_orders_admin(page: int, per_page: int, filters: Dict[str, Any] = None, sort_by: str = None, sort_order: str = 'desc'):
         """
         (Admin) Lấy tất cả đơn hàng, có bộ lọc, sắp xếp và phân trang nâng cao.
         """
+        # ... (Code get_all_orders_admin đã cập nhật ở lượt trước giữ nguyên) ...
         query = DonHang.query # Bắt đầu query
 
         # 1. Áp dụng Bộ lọc (Filters)
@@ -230,11 +225,12 @@ class DonHangService:
             # Lọc theo Trạng thái (có thể là nhiều trạng thái)
             if filters.get('trang_thai'):
                 status_str = filters['trang_thai'] # Ví dụ: "CHO_XAC_NHAN,DA_XAC_NHAN"
-                status_list = [s.strip() for s in status_str.split(',') if s.strip()]
+                # Chuyển thành list enum hợp lệ
+                status_list = [s.strip().lower() for s in status_str.split(',') if s.strip()] # Chuyển về lowercase
                 valid_statuses = []
                 for s in status_list:
                     try:
-                        valid_statuses.append(TrangThaiDonHangEnum(s))
+                        valid_statuses.append(TrangThaiDonHangEnum(s)) # Tạo enum từ lowercase
                     except ValueError:
                         print(f"Cảnh báo: Trạng thái lọc '{s}' không hợp lệ.") # Log cảnh báo
                 if valid_statuses:
@@ -246,14 +242,12 @@ class DonHangService:
             if start_date_str:
                 try:
                     start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-                    # Lọc từ đầu ngày bắt đầu
                     query = query.filter(DonHang.ngay_tao >= datetime.combine(start_date, time.min))
                 except ValueError:
                     print(f"Cảnh báo: start_date '{start_date_str}' không hợp lệ.")
             if end_date_str:
                 try:
                     end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-                    # Lọc đến cuối ngày kết thúc
                     query = query.filter(DonHang.ngay_tao <= datetime.combine(end_date, time.max))
                 except ValueError:
                     print(f"Cảnh báo: end_date '{end_date_str}' không hợp lệ.")
@@ -265,7 +259,7 @@ class DonHangService:
                     or_(
                         DonHang.ma_don_hang.ilike(search),
                         DonHang.so_dien_thoai_nhan.ilike(search),
-                        DonHang.ten_nguoi_nhan.ilike(search) # Thêm tìm theo tên người nhận
+                        DonHang.ten_nguoi_nhan.ilike(search)
                     )
                 )
 
@@ -273,11 +267,10 @@ class DonHangService:
         order_field = None
         sort_direction = sort_order.lower()
         if sort_direction not in ['asc', 'desc']:
-            sort_direction = 'desc' # Mặc định là desc nếu giá trị không hợp lệ
+            sort_direction = 'desc'
 
-        if sort_by == 'price': # Sắp xếp theo Tổng tiền
+        if sort_by == 'price':
             order_field = DonHang.tong_tien.asc() if sort_direction == 'asc' else DonHang.tong_tien.desc()
-        # Mặc định hoặc nếu sort_by == 'date' (hoặc giá trị không hợp lệ khác)
         else:
             order_field = DonHang.ngay_tao.asc() if sort_direction == 'asc' else DonHang.ngay_tao.desc()
 
@@ -286,3 +279,37 @@ class DonHangService:
         # 3. Phân trang
         paginated_result = query.paginate(page=page, per_page=per_page, error_out=False)
         return paginated_result
+
+
+    @staticmethod
+    def get_order_summary_by_status() -> Dict[str, int]:
+        """
+        (Admin) Lấy tổng số đơn hàng theo từng trạng thái.
+        Dùng cho component StatusGrid ở frontend.
+        """
+        try:
+            # Query để đếm số lượng đơn hàng, nhóm theo trạng thái
+            status_counts_query = db.session.query(
+                DonHang.trang_thai,
+                func.count(DonHang.id) # Đếm số lượng ID
+            ).group_by(DonHang.trang_thai).all() # Nhóm theo trạng thái
+
+            # Chuyển đổi kết quả thành dictionary dạng {'TEN_ENUM_STR': count}
+            # Sử dụng .value để lấy giá trị string của Enum
+            summary = {status.value: count for status, count in status_counts_query}
+
+            # Đảm bảo tất cả các trạng thái enum đều có trong kết quả (với count = 0 nếu không có)
+            all_statuses = [status.value for status in TrangThaiDonHangEnum]
+            for status_key in all_statuses:
+                summary.setdefault(status_key, 0) # Dùng setdefault cho gọn
+
+            # Tính tổng số đơn hàng và thêm vào dict với key 'Total' (frontend cần key này)
+            total_orders = sum(summary.values())
+            summary['Total'] = total_orders
+
+            return summary
+
+        except Exception as e:
+            print(f"Lỗi khi lấy thống kê đơn hàng theo trạng thái: {str(e)}")
+            # Trả về dict rỗng nếu có lỗi để tránh crash frontend
+            return {}

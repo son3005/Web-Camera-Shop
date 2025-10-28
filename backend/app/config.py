@@ -1,8 +1,8 @@
 import os
-from dotenv import load_dotenv
 
 
-load_dotenv()
+
+
 
 class Config:
     """
@@ -15,7 +15,7 @@ class Config:
     # Khóa JWT (dành riêng cho xác thực người dùng)
     JWT_SECRET_KEY = os.environ.get(
         'JWT_SECRET_KEY',
-        'b3bccc3498a97d10d5b8f9e96232006535981e9e41852b74a4f57b989ac8c937'
+        '6e5d8f3aa23b2fec0959da24bd47cef833f30a8dd8cb79ac9dbd0a37f18e3ed6'
     )
 
     # Database
@@ -33,12 +33,12 @@ class Config:
 
 
     # Email
-    MAIL_SERVER = 'smtp.gmail.com'
-    MAIL_PORT = 587
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    MAIL_PORT = os.environ.get('MAIL_PORT', 587)
     MAIL_USE_TLS = True
-    MAIL_USERNAME = 'ha.0774979941@gmail.com'
-    MAIL_PASSWORD = 'gnaxgmyblwcsrfub'
-    MAIL_DEFAULT_SENDER = 'ha.0774979941@gmail.com'
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
 
 
 class DevelopmentConfig(Config):
