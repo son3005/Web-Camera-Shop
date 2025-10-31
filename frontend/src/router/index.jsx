@@ -1,61 +1,101 @@
-import React, { lazy } from "react";
+import React, { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
-
-// --- Import các cấu hình route riêng lẻ ---
 import AdminRoutes from "./AdminRoutes";
 import MainLayout from "../layouts/MainLayout";
 
+const HomePage = lazy(() => import("../pages/HomePage"));
+const ProductListPage = lazy(() => import("../pages/ProductListPage"));
+const ProductDetailPage = lazy(() => import("../pages/ProductDetailPage"));
+const CartPage = lazy(() => import("../pages/CartPage"));
+const CheckoutPage = lazy(() => import("../pages/CheckoutPage"));
 
-// --- Import các trang ---
-import HomePage from "../pages/HomePage";
-import ProductListPage from "../pages/ProductListPage";
-import ProductDetailPage from "../pages/ProductDetailPage";
-
-// --- Lazy load các trang khác ---
 const DangNhap = lazy(() => import("../pages/Dangnhap"));
 const DangKy = lazy(() => import("../pages/Dangky"));
-const QuenMatKhau = lazy(() => import("../pages/Quenmatkhau"));
-const DoiMatKhau = lazy(() => import("../pages/Doimatkhau")); 
+const QuenMatKhau = lazy(() => import("../pages/QuenMatKhau"));
+const DoiMatKhau = lazy(() => import("../pages/Doimatkhau"));
 
-// --- Tạo Router tổng hợp ---
+const Fallback = <div className="container mx-auto px-4 py-10">Đang tải…</div>;
+
 const router = createBrowserRouter([
-  // Nhóm 1: Route của Admin
   AdminRoutes,
-
-  // Nhóm 2: Public routes (dùng MainLayout)
   {
     path: "/",
-    element: <MainLayout />, // MainLayout đã chứa Header/Footer
+    element: <MainLayout />,
     children: [
-      { index: true, element: <HomePage /> },
-      { path: "products", element: <ProductListPage /> },
-      { path: "products/:productId", element: <ProductDetailPage /> },
+      {
+        index: true,
+        element: (
+          <Suspense fallback={Fallback}>
+            <HomePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "products",
+        element: (
+          <Suspense fallback={Fallback}>
+            <ProductListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "products/:productId",
+        element: (
+          <Suspense fallback={Fallback}>
+            <ProductDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "cart",
+        element: (
+          <Suspense fallback={Fallback}>
+            <CartPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "checkout",
+        element: (
+          <Suspense fallback={Fallback}>
+            <CheckoutPage />
+          </Suspense>
+        ),
+      },
     ],
   },
-
-  // Nhóm 3: Auth routes (login, register, forgot password, reset password)
   {
     path: "/dangnhap",
-    element: <DangNhap />,
+    element: (
+      <Suspense fallback={Fallback}>
+        <DangNhap />
+      </Suspense>
+    ),
   },
   {
     path: "/dangky",
-    element: <DangKy />,
+    element: (
+      <Suspense fallback={Fallback}>
+        <DangKy />
+      </Suspense>
+    ),
   },
   {
     path: "/quenmatkhau",
-    element: <QuenMatKhau />,
+    element: (
+      <Suspense fallback={Fallback}>
+        <QuenMatKhau />
+      </Suspense>
+    ),
   },
   {
     path: "/doimatkhau/:token",
-    element: <DoiMatKhau />, // ✅ dùng component đúng
+    element: (
+      <Suspense fallback={Fallback}>
+        <DoiMatKhau />
+      </Suspense>
+    ),
   },
-
-  // Có thể thêm trang 404 nếu cần
-  // {
-  //   path: "*",
-  //   element: <NotFoundPage />,
-  // },
 ]);
 
 export default router;

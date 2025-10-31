@@ -1,5 +1,4 @@
-/* MainLayout.css — Storefront DARK-ONLY */
-
+/* MainLayout.css — Storefront LIGHT + DARK (auto follow OS/browser) */
 @import "tailwindcss";
 
 /* ========= BASE ========= */
@@ -8,52 +7,61 @@
   body {
     @apply antialiased scroll-smooth;
   }
+
+  /* Auto follow system theme */
   body {
-    @apply bg-slate-900 text-slate-100 font-sans;
+    @apply bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans;
   }
 
   h1,
   h2,
   h3,
   h4 {
-    @apply font-semibold text-white;
+    @apply font-semibold text-slate-900 dark:text-white;
   }
 
   a {
     @apply text-inherit no-underline transition duration-200;
   }
   a:hover {
-    @apply text-emerald-400;
+    @apply text-emerald-600 dark:text-emerald-400;
   }
 }
 
 /* ========= COMPONENTS ========= */
 @layer components {
-  /* Background */
+  /* Background gradient behind pages (nhẹ cho light, đậm cho dark) */
   .app-bg {
-    @apply bg-gradient-to-br from-emerald-950 via-emerald-800 to-slate-900;
+    @apply bg-gradient-to-br from-emerald-50 via-emerald-100 to-white
+           dark:from-emerald-950 dark:via-emerald-900 dark:to-slate-900;
   }
 
   /* Header / Footer */
   .site-header {
-    @apply fixed top-0 left-0 w-full z-50 bg-slate-900/85 backdrop-blur-md
-           border-b border-slate-700 shadow-sm;
+    @apply fixed top-0 left-0 w-full z-50 backdrop-blur-md shadow-sm;
+    @apply bg-white/80 border-b border-gray-200
+           dark:bg-slate-900/85 dark:border-slate-700;
     height: 64px;
   }
   .site-footer {
-    @apply bg-slate-900 border-t border-slate-700 text-slate-300;
+    @apply bg-gray-50 border-t border-gray-200 text-slate-700
+           dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300;
   }
 
   /* Surfaces */
   .surface-panel {
-    @apply rounded-2xl border border-slate-700/50 bg-slate-800/70 backdrop-blur-md shadow;
+    @apply rounded-2xl border shadow;
+    @apply bg-white/90 border-gray-200
+           dark:bg-slate-800/70 dark:border-slate-700/50;
+    @apply backdrop-blur-md;
   }
   .surface-card {
-    @apply bg-slate-800 border border-slate-700 rounded-2xl shadow-sm hover:shadow-lg transition;
+    @apply rounded-2xl transition shadow-sm hover:shadow-lg border;
+    @apply bg-white border-gray-200
+           dark:bg-slate-800 dark:border-slate-700;
   }
 
   /* ---------- Buttons ---------- */
-  /* Core utilities dùng chung cho tất cả biến thể nút */
   .btn,
   .btn-primary,
   .btn-emerald,
@@ -63,68 +71,78 @@
            font-semibold text-sm transition active:scale-95;
   }
 
-  /* Biến thể (không dùng @apply btn nữa) */
   .btn {
-    @apply bg-slate-800 text-slate-100 hover:bg-slate-700;
+    /* neutral */
+    @apply border;
+    @apply bg-white text-slate-900 border-black/10 hover:bg-black/5
+           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700;
   }
   .btn-primary {
-    @apply bg-black text-white hover:bg-gray-900 shadow-md hover:shadow-lg;
+    @apply bg-black text-white hover:bg-gray-900 shadow-md hover:shadow-lg
+           dark:bg-slate-900 dark:hover:bg-black;
   }
   .btn-emerald {
-    @apply bg-emerald-500 text-white hover:bg-emerald-600 shadow-md hover:shadow-lg;
+    @apply bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg;
   }
   .btn-outline {
-    @apply border border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700;
+    @apply bg-transparent border;
+    @apply text-slate-700 border-gray-300 hover:bg-gray-50
+           dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-800;
   }
   .btn-ghost {
-    @apply text-slate-200 hover:bg-slate-800;
+    @apply text-slate-700 hover:bg-gray-100
+           dark:text-slate-200 dark:hover:bg-slate-800;
   }
 
   /* Inputs / Selects */
   .ui-input {
-    @apply w-full rounded-xl border border-slate-600 px-4 py-2 text-sm outline-none
-           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
-           bg-slate-800 text-slate-100 shadow-sm placeholder-slate-400;
+    @apply w-full rounded-xl px-4 py-2 text-sm outline-none border shadow-sm;
+    @apply bg-white text-slate-900 placeholder-slate-400 border-gray-300
+           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500;
+    @apply dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400 dark:border-slate-600;
   }
   .ui-select {
-    @apply rounded-xl border border-slate-600 px-4 py-2 text-sm outline-none
-           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
-           bg-slate-800 text-slate-100 shadow-sm;
+    @apply rounded-xl px-4 py-2 text-sm outline-none border shadow-sm;
+    @apply bg-white text-slate-900 border-gray-300
+           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500;
+    @apply dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600;
   }
 
   .ui-card-thumb {
-    @apply aspect-square overflow-hidden rounded-t-2xl bg-slate-900;
+    @apply aspect-square overflow-hidden rounded-t-2xl bg-gray-100 dark:bg-slate-900;
   }
 
   /* Badge */
   .badge {
-    @apply inline-block text-xs px-2 py-1 rounded-full bg-emerald-900/40 text-emerald-300 font-medium;
+    @apply inline-block text-xs px-2 py-1 rounded-full font-medium;
+    @apply bg-emerald-100 text-emerald-700
+           dark:bg-emerald-900/40 dark:text-emerald-300;
   }
 
   /* Prose (mô tả) */
   .prose {
-    @apply text-slate-200 leading-relaxed;
+    @apply leading-relaxed text-slate-700 dark:text-slate-200;
   }
   .prose h1,
   .prose h2,
   .prose h3 {
-    @apply font-semibold text-white mt-4 mb-2;
+    @apply font-semibold text-slate-900 dark:text-white mt-4 mb-2;
   }
   .prose p {
     @apply my-3;
   }
   .prose a {
-    @apply text-emerald-400 underline decoration-emerald-600/40 hover:text-emerald-300;
+    @apply text-emerald-600 underline decoration-emerald-600/30 hover:text-emerald-700
+                   dark:text-emerald-400 dark:decoration-emerald-600/40 dark:hover:text-emerald-300;
   }
 
-  /* Skeleton container */
-
+  /* Skeleton */
   .skeleton {
-    @apply relative overflow-hidden bg-slate-700 rounded-xl;
+    @apply relative overflow-hidden rounded-xl bg-gray-200 dark:bg-slate-700;
   }
 }
 
-/* Skeleton shimmer (pseudo-element – không dùng @apply được) */
+/* Skeleton shimmer */
 .skeleton::after {
   content: "";
   position: absolute;
@@ -132,7 +150,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.6),
     transparent
   );
   animation: shimmer 1.2s infinite;
@@ -161,22 +179,16 @@
 }
 @media (max-width: 1024px) {
   .grid-carousel {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(240px, 1fr);
+    grid-auto-columns: minmax(220px, 1fr);
   }
-  @media (max-width: 1024px) {
-    .grid-carousel {
-      grid-auto-columns: minmax(220px, 1fr);
-    }
+}
+@media (max-width: 768px) {
+  .grid-carousel {
+    grid-auto-columns: minmax(200px, 85%);
   }
-  @media (max-width: 768px) {
-    .grid-carousel {
-      grid-auto-columns: minmax(200px, 85%);
-    }
-  }
-  @media (max-width: 480px) {
-    .grid-carousel {
-      grid-auto-columns: minmax(170px, 80%);
-    }
+}
+@media (max-width: 480px) {
+  .grid-carousel {
+    grid-auto-columns: minmax(170px, 80%);
   }
 }

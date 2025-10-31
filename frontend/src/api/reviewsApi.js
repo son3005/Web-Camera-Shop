@@ -1,64 +1,58 @@
 // frontend/src/api/reviewsApi.js
-// API cho đánh giá sản phẩm — tách riêng để dễ cache/invalidate & mở rộng
+// API đánh giá cho giao diện khách hàng.
+// - Dev/mock: lưu trong localStorage theo productId
+// - Prod: gọi backend /products/:id/reviews
 
 import { api, USE_MOCK_API, delay } from "./publicApi";
 
-// Mock store nho nhỏ cho DEV
-const MOCK_REVIEWS_DB = new Map(); // key: productId -> {items:[], total:number}
+const LS_KEY = "wcs_reviews_v1";
 
-export async function getReviews(productId, { page = 1, limit = 10 } = {}) {
-  if (USE_MOCK_API) {
-    await delay(200);
-    const store = MOCK_REVIEWS_DB.get(productId) || { items: [], total: 0 };
-    const start = (page - 1) * limit;
-    return {
-      items: store.items.slice(start, start + limit),
-      total: store.total,
-      page,
-      totalPages: Math.max(1, Math.ceil(store.total / limit)),
-    };
+function readLS() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
   }
-  const res = await api.get(`/products/${productId}/reviews`, {
-    params: { page, limit },
-  });
-  return res.data;
+}
+function writeLS(obj) {
+  localStorage.setItem(LS_KEY, JSON.stringify(obj));
 }
 
-export async function submitReview(
-  productId,
-  { rating, content, willRecommend, name, phone, images = [] }
-) {
+/** Lấy danh sách review của 1 sản phẩm */
+export async function getReviews(productId) {
+  if (!productId) return { items: [], total: 0 };
   if (USE_MOCK_API) {
-    await delay(500);
-    const store = MOCK_REVIEWS_DB.get(productId) || { items: [], total: 0 };
-    const review = {
-      id: Date.now(),
-      rating,
-      content,
-      willRecommend: !!willRecommend,
-      name,
-      phone,
-      images: images.map((f) =>
-        typeof f === "string" ? f : URL.createObjectURL(f)
-      ),
-      created_at: new Date().toISOString(),
-    };
-    store.items.unshift(review);
-    store.total += 1;
-    MOCK_REVIEWS_DB.set(productId, store);
-    return { ok: true, id: review.id };
+    await delay(200);
+    const db = readLS();
+    const arr = db[productId] || [];
+    // sắp xếp mới nhất trước
+    arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return { items: arr, total: arr.length };
   }
+  const res = await api.get(`/products/${productId}/reviews`);
+  return { items: res.data?.items || [], total: res.data?.total || 0 };
+}
 
-  const form = new FormData();
-  form.append("rating", rating);
-  form.append("content", content || "");
-  form.append("willRecommend", Boolean(willRecommend));
-  form.append("name", name || "");
-  form.append("phone", phone || "");
-  images.slice(0, 3).forEach((f) => form.append("images", f));
-
-  const res = await api.post(`/products/${productId}/reviews`, form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+/** Thêm review */
+export async function addReview(productId, payload) {
+  // payload: { name, rating, content }
+  if (USE_MOCK_API) {
+    await delay(250);
+    const db = readLS();
+    const arr = db[productId] || [];
+    const item = {
+      id: `${productId}-${Date.now()}`,
+      name: payload.name?.trim() || "Ẩn danh",
+      rating: Math.max(1, Math.min(5, Number(payload.rating || 0))),
+      content: String(payload.content || "").trim(),
+      createdAt: new Date().toISOString(),
+    };
+    arr.push(item);
+    db[productId] = arr;
+    writeLS(db);
+    return { ok: true, item };
+  }
+  const res = await api.post(`/products/${productId}/reviews`, payload);
   return res.data;
 }
