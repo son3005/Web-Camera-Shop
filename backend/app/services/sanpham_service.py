@@ -1,292 +1,266 @@
-# /backend/app/services/sanpham_service.py
-from app.extensions import db
-from app.models.sanpham import SanPham
-from app.models.sanpham import BienTheSanPham
-from app.models.sanpham import HinhAnhSanPham
-from app.models.sanpham.DanhMuc import DanhMuc
-from app.models.sanpham.ThuongHieu import ThuongHieu
-from app.schemas.sanpham import SanPhamCreate, SanPhamUpdate, TrangThaiUpdate 
-from app.services.cloudinary_service import CloudinaryService
-from app.schemas.Shared import TrangThaiSanPhamEnum
+# app/services/sanpham_service.py
+from ..extensions import db
+from ..models.sanpham import SanPham, BienTheSanPham, HinhAnhSanPham, DanhMuc, ThuongHieu
+from ..schemas.sanpham import SanPhamCreate, SanPhamUpdate, SanPhamResponse
+from ..schemas.sanpham import BienTheSanPhamCreate
+from ..schemas.sanpham import HinhAnhCreate
+from sqlalchemy.exc import IntegrityError
+from werkzeug.exceptions import NotFound, BadRequest
+from sqlalchemy import func, case, null
+from sqlalchemy.orm import joinedload, selectinload
+from ..utils.taoMa import generate_unique_ma_san_pham
+from .cloudinary_service import CloudinaryService
+import logging  # THÊM logging
 
-from sqlalchemy.orm import joinedload
-from sqlalchemy import text 
-from typing import Dict, Any, List
+logger = logging.getLogger(__name__)  # THÊM
 
-
-class ServiceError(Exception):
-    """Lỗi nghiệp vụ chung"""
-    pass
-
-class ProductNotFound(ServiceError):
-    """Không tìm thấy sản phẩm"""
-    pass
-
-class InvalidDataError(ServiceError):
-    """Dữ liệu đầu vào không hợp lệ (VD: ID không tồn tại)"""
-    pass
-
-class SkuConflictError(ServiceError):
-    """Lỗi trùng lặp SKU"""
-    pass
-
+class ProductNotFound(NotFound):
+    def __init__(self, message="Sản phẩm không tồn tại"):
+        super().__init__(description=message)
 class SanPhamService:
-    """
-    Lớp Service chứa toàn bộ logic nghiệp vụ cho việc quản lý sản phẩm.
-    Service không bao giờ gọi db.session.commit().
-    """
 
     @staticmethod
-    def get_all_products(page: int, per_page: int, 
-                         filters: Dict[str, Any] = None, 
-                         sort_by: str = None, 
-                         sort_order: str = 'desc'):
+    def get_all_san_pham(
+        page=1,
+        per_page=10,
+        search=None,
+        min_price=None,
+        max_price=None,
+        sort_by=None,
+        thuong_hieu_ids=None,
+        danh_muc_ids=None
+    ):
         """
-        Lấy danh sách sản phẩm với phân trang, lọc và sắp xếp.
-        Hỗ trợ lọc theo danh mục, thương hiệu, trạng thái, khoảng giá và
-        tìm kiếm từ khóa.
-        Hỗ trợ sắp xếp theo giá, tên hoặc ngày tạo.
+        Lấy list sản phẩm với phân trang, search, lọc giá, sắp xếp, lọc thương hiệu/danh mục.
+        SỬA: Dùng joinedload để tránh N+1 query
         """
         query = SanPham.query.options(
+            joinedload(SanPham.danh_muc),
             joinedload(SanPham.thuong_hieu),
-            joinedload(SanPham.danh_muc)
+            selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
         )
-        
-        needs_join_or_distinct = False
 
-        if filters:
-            if filters.get('danh_muc_id'):
-                query = query.filter(SanPham.danh_muc_id == filters['danh_muc_id'])
-            if filters.get('thuong_hieu_id'):
-                query = query.filter(SanPham.thuong_hieu_id == filters['thuong_hieu_id'])
-            if filters.get('trang_thai'):
-                try:
-                    status_enum = TrangThaiSanPhamEnum(filters['trang_thai'])
-                    query = query.filter(SanPham.trang_thai == status_enum)
-                except ValueError:
-                    pass 
+        # Lọc theo danh mục
+        if danh_muc_ids:
+            query = query.filter(SanPham.danh_muc_id.in_(danh_muc_ids))
 
-            if filters.get('search_term'):
-                search_term = filters['search_term']
-                query = query.filter(
-                    text("MATCH(ten_san_pham, mo_ta) AGAINST(:search_term IN BOOLEAN MODE)")
-                ).params(search_term=f"+{search_term}*")
+        # Lọc theo thương hiệu
+        if thuong_hieu_ids:
+            query = query.filter(SanPham.thuong_hieu_id.in_(thuong_hieu_ids))
 
-            if filters.get('min_price') or filters.get('max_price'):
-                if not needs_join_or_distinct:
-                    query = query.join(SanPham.cac_bien_the)
-                    needs_join_or_distinct = True
-            if filters.get('min_price'):
-                query = query.filter(BienTheSanPham.gia >= filters['min_price'])
-            if filters.get('max_price'):
-                query = query.filter(BienTheSanPham.gia <= filters['max_price'])
+        # Search FULLTEXT
+        if search:
+            query = query.filter(
+                func.match(SanPham.ten_san_pham, SanPham.mo_ta).against(search, in_boolean_mode=True)
+            )
 
-        # Xử lý Sắp xếp
-        order_field = None
-        sort_direction = sort_order.lower()
-        
-        if sort_by == 'price':
-            if not needs_join_or_distinct:
-                query = query.join(SanPham.cac_bien_the)
-                needs_join_or_distinct = True
-            order_field = BienTheSanPham.gia.asc() if sort_direction == 'asc' else BienTheSanPham.gia.desc()
-        elif sort_by == 'name':
-            order_field = SanPham.ten_san_pham.asc() if sort_direction == 'asc' else SanPham.ten_san_pham.desc()
-        
-        if order_field is None:
-            order_field = SanPham.ngay_tao.desc() 
-            
-        query = query.order_by(order_field)
+        # SỬA: Effective price cho filter/sort
+        effective_price = case(
+            (
+                (BienTheSanPham.gia_khuyen_mai.is_not(null())) &
+                (BienTheSanPham.ngay_bat_dau_khuyen_mai <= func.now()) &
+                (BienTheSanPham.ngay_ket_thuc_khuyen_mai >= func.now()),
+                BienTheSanPham.gia_khuyen_mai
+            ),
+            else_=BienTheSanPham.gia_ban
+        )
 
-        if needs_join_or_distinct:
-            query = query.distinct()
+        price_subquery = (
+            db.session.query(
+                BienTheSanPham.san_pham_id,
+                func.min(effective_price).label('min_effective_price')
+            )
+            .group_by(BienTheSanPham.san_pham_id)
+            .subquery()
+        )
 
-        return query.paginate(page=page, per_page=per_page, error_out=False)
+        # Lọc giá
+        if min_price is not None or max_price is not None:
+            query = query.join(price_subquery, price_subquery.c.san_pham_id == SanPham.id)
+            if min_price is not None:
+                query = query.filter(price_subquery.c.min_effective_price >= min_price)
+            if max_price is not None:
+                query = query.filter(price_subquery.c.min_effective_price <= max_price)
+
+        # Sắp xếp
+        if sort_by in ['price_asc', 'price_desc']:
+            query = query.join(price_subquery, price_subquery.c.san_pham_id == SanPham.id)
+            if sort_by == 'price_asc':
+                query = query.order_by(price_subquery.c.min_effective_price.asc())
+            else:
+                query = query.order_by(price_subquery.c.min_effective_price.desc())
+        elif sort_by == 'name_asc':
+            query = query.order_by(SanPham.ten_san_pham.asc())
+        elif sort_by == 'name_desc':
+            query = query.order_by(SanPham.ten_san_pham.desc())
+
+        # Phân trang
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        products = pagination.items
+        return {
+            "data": [SanPhamResponse.from_orm(p).dict() for p in products],
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": pagination.total,
+                "pages": pagination.pages
+            }
+        }
 
     @staticmethod
-    def get_product_by_id(product_id: int) -> SanPham:
+    def get_san_pham_by_id(san_pham_id: int):
         """
-        Tìm sản phẩm theo ID và ném lỗi tùy chỉnh.
-        Tải sẵn toàn bộ biến thể và hình ảnh.
+        Lấy chi tiết sản phẩm theo ID.
+        SỬA: Dùng joinedload để tránh N+1
         """
         product = SanPham.query.options(
-            joinedload(SanPham.cac_bien_the).joinedload(BienTheSanPham.hinh_anhs),
             joinedload(SanPham.danh_muc),
-            joinedload(SanPham.thuong_hieu)
-        ).get(product_id)
-        
+            joinedload(SanPham.thuong_hieu),
+            selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
+        ).get(san_pham_id)
+
         if not product:
-            raise ProductNotFound(f"Không tìm thấy sản phẩm với ID {product_id}")
-        return product
+            raise NotFound("Sản phẩm không tồn tại")
+        return SanPhamResponse.from_orm(product)
 
     @staticmethod
-    def create_product(product_data: SanPhamCreate) -> SanPham:
+    def create_san_pham(data: SanPhamCreate):
         """
-        Logic nghiệp vụ để tạo một sản phẩm mới.
-        """
-        data = product_data.dict()
-
-        if not db.session.get(DanhMuc, data['danh_muc_id']):
-            raise InvalidDataError(f"Danh mục ID {data['danh_muc_id']} không tồn tại.")
-        if not db.session.get(ThuongHieu, data['thuong_hieu_id']):
-            raise InvalidDataError(f"Thương hiệu ID {data['thuong_hieu_id']} không tồn tại.")
-
-        variants_data = data.pop('cac_bien_the', [])
-        
-        SanPhamService._check_sku_uniqueness([v['ma_sku'] for v in variants_data])
-
-        new_product = SanPham(**data)
-        db.session.add(new_product)
-        db.session.flush() # Flush để lấy ID và chạy event listener tạo mã SP
-
-        for variant_data in variants_data:
-            images_data = variant_data.pop('hinh_anhs', [])
-            
-            new_variant = BienTheSanPham(
-                san_pham_goc_id=new_product.id, 
-                **variant_data
-            )
-            db.session.add(new_variant)
-            db.session.flush()
-
-            SanPhamService._sync_images(new_variant, images_data)
-        
-        return new_product
-
-    @staticmethod
-    def update_product(product: SanPham, product_data: SanPhamUpdate) -> SanPham:
-        """
-        Logic nghiệp vụ để cập nhật một sản phẩm.
-        """
-        update_data = product_data.dict(exclude_unset=True)
-        variants_data = update_data.pop('cac_bien_the', None) # Lấy data biến thể
-        
-        for key, value in update_data.items():
-            setattr(product, key, value)
-        
-        if variants_data is not None:
-            # Dùng hàm sync an toàn
-            SanPhamService._update_variants(product, variants_data)
-            
-        return product
-
-    @staticmethod
-    def update_product_status(product: SanPham, status_data: TrangThaiUpdate) -> SanPham:
-        """
-        Cập nhật trạng thái của sản phẩm.
+        Tạo sản phẩm mới, bao gồm variants và images.
+        SỬA: 
+          - generate_unique_ma_san_pham
+          - sửa lỗi logic la_anh_dai_dien
         """
         try:
-            new_status = TrangThaiSanPhamEnum(status_data.trang_thai)
-            product.trang_thai = new_status
-            return product
-        except ValueError:
-            valid_statuses = [item.value for item in TrangThaiSanPhamEnum]
-            raise ValueError(f"Trạng thái không hợp lệ. Chỉ chấp nhận: {', '.join(valid_statuses)}")
+            # Kiểm tra danh mục và thương hiệu
+            danh_muc = DanhMuc.query.get(data.danh_muc_id)
+            if not danh_muc:
+                raise BadRequest("Danh mục không tồn tại")
+
+            thuong_hieu = ThuongHieu.query.get(data.thuong_hieu_id)
+            if not thuong_hieu:
+                raise BadRequest("Thương hiệu không tồn tại")
+
+            # Tạo mã sản phẩm DUY NHẤT
+            ma_san_pham = generate_unique_ma_san_pham(danh_muc.ma_danh_muc, thuong_hieu.ma_thuong_hieu)
+
+            # Tạo sản phẩm
+            new_product = SanPham(
+                ma_san_pham=ma_san_pham,
+                danh_muc_id=data.danh_muc_id,
+                thuong_hieu_id=data.thuong_hieu_id,
+                ten_san_pham=data.ten_san_pham,
+                mo_ta=data.mo_ta,
+                thong_so_ky_thuat=data.thong_so_ky_thuat,
+                trang_thai=data.trang_thai
+            )
+            db.session.add(new_product)
+            db.session.flush()
+
+            # Tạo biến thể
+            for variant_data in data.bien_the_san_phams:
+                new_variant = BienTheSanPham(
+                    san_pham_id=new_product.id,
+                    ten_bien_the=variant_data.ten_bien_the,
+                    trang_thai_kich_hoat=variant_data.trang_thai_kich_hoat,
+                    gia_ban=variant_data.gia_ban,
+                    gia_khuyen_mai=variant_data.gia_khuyen_mai,
+                    ngay_bat_dau_khuyen_mai=variant_data.ngay_bat_dau_khuyen_mai,
+                    ngay_ket_thuc_khuyen_mai=variant_data.ngay_ket_thuc_khuyen_mai,
+                    so_luong_ton=variant_data.so_luong_ton
+                )
+                db.session.add(new_variant)
+                db.session.flush()
+
+                # Hình ảnh cho biến thể
+                images_to_add = []
+                has_main_image = False
+
+                if hasattr(variant_data, 'hinh_anhs') and variant_data.hinh_anhs:
+                    for img_data in variant_data.hinh_anhs:
+                        img = HinhAnhSanPham(
+                            bien_the_id=new_variant.id,
+                            url=img_data.url,
+                            public_id=img_data.public_id,
+                            alt_text=img_data.alt_text,
+                            la_anh_dai_dien=img_data.la_anh_dai_dien
+                        )
+                        images_to_add.append(img)
+                        if img_data.la_anh_dai_dien:
+                            has_main_image = True
+
+                    # Đảm bảo có ít nhất 1 ảnh đại diện
+                    if not has_main_image and images_to_add:
+                        images_to_add[0].la_anh_dai_dien = True
+
+                    for img in images_to_add:
+                        db.session.add(img)
+
+            db.session.commit()
+            return SanPhamResponse.from_orm(new_product)
+
+        except IntegrityError as e:
+            db.session.rollback()
+            logger.error(f"Lỗi tích hợp: {str(e)}")  # SỬA: Logging
+            raise BadRequest(f"Lỗi tích hợp: {str(e)}")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Lỗi tạo sản phẩm: {str(e)}")  # SỬA: Logging
+            raise BadRequest(f"Lỗi tạo sản phẩm: {str(e)}")
 
     @staticmethod
-    def delete_product(product: SanPham) -> None:
+    def update_san_pham(san_pham_id: int, data: SanPhamUpdate):
+        product = SanPham.query.get(san_pham_id)
+        if not product:
+            raise NotFound("Sản phẩm không tồn tại")
+
+        if data.danh_muc_id:
+            if not DanhMuc.query.get(data.danh_muc_id):
+                raise BadRequest("Danh mục không tồn tại")
+            product.danh_muc_id = data.danh_muc_id
+
+        if data.thuong_hieu_id:
+            if not ThuongHieu.query.get(data.thuong_hieu_id):
+                raise BadRequest("Thương hiệu không tồn tại")
+            product.thuong_hieu_id = data.thuong_hieu_id
+
+        if data.ten_san_pham:
+            product.ten_san_pham = data.ten_san_pham
+
+        if data.mo_ta is not None:
+            product.mo_ta = data.mo_ta
+
+        if data.thong_so_ky_thuat is not None:
+            product.thong_so_ky_thuat = data.thong_so_ky_thuat
+
+        if data.trang_thai:
+            product.trang_thai = data.trang_thai
+
+        db.session.commit()
+        return SanPhamResponse.from_orm(product)
+
+    @staticmethod
+    def delete_san_pham(san_pham_id: int):
         """
-        Xóa một sản phẩm.
+        Xóa sản phẩm + trigger xóa ảnh trên Cloudinary (dùng CloudinaryService).
         """
+        product = SanPham.query.options(
+            selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
+        ).get(san_pham_id)
+
+        if not product:
+            raise NotFound("Sản phẩm không tồn tại")
+
+        public_ids = [
+            img.public_id for variant in product.cac_bien_the
+            for img in variant.hinh_anhs
+            if img.public_id and img.public_id.strip()
+        ]
+
         db.session.delete(product)
+        db.session.commit()
 
-    # --- CÁC HÀM HELPER AN TOÀN ---
+        for public_id in public_ids:
+            CloudinaryService.delete_image_task.delay(public_id)
 
-    @staticmethod
-    def _check_sku_uniqueness(skus: List[str], current_product_id: int = None):
-        """(CẢI TIẾN AN TOÀN) Helper kiểm tra SKU."""
-        if not skus:
-            return
-        if len(skus) != len(set(skus)):
-            raise SkuConflictError("SKU bị trùng lặp trong chính request.")
-        
-        query = BienTheSanPham.query.filter(BienTheSanPham.ma_sku.in_(skus))
-        if current_product_id:
-            query = query.filter(BienTheSanPham.san_pham_goc_id != current_product_id)
-            
-        conflicting_sku = query.first()
-        if conflicting_sku:
-            raise SkuConflictError(f"SKU '{conflicting_sku.ma_sku}' đã tồn tại.")
-
-    @staticmethod
-    def _update_variants(product: SanPham, variants_data: List[Dict]):
-        """ Đồng bộ các biến thể (Thêm/Sửa/Xóa)."""
-        existing_variants_map = {v.id: v for v in product.cac_bien_the}
-        
-        skus_to_check = [v['ma_sku'] for v in variants_data if 'ma_sku' in v]
-        SanPhamService._check_sku_uniqueness(skus_to_check, current_product_id=product.id)
-
-        variants_to_keep = []
-        for v_data in variants_data:
-            images_data = v_data.pop('hinh_anhs', [])
-            variant_id = v_data.get('id')
-
-            if variant_id and variant_id in existing_variants_map:
-                # CẬP NHẬT
-                variant_to_update = existing_variants_map.pop(variant_id)
-                for key, value in v_data.items():
-                    setattr(variant_to_update, key, value)
-                SanPhamService._sync_images(variant_to_update, images_data)
-                variants_to_keep.append(variant_to_update)
-            else:
-                # THÊM MỚI
-                v_data.pop('id', None)
-                new_variant = BienTheSanPham(san_pham_goc_id=product.id, **v_data)
-                SanPhamService._sync_images(new_variant, images_data)
-                variants_to_keep.append(new_variant)
-
-        # tự động xóa các biến thể còn sót lại trong 'existing_variants_map'.
-        product.cac_bien_the = variants_to_keep
-
-    @staticmethod
-    def _sync_images(variant: BienTheSanPham, images_data: List[Dict]):
-        """
-        Đồng bộ hình ảnh (Thêm/Sửa/Xóa)
-        VÀ gọi Celery task để xóa ảnh trên Cloudinary.
-        """
-        # (Logic xử lý ảnh đại diện giữ nguyên)
-        has_thumbnail = False
-        for img_data in images_data:
-            if img_data.get('la_anh_dai_dien'):
-                if has_thumbnail:
-                    img_data['la_anh_dai_dien'] = False
-                else:
-                    has_thumbnail = True
-        if not has_thumbnail and images_data:
-            images_data[0]['la_anh_dai_dien'] = True
-            
-        # --- Logic đồng bộ (Thêm/Sửa/Xóa) ---
-        existing_images_map = {img.id: img for img in variant.hinh_anhs}
-        incoming_image_ids = {img['id'] for img in images_data if 'id' in img}
-        
-        images_to_keep = []
-
-        # 1. Xử lý Thêm / Cập nhật
-        for img_data in images_data:
-            img_id = img_data.get('id')
-            if img_id and img_id in existing_images_map:
-                # CẬP NHẬT
-                image_to_update = existing_images_map.pop(img_id) 
-                for key, value in img_data.items():
-                    setattr(image_to_update, key, value)
-                images_to_keep.append(image_to_update)
-            else:
-                # THÊM MỚI 
-                img_data.pop('id', None)
-                if 'public_id' not in img_data or 'url' not in img_data:
-                    continue 
-                new_image = HinhAnhSanPham(bien_the_id=variant.id, **img_data)
-                images_to_keep.append(new_image)
-        
-        # 2. Xử lý Xóa 
-        ids_to_delete = existing_images_map.keys()
-        for img_id in ids_to_delete:
-            image_to_delete = existing_images_map[img_id]
-            
-            # Lấy public_id và gọi Celery task
-            public_id_to_delete = image_to_delete.public_id
-            CloudinaryService.delete_image_task.delay(public_id_to_delete)
-            pass 
-
-        # (CẢI TIẾN AN TOÀN) Gán lại list
-        variant.hinh_anhs = images_to_keep
+        return {"message": "Sản phẩm đã xóa thành công. Ảnh đang được xóa trên Cloudinary..."}

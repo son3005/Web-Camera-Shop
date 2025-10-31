@@ -1,34 +1,37 @@
-from pydantic import BaseModel, Field, validator
+# /backend/app/schemas/BienTheSanPham.py
+
+from pydantic import BaseModel, Field
 from typing import List, Optional
+from datetime import datetime
+from ..sanpham import HinhAnhResponse, HinhAnhCreate
+from ..Shared import TrangThaiSanPhamEnum
 from decimal import Decimal
 
-# Import schema từ file khác
-from .HinhAnhSanPham import HinhAnhCreate, HinhAnhResponse
+class BienTheSanPhamBase(BaseModel):
+    san_pham_id: int = Field(..., description="ID của sản phẩm cha")
+    ten_bien_the: Optional[str] = Field(None, max_length=100, description="Tên biến thể sản phẩm")
+    trang_thai_kich_hoat: Optional[TrangThaiSanPhamEnum] = Field(TrangThaiSanPhamEnum.DANG_BAN, description="Trạng thái kích hoạt của biến thể sản phẩm")
+    gia_ban: Decimal = Field(..., gt=0, description="Giá bán của biến thể sản phẩm")
+    gia_khuyen_mai: Optional[Decimal] = Field(None, gt=0, description="Giá khuyến mãi của biến thể sản phẩm")
+    ngay_bat_dau_khuyen_mai: Optional[datetime] = Field(None, description="Ngày bắt đầu khuyến mãi")
+    ngay_ket_thuc_khuyen_mai: Optional[datetime] = Field(None, description="Ngày kết thúc khuyến mãi")
+    so_luong_ton: int = Field(..., ge=0, description="Số lượng tồn kho của biến thể sản phẩm")
 
-class BienTheBase(BaseModel):
-    ma_sku: str = Field(..., max_length=120, description="Mã SKU định danh duy nhất cho biến thể")
-    ten_bien_the: Optional[str] = Field(None, max_length=100, description="Tên của biến thể, ví dụ: 'Màu đen, 128GB'")
-    gia: Decimal = Field(..., gt=0, description="Giá bán của biến thể")
-    gia_khuyen_mai: Optional[Decimal] = Field(None, gt=0, description="Giá sau khi khuyến mãi")
-    so_luong_ton: int = Field(..., ge=0, description="Số lượng tồn kho")
+class BienTheSanPhamCreate(BienTheSanPhamBase):
+    hinh_anhs: Optional[List[HinhAnhCreate]] = Field([], description="Danh sách ảnh của biến thể")
 
-    @validator('gia_khuyen_mai')
-    def gia_khuyen_mai_must_be_less_than_gia(cls, v, values, **kwargs):
-        if v is not None and 'gia' in values and v >= values['gia']:
-            raise ValueError('Giá khuyến mãi phải nhỏ hơn giá gốc')
-        return v
-
-class BienTheCreate(BienTheBase):
-    hinh_anhs: Optional[List[HinhAnhCreate]] = Field([], description="Danh sách hình ảnh cho biến thể này")
-
-class BienTheUpdate(BaseModel):
-    ma_sku: Optional[str] = Field(None, max_length=120)
+class BienTheSanPhamUpdate(BaseModel):
     ten_bien_the: Optional[str] = Field(None, max_length=100)
-    gia: Optional[Decimal] = Field(None, gt=0)
+    trang_thai_kich_hoat: Optional[TrangThaiSanPhamEnum] = None
+    gia_ban: Optional[Decimal] = Field(None, gt=0)
     gia_khuyen_mai: Optional[Decimal] = Field(None, gt=0)
+    ngay_bat_dau_khuyen_mai: Optional[datetime] = None
+    ngay_ket_thuc_khuyen_mai: Optional[datetime] = None
     so_luong_ton: Optional[int] = Field(None, ge=0)
+class BienTheSanPhamDelete(BaseModel):
+    id: int
 
-class BienTheResponse(BienTheBase):
+class BienTheSanPhamResponse(BienTheSanPhamBase):
     id: int
     hinh_anhs: List[HinhAnhResponse] = []
 

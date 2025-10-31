@@ -1,40 +1,25 @@
 # app/models/don_hang.py
 
 from datetime import datetime
-from app.extensions import db
-import enum
-
-class TrangThaiDonHang(enum.Enum):
-    # Dùng giá trị snake_case cho Enum để nhất quán
-    CHO_XAC_NHAN = "cho_xac_nhan"
-    DA_XAC_NHAN = "da_xac_nhan"
-    DANG_GIAO_HANG = "dang_giao_hang"
-    HOAN_THANH = "hoan_thanh"
-    DA_HUY = "da_huy"
-    YEU_CAU_TRA_HANG = "yeu_cau_tra_hang"
-    DA_TRA_HANG = "da_tra_hang"
+from ...extensions import db
+from..enums import TrangThaiDonHangEnum
+import uuid
 
 class DonHang(db.Model):
     __tablename__ = 'don_hang'
 
+    # --- Các thuộc tính ---
     id = db.Column(db.Integer, primary_key=True)
-    # Mã đơn hàng để người dùng và admin dễ tra cứu
-    ma_don_hang = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    nguoi_dung_id = db.Column(db.Integer, db.ForeignKey('nguoi_dung.id'), nullable=False, index=True)
-    trang_thai = db.Column(db.Enum(TrangThaiDonHang), default=TrangThaiDonHang.CHO_XAC_NHAN, nullable=False)
-    
-    # Dùng Numeric cho tất cả các giá trị tiền tệ
-    tam_tinh = db.Column(db.Numeric(12, 2), nullable=False)
-    phi_van_chuyen = db.Column(db.Numeric(12, 2), default=0)
-    giam_gia = db.Column(db.Numeric(12, 2), default=0)
-    tong_tien = db.Column(db.Numeric(12, 2), nullable=False)
-    
-    # "Đóng băng" thông tin giao hàng tại thời điểm đặt
-    ten_nguoi_nhan = db.Column(db.String(100))
-    so_dien_thoai_nhan = db.Column(db.String(15))
-    dia_chi_giao_hang = db.Column(db.String(500))
+    ma_don_hang = db.Column(db.String(25), unique=True, nullable=False, index=True)
+    nguoi_dung_id = db.Column(db.Integer, db.ForeignKey('nguoi_dung.id', ondelete = "SET NULL"), nullable=True, index=True)
+    dia_chi_id = db.Column(db.Integer, db.ForeignKey('dia_chi.id', ondelete = "SET NULL"), nullable=True)
+    ten_nguoi_nhan = db.Column(db.String(50), nullable=False)
+    so_dien_thoai_nguoi_nhan = db.Column(db.String(15),nullable= False)
+    dia_chi_giao = db.Column(db.String(500),nullable= False)
+    trang_thai = db.Column(db.Enum(TrangThaiDonHangEnum), default=TrangThaiDonHangEnum.CHO_XAC_NHAN, nullable=False)
+    phi_van_chuyen = db.Column(db.Numeric(14, 2), default=0)
+    giam_gia = db.Column(db.Numeric(15, 2), default=0)
     ghi_chu = db.Column(db.Text, nullable=True)
-
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
     ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -42,6 +27,13 @@ class DonHang(db.Model):
     nguoi_dung = db.relationship('NguoiDung', back_populates='don_hangs')
     items = db.relationship('ChiTietDonHang', back_populates='don_hang', cascade="all, delete-orphan")
     thanh_toan = db.relationship('ThanhToan', back_populates='don_hang', uselist=False, cascade="all, delete-orphan")
+    dia_chi = db.relationship('DiaChi', back_populates='don_hangs')
+
+    # --- Ràng buộc ---
+    __table_args__ = (
+        db.CheckConstraint('phi_van_chuyen >= 0', name='ck_phivanchuyen'),
+        db.CheckConstraint('giam_gia >= 0', name='ck_giamgia'),
+    )
 
     def __repr__(self):
         return f'<Đơn hàng {self.ma_don_hang}> - Trạng thái: {self.trang_thai.name}'

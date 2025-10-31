@@ -2,13 +2,12 @@ import enum
 
 # --- ENUMS CHO SẢN PHẨM ---
 class TrangThaiSanPhamEnum(str, enum.Enum):
-    DANG_BAN = 'đang bán'
-    AN = 'ẩn'
-    HET_HANG = 'hết hàng'
+    DANG_BAN = 'dang_ban'
+    AN = 'ngung_ban'
+    HET_HANG = 'het_hang'
 
 # --- ENUMS CHO ĐÁNH GIÁ (Lấy từ file sanpham.py của bạn) ---
-class TrangThaiDanhGia(str, enum.Enum):
-    CHO_DUYET = 'cho_duyet'
+class TrangThaiDanhGiaEnum(str, enum.Enum):
     DA_DUYET = 'da_duyet'
     BI_TU_CHOI = 'bi_tu_choi'
 
@@ -21,10 +20,6 @@ class TrangThaiNguoiDungEnum(str, enum.Enum):
     KICH_HOAT = 'kich_hoat'
     KHOA = 'khoa'
     
-class GioiTinhEnum(str, enum.Enum):
-    NAM = 'nam'
-    NU = 'nu'
-    KHAC = 'khac'
 
 # --- ENUMS CHO ĐƠN HÀNG ---
 class TrangThaiDonHangEnum(str, enum.Enum):
@@ -38,7 +33,7 @@ class TrangThaiDonHangEnum(str, enum.Enum):
 
 # --- ENUMS CHO THANH TOÁN ---
 class TrangThaiThanhToanEnum(str, enum.Enum):
-    CHO_THANH_TOAN = 'cho_thanh_toan' # Đơn hàng đã tạo, chờ thanh toán (VD: Chờ quét QR)
+    CHO_THANH_TOAN = 'cho_thanh_toan'
     DA_THANH_TOAN = 'da_thanh_toan'
     THAT_BAI = 'that_bai'
     DA_HOAN_TIEN = 'da_hoan_tien'

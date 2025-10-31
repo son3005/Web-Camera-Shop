@@ -1,4 +1,3 @@
-// src/components/common/Inventory/AddProduct/VariantManager.jsx
 import React from "react";
 import { useFieldArray, Controller } from "react-hook-form";
 import VariantImageUpload from "./VariantImageUpload";
@@ -23,7 +22,7 @@ const FormInput = ({
       placeholder={placeholder}
       readOnly={readOnly}
       defaultValue={readOnly ? defaultValue : undefined}
-      {...(register ? register(name) : {})}
+      {...(register ? register(name, { valueAsNumber: type === "number" }) : {})}
       className={`w-full rounded-lg px-3 py-2 text-sm transition-all bg-white/50 dark:bg-slate-700/50 border ${
         errors
           ? "border-red-500 focus:ring-red-500"
@@ -44,10 +43,13 @@ const VariantManager = ({
   control,
   register,
   errors,
-  defaultVariants,
+  fields,
+  append,
+  remove,
+  update,
   readOnly = false,
+  defaultVariants,
 }) => {
-  // --- MODE: READONLY (chỉ xem, không dùng hook form)
   if (readOnly) {
     return (
       <div className="space-y-4">
@@ -65,47 +67,44 @@ const VariantManager = ({
               </h4>
               <div className="grid grid-cols-2 gap-4">
                 <FormInput
-                  label="Màu sắc"
+                  label="Tên biến thể"
                   readOnly={true}
-                  defaultValue={variant.color}
+                  defaultValue={variant.ten_bien_the}
                 />
                 <FormInput
                   label="SKU"
                   readOnly={true}
-                  defaultValue={variant.sku}
+                  defaultValue={variant.ma_sku}
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <FormInput
-                  label="Giá nhập"
-                  type="number"
-                  readOnly={true}
-                  defaultValue={variant.cost_price}
-                />
-                <FormInput
                   label="Giá bán"
                   type="number"
                   readOnly={true}
-                  defaultValue={variant.selling_price}
+                  defaultValue={variant.gia}
                 />
                 <FormInput
                   label="Giá KM"
                   type="number"
                   readOnly={true}
-                  defaultValue={variant.sale_price}
+                  defaultValue={variant.gia_khuyen_mai}
+                />
+                <FormInput
+                  label="Tồn kho"
+                  type="number"
+                  readOnly={true}
+                  defaultValue={variant.so_luong_ton}
                 />
               </div>
-              <FormInput
-                label="Tồn kho"
-                type="number"
-                readOnly={true}
-                defaultValue={variant.stock}
-              />
               <div>
                 <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">
                   Hình ảnh
                 </label>
-                <VariantImageUpload images={variant.images || []} readOnly />
+                <VariantImageUpload
+                  images={variant.hinh_anhs || []}
+                  readOnly
+                />
               </div>
             </div>
           ))}
@@ -114,29 +113,19 @@ const VariantManager = ({
     );
   }
 
-  // --- MODE: EDIT (dùng react-hook-form)
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "cac_bien_the", // 🔥 Đúng theo schema Yup
-  });
-
   const handleAddVariant = () => {
     append({
       ten_bien_the: "",
       ma_sku: "",
       gia: 0,
       gia_khuyen_mai: 0,
-      so_luong_ton_kho: 0,
+      so_luong_ton: 0,
       hinh_anhs: [],
     });
   };
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-        Các biến thể
-      </h3>
-
       <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 -mr-4 scrollbar-thin">
         {fields.map((field, index) => (
           <div
@@ -158,7 +147,6 @@ const VariantManager = ({
               )}
             </div>
 
-            {/* --- Tên biến thể + SKU --- */}
             <div className="grid grid-cols-2 gap-4">
               <FormInput
                 label="Tên biến thể"
@@ -174,7 +162,6 @@ const VariantManager = ({
               />
             </div>
 
-            {/* --- Giá + Giá KM + Tồn kho --- */}
             <div className="grid grid-cols-3 gap-4">
               <FormInput
                 label="Giá"
@@ -193,13 +180,12 @@ const VariantManager = ({
               <FormInput
                 label="Tồn kho"
                 type="number"
-                name={`cac_bien_the.${index}.so_luong_ton_kho`}
+                name={`cac_bien_the.${index}.so_luong_ton`}
                 register={register}
-                errors={errors?.cac_bien_the?.[index]?.so_luong_ton_kho}
+                errors={errors?.cac_bien_the?.[index]?.so_luong_ton}
               />
             </div>
 
-            {/* --- Upload ảnh --- */}
             <div>
               <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">
                 Hình ảnh
@@ -210,10 +196,9 @@ const VariantManager = ({
                 defaultValue={[]}
                 render={({ field: { onChange, value } }) => (
                   <VariantImageUpload
-                    control={control}
-                    name={`cac_bien_the.${index}.hinh_anhs`}
                     images={value || []}
                     onChange={onChange}
+                    readOnly={readOnly}
                   />
                 )}
               />

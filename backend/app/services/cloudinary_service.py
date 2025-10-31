@@ -1,7 +1,10 @@
 # /backend/app/services/cloudinary_service.py
 import cloudinary
 import cloudinary.uploader
-from app.extensions import celery
+from ..extensions import celery
+import logging 
+
+logger = logging.getLogger(__name__)  
 
 class CloudinaryService:
 
@@ -13,20 +16,20 @@ class CloudinaryService:
         Sẽ tự động thử lại 3 lần nếu thất bại.
         """
         if not public_id:
-            print("Bỏ qua việc xóa: không có public_id.")
+            logger.info("Bỏ qua việc xóa: không có public_id.")  # SỬA: logging.info
             return
 
         try:
-            print(f"Đang xóa ảnh {public_id} khỏi Cloudinary...")
+            logger.info(f"Đang xóa ảnh {public_id} khỏi Cloudinary...")  # SỬA
             # Dùng API 'destroy' của Cloudinary
             result = cloudinary.uploader.destroy(public_id)
             
             if result.get("result") == "ok" or result.get("result") == "not found":
-                print(f"Đã xóa thành công {public_id}.")
+                logger.info(f"Đã xóa thành công {public_id}.")  # SỬA
                 return f"Đã xóa {public_id}"
             else:
                 raise Exception(f"Lỗi từ Cloudinary: {result.get('result')}")
 
         except Exception as exc:
-            print(f"Xóa {public_id} thất bại. Thử lại sau. Lỗi: {exc}")
+            logger.error(f"Xóa {public_id} thất bại. Thử lại sau. Lỗi: {exc}")  # SỬA: logging.error
             self.retry(exc=exc)

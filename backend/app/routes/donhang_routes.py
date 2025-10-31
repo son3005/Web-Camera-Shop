@@ -1,18 +1,17 @@
 # /backend/app/routes/donhang_routes.py
 
 from flask import Blueprint, request, jsonify
-from app.extensions import db, spec
+from ..extensions import db, spec
 from flask_pydantic_spec import Request, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-# --- (THÊM) Import BaseModel, Field, Dict ---
 from pydantic import BaseModel, Field
 from typing import Dict
 
 # Import Decorators
-from app.utils.decorators import admin_required, jwt_required # (Giả sử)
+from ..utils.decorators import admin_required  # (Giả sử không cần jwt_required riêng vì đã tích hợp trong admin_required)
 
 # Import Service và các lỗi nghiệp vụ
-from app.services.donhang_service import (
+from ..services.donhang_service import (
     DonHangService,
     CartIsEmptyError,
     AddressNotFoundError,
@@ -21,18 +20,18 @@ from app.services.donhang_service import (
     ServiceError # Thêm ServiceError
 )
 # Import các lỗi dùng chung
-from app.services.giohang_service import VariantNotFound, OutOfStockError
-from app.schemas.giohang_dathang import DonHangCreate, DonHangUpdate, DonHangResponse
-from app.schemas.Shared import PaginatedResponse
+from ..services.giohang_service import VariantNotFound, OutOfStockError
+from ..schemas.giohang_dathang import DonHangCreate, DonHangUpdate, DonHangResponse
+from ..schemas.Shared import PaginatedResponse
 # Import Enum từ file mới
-from app.models.enums import TrangThaiDonHangEnum
+from ..models.enums import TrangThaiDonHangEnum
 
 # Tạo Blueprint
 order_api = Blueprint('order_api', __name__, url_prefix='/api/orders')
 
 
 # --- ROUTE CHO USER (Giữ nguyên) ---
-@order_api.route('/', methods=['POST'])
+@order_api.route('/', methods=['POST'], endpoint='create_order')
 @jwt_required()
 @spec.validate( body=Request(DonHangCreate), resp=Response(HTTP_201=DonHangResponse), tags=['Đơn Hàng (User)'])
 def create_order():
@@ -53,7 +52,7 @@ def create_order():
         print(f"Lỗi khi tạo đơn hàng: {str(e)}") # Log lỗi
         return jsonify(error="Đã xảy ra lỗi không mong muốn khi tạo đơn hàng."), 500
 
-@order_api.route('/', methods=['GET'])
+@order_api.route('/', methods=['GET'], endpoint='get_my_orders')
 @jwt_required()
 @spec.validate( resp=Response(HTTP_200=PaginatedResponse[DonHangResponse]), tags=['Đơn Hàng (User)'])
 def get_my_orders():
@@ -73,7 +72,7 @@ def get_my_orders():
         print(f"Lỗi khi lấy lịch sử đơn hàng: {str(e)}")
         return jsonify(error="Lỗi khi lấy lịch sử đơn hàng."), 500
 
-@order_api.route('/<int:order_id>', methods=['GET'])
+@order_api.route('/<int:order_id>', methods=['GET'], endpoint='get_my_order_detail')
 @jwt_required()
 @spec.validate( resp=Response(HTTP_200=DonHangResponse), tags=['Đơn Hàng (User)'])
 def get_my_order_detail(order_id: int):
@@ -93,13 +92,12 @@ def get_my_order_detail(order_id: int):
 
 # --- ROUTE CHO ADMIN (Quản lý đơn hàng) ---
 
-@order_api.route('/admin', methods=['GET'])
-@admin_required()
+@order_api.route('/admin', methods=['GET'], endpoint='get_all_orders')
+@admin_required
 @spec.validate( resp=Response(HTTP_200=PaginatedResponse[DonHangResponse]), tags=['Admin - Đơn Hàng'])
 def get_all_orders():
-    # ... (code đã cập nhật ở lượt trước, giữ nguyên) ...
+    # ... (code giữ nguyên) ...
     page = request.args.get('page', 1, type=int)
-    # **SỬA LẠI PER_PAGE** (File bạn gửi đang là 20, tôi trả về 10 cho giống lượt trước)
     per_page = request.args.get('per_page', 10, type=int)
     filters = {}
     if request.args.get('trang_thai'):
@@ -134,8 +132,8 @@ class OrderSummaryResponse(BaseModel):
     # Dùng Field để thêm mô tả cho Swagger
     summary: Dict[str, int] = Field(..., description="Dictionary chứa số lượng đơn theo từng trạng thái (key là tên Enum dạng string, ví dụ: 'cho_xac_nhan')")
 
-@order_api.route('/admin/summary', methods=['GET'])
-@admin_required()
+@order_api.route('/admin/summary', methods=['GET'], endpoint='get_order_summary')
+@admin_required
 @spec.validate(
     resp=Response(HTTP_200=OrderSummaryResponse), # Dùng schema mới
     tags=['Admin - Đơn Hàng']
@@ -152,8 +150,8 @@ def get_order_summary():
 # --- (HẾT ROUTE MỚI) ---
 
 
-@order_api.route('/<int:order_id>/status', methods=['PATCH'])
-@admin_required()
+@order_api.route('/<int:order_id>/status', methods=['PATCH'], endpoint='update_order_status')
+@admin_required
 @spec.validate( body=Request(DonHangUpdate), resp=Response(HTTP_200=DonHangResponse), tags=['Admin - Đơn Hàng'])
 def update_order_status(order_id: int):
     # ... (code giữ nguyên) ...
@@ -174,8 +172,8 @@ def update_order_status(order_id: int):
         print(f"Lỗi khi cập nhật trạng thái đơn hàng: {str(e)}")
         return jsonify(error="Lỗi khi cập nhật trạng thái đơn hàng."), 500
 
-@order_api.route('/admin/<int:order_id>', methods=['GET'])
-@admin_required()
+@order_api.route('/admin/<int:order_id>', methods=['GET'], endpoint='get_order_detail_admin')
+@admin_required
 @spec.validate( resp=Response(HTTP_200=DonHangResponse), tags=['Admin - Đơn Hàng'])
 def get_order_detail_admin(order_id: int):
     # ... (code giữ nguyên) ...

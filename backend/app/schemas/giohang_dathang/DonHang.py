@@ -24,7 +24,7 @@ class ChiTietDonHangResponse(BaseModel):
 
 class DonHangBase(BaseModel):
     """Schema cơ sở cho đơn hàng, chứa thông tin giao hàng."""
-    ten_nguoi_nhan: str = Field(..., max_length=100)
+    ten_nguoi_nhan: str = Field(..., max_length=50)
     so_dien_thoai_nhan: str = Field(..., max_length=15)
     dia_chi_giao_hang: str = Field(..., max_length=500, description="Địa chỉ đầy đủ dưới dạng text")
     ghi_chu: Optional[str] = None
@@ -37,7 +37,7 @@ class DonHangCreate(BaseModel):
     dia_chi_id: int = Field(..., description="ID của địa chỉ đã lưu mà người dùng chọn để giao hàng")
     phuong_thuc_thanh_toan: PhuongThucThanhToanEnum
     ghi_chu: Optional[str] = None
-    # Các thông tin về giá trị đơn hàng (tạm tính, tổng tiền) sẽ do backend tính toán để đảm bảo an toàn.
+    
 
 class DonHangUpdate(BaseModel):
     """Schema dành cho admin cập nhật trạng thái đơn hàng."""

@@ -1,9 +1,18 @@
-// VariantImageUpload.jsx
 import React, { useRef } from "react";
-// 1. Import icon cần dùng từ thư viện lucide-react
 import { UploadCloud, XCircle } from 'lucide-react';
 
-// (Bạn có thể xóa các component SVG thủ công trước đó)
+const getImageUrl = (image) => {
+  if (image instanceof File) {
+    return URL.createObjectURL(image);
+  }
+  if (typeof image === 'object' && image !== null && image.url) {
+    return image.url;
+  }
+  if (typeof image === 'string') {
+    return image;
+  }
+  return ""; 
+};
 
 const VariantImageUpload = ({ images = [], onChange, readOnly = false }) => {
   const fileInputRef = useRef(null);
@@ -45,7 +54,6 @@ const VariantImageUpload = ({ images = [], onChange, readOnly = false }) => {
                        dark:bg-gray-600 dark:text-slate-200 dark:hover:bg-gray-500
                        transition-colors duration-300 shadow"
           >
-            {/* 2. Sử dụng icon <UploadCloud /> từ lucide-react */}
             <UploadCloud className="h-5 w-5 mr-2" />
             Tải ảnh lên
           </button>
@@ -61,9 +69,9 @@ const VariantImageUpload = ({ images = [], onChange, readOnly = false }) => {
       {images.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-4 p-4 rounded-lg bg-black/5 dark:bg-white/5 border border-dashed border-gray-300 dark:border-gray-600">
           {images.map((image, index) => (
-            <div key={index} className="relative group aspect-square">
+            <div key={image.id || image.name || index} className="relative group aspect-square">
               <img
-                src={image instanceof File ? URL.createObjectURL(image) : image}
+                src={getImageUrl(image)}
                 alt={`preview ${index}`}
                 className="w-full h-full object-cover rounded-md shadow-md"
                 onLoad={(e) => { if (image instanceof File) URL.revokeObjectURL(e.target.src) }}
@@ -78,7 +86,6 @@ const VariantImageUpload = ({ images = [], onChange, readOnly = false }) => {
                              transform group-hover:scale-110 transition-all duration-300"
                   aria-label="Remove image"
                 >
-                  {/* 3. Sử dụng icon <XCircle /> từ lucide-react */}
                   <XCircle className="h-6 w-6" />
                 </button>
               )}

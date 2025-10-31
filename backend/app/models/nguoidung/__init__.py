@@ -1,4 +1,3 @@
-from .NguoiDung import NguoiDung, KhachHang, QuanTriVien, VaiTroNguoiDung, TrangThaiNguoiDung
+from .NguoiDung import NguoiDung, KhachHang, QuanTriVien
 from .DiaChi import DiaChi
-# from .role import Role
-# from .user_role import UserRole
+from ..enums import VaiTroNguoiDungEnum as VaiTroNguoiDung, TrangThaiNguoiDungEnum as TrangThaiNguoiDung

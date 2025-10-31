@@ -1,20 +1,22 @@
 # /backend/app/services/danhgia_service.py
-from app.extensions import db
+from ..extensions import db
 from sqlalchemy.orm import joinedload
 from typing import List
 
 # đường dẫn import models
-from app.models.extras import DanhGia, TrangThaiDanhGia
-from app.models.sanpham import SanPham
-from app.models.giohang_dathang import ChiTietDonHang 
+from ..models.extras import DanhGia, TrangThaiDanhGia
+from ..models.sanpham import SanPham
+from ..models.giohang_dathang import ChiTietDonHang 
 
 # Import lỗi tùy chỉnh từ sanpham_service
-from app.services.sanpham_service import SanPhamService, ProductNotFound
+from .sanpham_service import SanPhamService, ProductNotFound
 
 # đường dẫn import schemas
-from app.schemas.extras import DanhGiaCreate, DanhGiaUpdate
+from ..schemas.extras import DanhGiaCreate, DanhGiaUpdate
 
 # Các lỗi nghiệp vụ
+class ProductNotFound(Exception):
+    pass
 class ReviewError(Exception):
     pass
 class PermissionDeniedError(ReviewError):

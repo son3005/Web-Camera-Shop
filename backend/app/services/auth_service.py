@@ -1,16 +1,16 @@
 # backend/app/services/auth_service.py
-from werkzeug.security import check_password_hash
 from flask_jwt_extended import create_access_token
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from datetime import timedelta
 from flask_mail import Message
 from flask import current_app
 from typing import Dict, Any
+from ..utils.taoMa import generate_ma_nguoi_dung
 
-from app.extensions import db, mail
-from app.models.nguoidung import NguoiDung, KhachHang
-from app.models.nguoidung.NguoiDung import TrangThaiNguoiDung
-from app.schemas.nguoidung import NguoiDungResponse, NguoiDungCreate
+from ..extensions import db, mail, bcrypt  # <-- pwd_context thay bcrypt
+from ..models.nguoidung import NguoiDung, KhachHang
+from ..models.enums import TrangThaiNguoiDungEnum
+from ..schemas.nguoidung import NguoiDungResponse, NguoiDungCreate
 
 
 class AuthError(Exception):
@@ -19,6 +19,17 @@ class AuthError(Exception):
 
 
 class AuthService:
+    # -------------------- HASH PASSWORD --------------------
+    @staticmethod
+    def hash_password(raw_password: str) -> str:
+        """Tạo hash mật khẩu bằng passlib + bcrypt."""
+        return bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    # -------------------- CHECK PASSWORD --------------------
+    @staticmethod
+    def check_password(hash_stored: str, raw_password: str) -> bool:
+        """Kiểm tra mật khẩu bằng passlib + bcrypt."""
+        return bcrypt.checkpw(raw_password.encode('utf-8'), hash_stored.encode('utf-8'))
+
     # -------------------- LOGIN --------------------
     @staticmethod
     def login(email: str, password: str) -> Dict[str, Any]:
@@ -26,75 +37,50 @@ class AuthService:
         # 1️⃣ Tìm user theo email (case-insensitive)
         user = NguoiDung.query.filter(NguoiDung.email.ilike(email)).first()
 
-        if not user or not user.check_password(password):
+        if not user or not AuthService.check_password(user.mat_khau_hash, password):
             raise AuthError("Email hoặc mật khẩu không chính xác.")
 
         # 2️⃣ Kiểm tra trạng thái tài khoản
-        if user.trang_thai != TrangThaiNguoiDung.KICH_HOAT:
+        if user.trang_thai != TrangThaiNguoiDungEnum.KICH_HOAT:
             raise AuthError("Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt.")
 
         # 3️⃣ Tạo JWT token
-        payload = {
-            "id": user.id,
-            "vai_tro": user.vai_tro.value if hasattr(user.vai_tro, "value") else str(user.vai_tro)
-        }
+        identity = str(user.id)
 
-        # --- BẮT ĐẦU SỬA LỖI TypeError ---
-        # Lấy giá trị từ config, mặc định là 7 (ngày)
-        expires_config = current_app.config.get("JWT_ACCESS_TOKEN_EXPIRES", 7)
+        claims = {"vai_tro": user.vai_tro.value}
 
-        # Kiểm tra xem giá trị config đã là object timedelta chưa
-        if isinstance(expires_config, timedelta):
-            # Nếu ĐÚNG (là timedelta), dùng trực tiếp
-            expires = expires_config
-        else:
-            # Nếu SAI (nó là số nguyên, vd: 7), thì tạo object timedelta
-            try:
-                # Chuyển đổi an toàn sang số nguyên
-                expires = timedelta(days=int(expires_config))
-            except (ValueError, TypeError):
-                # Fallback an toàn nếu config bị sai (vd: "abc")
-                expires = timedelta(days=7)
-        
-        token = create_access_token(identity=payload, expires_delta=expires)
-        # --- KẾT THÚC SỬA LỖI ---
+        token = create_access_token(identity=identity, 
+                                    expires_delta=timedelta(days=7),
+                                    additional_claims=claims
+                                    )
 
-        # 4️⃣ Trả dữ liệu user theo schema để tránh lỗi serialize
-        user_dict = NguoiDungResponse.from_orm(user).dict()
-
-        return {"user": user_dict, "token": token}
+        user_resp = NguoiDungResponse.from_orm(user).dict()
+        return {"user": user_resp, "token": token}
 
     # -------------------- REGISTER --------------------
     @staticmethod
-    def register(user_data: NguoiDungCreate) -> NguoiDung:
-        """
-        Đăng ký tài khoản khách hàng mới. Không commit tại service (commit ở route).
-        """
-        existing = NguoiDung.query.filter(NguoiDung.email.ilike(user_data.email)).first()
-        if existing:
-            raise AuthError("Email này đã được sử dụng.")
+    def register(data: NguoiDungCreate) -> NguoiDung:
+        """Tạo người dùng mới với mật khẩu đã hash."""
+        if NguoiDung.query.filter(NguoiDung.email.ilike(data.email)).first():
+            raise AuthError("Email này đã tồn tại.")
 
         new_user = KhachHang(
-            email=user_data.email.lower(),
-            ho_ten=user_data.ho_ten,
-            so_dien_thoai=getattr(user_data, "so_dien_thoai", None),
+            email=data.email.lower(),
+            ma_nguoi_dung = generate_ma_nguoi_dung(),
+            mat_khau_hash=AuthService.hash_password(data.mat_khau),
+            ho_ten=data.ho_ten,
+            vai_tro="KHACH_HANG",
+            trang_thai="KICH_HOAT"
         )
-        new_user.set_password(user_data.mat_khau)
 
         db.session.add(new_user)
-        return new_user
+        return new_user  # Commit ở route
 
-    # -------------------- PASSWORD RESET --------------------
+    # -------------------- FORGOT PASSWORD --------------------
     @staticmethod
-    def create_reset_token(email: str, salt="reset-password") -> str:
-        s = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
-        return s.dumps(email, salt=salt)
-
-    @staticmethod
-    def send_password_reset_email(email: str):
-        """Gửi email reset password. Luôn trả True nếu không lỗi gửi mail."""
+    def forgot_password(email: str) -> bool:
+        """Gửi email reset password nếu user tồn tại."""
         user = NguoiDung.query.filter(NguoiDung.email.ilike(email)).first()
-
         if not user:
             current_app.logger.info(f"Yêu cầu quên mật khẩu cho email không tồn tại: {email}")
             return True
@@ -121,12 +107,18 @@ class AuthService:
             current_app.logger.exception(f"Lỗi gửi email reset password: {e}")
             raise AuthError("Không thể gửi email đặt lại mật khẩu vào lúc này.")
 
+    # -------------------- CREATE RESET TOKEN --------------------
+    @staticmethod
+    def create_reset_token(email: str) -> str:
+        s = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+        return s.dumps(email, salt="reset-password")
+
     # -------------------- VERIFY TOKEN --------------------
     @staticmethod
-    def verify_reset_token(token: str, expiration=3600, salt="reset-password") -> str:
+    def verify_reset_token(token: str, expiration=3600) -> str:
         s = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
         try:
-            return s.loads(token, salt=salt, max_age=expiration)
+            return s.loads(token, salt="reset-password", max_age=expiration)
         except SignatureExpired:
             raise AuthError("Liên kết đặt lại mật khẩu đã hết hạn.")
         except BadSignature:
@@ -141,5 +133,5 @@ class AuthService:
         if not user:
             raise AuthError("Không tìm thấy người dùng được liên kết với liên kết này.")
 
-        user.set_password(new_password)
+        user.mat_khau_hash = AuthService.hash_password(new_password)
         return True

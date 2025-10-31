@@ -1,13 +1,13 @@
 # /backend/app/routes/danh_gia_routes.py
 from flask import Blueprint, request, jsonify
-from app.extensions import db, spec
+from ..extensions import db, spec
 from flask_pydantic_spec import Request, Response
 from typing import List
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.decorators import admin_required
+from ..utils.decorators import admin_required
 
 # Import Service và các lỗi nghiệp vụ
-from app.services.danhgia_service import (
+from ..services.danhgia_service import (
     DanhGiaService,
     ProductNotFound,
     ReviewError,
@@ -16,12 +16,12 @@ from app.services.danhgia_service import (
     InvalidDataError
 )
 # (QUAN TRỌNG) Import model DanhGia để query lại
-from app.models.extras import DanhGia
+from ..models.extras import DanhGia
 from sqlalchemy.orm import joinedload
 
 # Import Schema
-from app.schemas.extras import DanhGiaResponse, DanhGiaCreate, DanhGiaUpdate
-from app.schemas.Shared import PaginatedResponse 
+from ..schemas.extras import DanhGiaResponse, DanhGiaCreate, DanhGiaUpdate
+from ..schemas.Shared import PaginatedResponse 
 
 # --- TẠO 2 BLUEPRINT ---
 # 1. API Public: Lấy danh sách đánh giá
@@ -105,7 +105,7 @@ def create_new_review():
 
 # --- API 3: DUYỆT ĐÁNH GIÁ (ADMIN) ---
 @private_review_api.route('/admin/reviews/<int:review_id>', methods=['PATCH'])
-@admin_required() # Yêu cầu quyền admin
+@admin_required
 @spec.validate(
     body=Request(DanhGiaUpdate),
     resp=Response(HTTP_200=DanhGiaResponse),

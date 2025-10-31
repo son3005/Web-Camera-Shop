@@ -4,10 +4,11 @@ from pydantic import BaseModel, Field, EmailStr, validator
 from typing import Optional, List
 from datetime import date, datetime
 
-# --- FIX 1: Import Enums trực tiếp từ Model ---
-from app.models.nguoidung.NguoiDung import VaiTroNguoiDung, TrangThaiNguoiDung
 
-# ========================== SCHEMA REQUEST ==========================
+from ...models.enums import VaiTroNguoiDungEnum, TrangThaiNguoiDungEnum
+
+
+
 
 class LoginRequest(BaseModel):
     """Dùng cho API đăng nhập"""
@@ -21,7 +22,6 @@ class NguoiDungBase(BaseModel):
     ho_ten: str = Field(..., max_length=100, description="Họ và tên người dùng")
     so_dien_thoai: Optional[str] = Field(None, max_length=15, description="Số điện thoại")
     
-    # --- Đã xóa 'ngay_sinh', 'gioi_tinh' và 'anh_dai_dien_url' vì không có trong Model ---
 
 
 class NguoiDungCreate(NguoiDungBase):
@@ -40,28 +40,33 @@ class NguoiDungUpdate(BaseModel):
     """Schema dùng khi cập nhật hồ sơ người dùng"""
     ho_ten: Optional[str] = Field(None, max_length=100)
     so_dien_thoai: Optional[str] = Field(None, max_length=15)
-    # --- Đã xóa 'ngay_sinh', 'gioi_tinh' và 'anh_dai_dien_url' ---
+    email: Optional[EmailStr] = None
 
+class NguoiDungUpdateMatKhau(BaseModel):
+    mat_khau: str = Field(..., min_length=8, description="Mật khẩu phải có ít nhất 8 ký tự")
+    xac_nhan_mat_khau: str = Field(..., description="Xác nhận lại mật khẩu")
 
-# ========================== SCHEMA RESPONSE ==========================
+    @validator("xac_nhan_mat_khau")
+    def passwords_match(cls, v, values, **kwargs):
+        if "mat_khau" in values and v != values["mat_khau"]:
+            raise ValueError("Mật khẩu xác nhận không khớp")
+        return v
+    
 
 class NguoiDungResponse(NguoiDungBase):
-    """Schema phản hồi - Đã đồng bộ với Model"""
     id: int
     ma_nguoi_dung: str
-    
-    # --- FIX 1: Sử dụng Enum class trực tiếp từ Model ---
-    vai_tro: VaiTroNguoiDung
-    trang_thai: TrangThaiNguoiDung
-    
+    vai_tro: VaiTroNguoiDungEnum
+    so_dien_thoai: Optional[str] = None
+    trang_thai: TrangThaiNguoiDungEnum
     ngay_tao: datetime
+    lan_cuoi_dang_nhap: Optional[datetime] = None  # Thêm nếu cần
 
     class Config:
         orm_mode = True
-        use_enum_values = True # Chuyển enums thành string khi .dict()
+        use_enum_values = True
 
 
-# --- FIX 3: Thêm class này để sửa lỗi ImportError ---
 class NguoiDungCoBanResponse(BaseModel):
     """Schema phản hồi rút gọn (id, họ tên)"""
     id: int

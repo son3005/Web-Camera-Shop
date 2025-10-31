@@ -1,12 +1,13 @@
 
 # ===== USER & ROLE =====
-import app.models.nguoidung
+from .nguoidung import *
 
 # ===== PRODUCT & CATEGORY =====
-import app.models.sanpham
+from .sanpham import *
 
 # ===== CART & ORDER =====
-import app.models.giohang_dathang
+from .giohang_dathang import *
 
 # ===== COUPON, REVIEW, WISHLIST =====
-import app.models.extras
+from .extras import *
+from .enums import *

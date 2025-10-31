@@ -1,30 +1,27 @@
 from sqlalchemy import event
-from app.extensions import db
-from app.utils.slug import generate_slug # Giả sử bạn có một hàm tạo slug
+from ...extensions import db
 
 class DanhMuc(db.Model):
+    """
+    DanhMuc là một lớp đại diện cho bảng "danh_muc" trong cơ sở dữ liệu.
+    Attributes:
+        id (int): Khóa chính của bảng.
+        ma_danh_muc (str): Mã danh mục, là chuỗi ký tự duy nhất, không được để trống, và có chỉ mục.
+        ten_danh_muc (str): Tên danh mục, là chuỗi ký tự duy nhất, không được để trống.
+        san_phams (relationship): Mối quan hệ một-nhiều với bảng "SanPham", cho phép truy cập danh sách sản phẩm thuộc danh mục này.
+    Methods:
+        __repr__(): Trả về chuỗi đại diện cho đối tượng DanhMuc, bao gồm tên danh mục.
+    """
+    
     __tablename__ = 'danh_muc'
 
     id = db.Column(db.Integer, primary_key=True)
-    ma_danh_muc = db.Column(db.String(10), unique=True, nullable=False, index=True)
+    ma_danh_muc = db.Column(db.String(5), unique=True, nullable=False, index=True)
     ten_danh_muc = db.Column(db.String(100), unique=True, nullable=False)
-    slug = db.Column(db.String(150), unique=True, nullable=False, index=True)
+
 
     # --- Mối quan hệ ---
     san_phams = db.relationship('SanPham', back_populates='danh_muc', lazy='dynamic')
 
     def __repr__(self):
         return f'<Danh mục {self.ten_danh_muc}>'
-
-# TỰ ĐỘNG TẠO SLUG: Dùng SQLAlchemy event để tự động tạo slug
-# Event này sẽ được kích hoạt trước khi một đối tượng DanhMuc được insert vào DB
-@event.listens_for(DanhMuc, 'before_insert')
-def before_insert_listener(mapper, connection, target):
-    if target.ten_danh_muc and not target.slug:
-        target.slug = generate_slug(target.ten_danh_muc, DanhMuc)
-
-# Event này sẽ được kích hoạt trước khi một đối tượng DanhMuc được update
-@event.listens_for(DanhMuc, 'before_update')
-def before_update_listener(mapper, connection, target):
-    if target.ten_danh_muc and not target.slug: # Hoặc nếu bạn muốn slug thay đổi khi tên thay đổi
-        target.slug = generate_slug(target.ten_danh_muc, DanhMuc)

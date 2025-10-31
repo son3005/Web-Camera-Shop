@@ -4,11 +4,10 @@ from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 
 # --- (SỬA) Import Enums từ file trung lập ---
-from app.models.enums import (
+from ..models.enums import (
     TrangThaiSanPhamEnum,
     VaiTroNguoiDungEnum,
     TrangThaiNguoiDungEnum,
-    GioiTinhEnum,
     TrangThaiDonHangEnum,
     TrangThaiThanhToanEnum,
     PhuongThucThanhToanEnum

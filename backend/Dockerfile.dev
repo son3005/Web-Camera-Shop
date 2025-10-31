@@ -1,37 +1,17 @@
-# Sử dụng image chính thức của Python 3.11 (phiên bản slim để nhẹ)
-# Đây là phiên bản ổn định và tương thích tốt với các thư viện.
 FROM python:3.11-slim
 
-# Đặt thư mục làm việc bên trong container
 WORKDIR /app
 
-# --- TỐI ƯU HÓA ---
-# Vì đã chuyển sang PyMySQL (pure Python), chúng ta không cần cài đặt
-# các gói hệ thống nặng nề để biên dịch mysqlclient nữa.
-# Toàn bộ khối `RUN apt-get ...` đã được loại bỏ.
-
-# Copy file requirements trước để tận dụng cache layer của Docker.
-# Nếu file này không đổi, bước `pip install` sẽ không phải chạy lại.
 COPY requirements.txt .
-
 RUN pip install --upgrade pip
-
-# Cài đặt các thư viện Python đã định nghĩa trong requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy toàn bộ code của thư mục backend vào container.
-# Lưu ý: Trong development, code thực tế sẽ được mount từ máy thật
-# thông qua `volumes` trong docker-compose.yml để bật hot-reload.
 COPY . .
 
-# Mở cổng 5000 để service backend có thể nhận request từ bên ngoài
 EXPOSE 5000
 
-# Thiết lập các biến môi trường cho Flask
 ENV FLASK_APP=app.main
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
 
-# Lệnh mặc định để khởi động server development của Flask
-# --host=0.0.0.0 là bắt buộc để server có thể truy cập từ ngoài container
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

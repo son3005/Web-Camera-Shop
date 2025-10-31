@@ -1,15 +1,15 @@
 # /backend/app/routes/giohang_routes.py
 
 from flask import Blueprint, request, jsonify
-from app.extensions import db, spec
+from ..extensions import db, spec
 from flask_pydantic_spec import Request, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 # Import Decorator
-from app.utils.decorators import jwt_required # (Giả sử bạn có decorator này, hoặc dùng @jwt_required() của flask_jwt_extended)
+from ..utils.decorators import jwt_required # (Giả sử bạn có decorator này, hoặc dùng @jwt_required() của flask_jwt_extended)
 
 # Import Service và các lỗi nghiệp vụ
-from app.services.giohang_service import (
+from ..services.giohang_service import (
     GioHangService,
     VariantNotFound,
     OutOfStockError,
@@ -17,7 +17,7 @@ from app.services.giohang_service import (
 )
 
 # Import Schemas
-from app.schemas.giohang_dathang import GioHangResponse, ChiTietGioHangCreate, ChiTietGioHangUpdate
+from ..schemas.giohang_dathang import GioHangResponse, ChiTietGioHangCreate, ChiTietGioHangUpdate
 
 # Tạo Blueprint
 cart_api = Blueprint('cart_api', __name__, url_prefix='/api/cart')

@@ -1,15 +1,15 @@
-# /backend/app/services/giohang_service.py
-from app.extensions import db
+# /backend/./services/giohang_service.py
+from ..extensions import db
 from sqlalchemy.orm import joinedload, selectinload, load_only
 from typing import Dict, Any, List
 
 # Import Models
-from app.models.giohang_dathang import GioHang, ChiTietGioHang
-from app.models.sanpham import BienTheSanPham, SanPham
-from app.models.nguoidung import NguoiDung
+from ..models.giohang_dathang import GioHang, ChiTietGioHang
+from ..models.sanpham import BienTheSanPham, SanPham
+from ..models.nguoidung import NguoiDung
 
 # Import Schemas
-from app.schemas.giohang_dathang import ChiTietGioHangCreate, ChiTietGioHangUpdate
+from ..schemas.giohang_dathang import ChiTietGioHangCreate, ChiTietGioHangUpdate
 
 # --- Định nghĩa lỗi nghiệp vụ ---
 

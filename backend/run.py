@@ -1,19 +1,28 @@
+# /backend/app/run.py
 from dotenv import load_dotenv
-
 load_dotenv()
 
 from app.main import create_app
-from app.config import DevelopmentConfig, ProductionConfig 
 import os
 
+# Xác định môi trường
+flask_env = os.getenv('FLASK_ENV', 'development').lower()
 
-config_name = os.getenv('FLASK_CONFIG', 'development')
-if config_name == 'production':
-    config = ProductionConfig()
+if flask_env == 'production':
+    from app.config import ProductionConfig
+    config_class = ProductionConfig
+elif flask_env == 'testing':
+    from app.config import TestingConfig
+    config_class = TestingConfig
 else:
-    config = DevelopmentConfig()
+    from app.config import DevelopmentConfig
+    config_class = DevelopmentConfig
 
-app = create_app(config)
+app = create_app(config_class)
 
 if __name__ == "__main__":
-    app.run(debug=config.DEBUG, host='0.0.0.0', port=5000)
+    app.run(
+        debug=config_class.DEBUG,
+        host='0.0.0.0',
+        port=5000
+    )

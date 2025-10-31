@@ -1,49 +1,59 @@
-# /backend/app/main.py
-
+import os
 from flask import Flask, jsonify
-from app.config import DevelopmentConfig
-from app.extensions import db, migrate, jwt, cors, spec, celery, mail
-from flask_cors import CORS
+from .config import DevelopmentConfig, ProductionConfig, TestingConfig
+from .extensions import db, migrate, jwt, cors, spec, celery, mail
 import cloudinary
-import app.models
-from app.routes.auth_routes import auth_api
 
 # Import các routes (blueprints)
-from app.routes.sanpham_routes import product_api
-from app.routes.upload_routes import upload_api
-from app.routes.danggia_routes import public_review_api, private_review_api 
-from app.routes.giohang_routes import cart_api
-from app.routes.donhang_routes import order_api
+from .routes.auth_routes import auth_api
+from .routes.sanpham_routes import product_api
+from .routes.upload_routes import upload_api
+from .routes.danggia_routes import public_review_api, private_review_api
+from .routes.giohang_routes import cart_api
+from .routes.donhang_routes import order_api
 
-def create_app(config_class=DevelopmentConfig):
+
+def create_app(config_class=None):
     app = Flask(__name__)
-    
-    # 1. Load configuration
+
+    # === Xác định config ===
+    if config_class is None:
+        env = os.getenv("FLASK_ENV", "development").lower()
+        if env == "production":
+            config_class = ProductionConfig
+        elif env == "testing":
+            config_class = TestingConfig
+        else:
+            config_class = DevelopmentConfig
+
     app.config.from_object(config_class)
 
-    # 2. Initialize Flask extensions
+    # 1. Initialize Flask extensions
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
     cors.init_app(
-        app, 
-        resources={r"/api/*": {"origins": "http://localhost:5173"}}, 
+        app,
+        resources={r"/api/*": {"origins": "*"}},
         supports_credentials=True,
-        allow_headers=["Authorization", "Content-Type"] 
     )
     spec.register(app)
-    mail.init_app(app)  
+    mail.init_app(app)
 
+    # 2. Cấu hình Cloudinary (chỉ nếu có config thật)
+    if all([
+        app.config.get('CLOUDINARY_CLOUD_NAME'),
+        app.config.get('CLOUDINARY_API_KEY'),
+        app.config.get('CLOUDINARY_API_SECRET'),
+    ]):
+        cloudinary.config(
+            cloud_name=app.config['CLOUDINARY_CLOUD_NAME'],
+            api_key=app.config['CLOUDINARY_API_KEY'],
+            api_secret=app.config['CLOUDINARY_API_SECRET'],
+        )
 
-    # Cấu hình Cloudinary
-    cloudinary.config(
-        cloud_name=app.config['CLOUDINARY_CLOUD_NAME'],
-        api_key=app.config['CLOUDINARY_API_KEY'],
-        api_secret=app.config['CLOUDINARY_API_SECRET']
-    )
-
-    # Cấu hình Celery
-    celery.config_from_object(app.config, namespace='CELERY')
+    # 3. Cấu hình Celery
+    celery.conf.update(app.config)
     celery.autodiscover_tasks(['app.services'])
 
     class ContextTask(celery.Task):
@@ -51,17 +61,26 @@ def create_app(config_class=DevelopmentConfig):
             with app.app_context():
                 return self.run(*args, **kwargs)
     celery.Task = ContextTask
-        
-    # 3. Register Blueprints
-    app.register_blueprint(product_api)
-    app.register_blueprint(upload_api)
-    app.register_blueprint(public_review_api)
-    app.register_blueprint(private_review_api)
-    app.register_blueprint(cart_api)
-    app.register_blueprint(order_api)
-    app.register_blueprint(auth_api)
-    
-    # 4. Add routes
+
+    # 4. Register Blueprints — đảm bảo không bị trùng
+    blueprints = {
+        "product_api": product_api,
+        "upload_api": upload_api,
+        "public_review_api": public_review_api,
+        "private_review_api": private_review_api,
+        "cart_api": cart_api,
+        "order_api": order_api,
+        "auth_api": auth_api,
+    }
+
+    app.blueprints.clear()
+    app.url_map = app.url_map.__class__()
+
+    for name, bp in blueprints.items():
+        if name not in app.blueprints:
+            app.register_blueprint(bp)
+
+    # 5. Các route mặc định
     @app.route('/')
     def index():
         return jsonify(message="Welcome to CameraStore API!")
@@ -75,4 +94,3 @@ def create_app(config_class=DevelopmentConfig):
         return jsonify(spec.generate_swagger())
 
     return app
-

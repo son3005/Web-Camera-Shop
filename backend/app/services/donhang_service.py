@@ -1,5 +1,5 @@
 # /backend/app/services/donhang_service.py
-from app.extensions import db
+from ..extensions import db
 from sqlalchemy.orm import Session, joinedload, selectinload
 # --- (THÊM) Import func để dùng count ---
 from sqlalchemy import func, or_
@@ -9,17 +9,17 @@ from typing import Dict, Any, List
 from datetime import datetime, time # Thêm datetime, time để xử lý date range
 
 # Import Models
-from app.models.giohang_dathang import GioHang, ChiTietGioHang, DonHang, ChiTietDonHang, ThanhToan
-from app.models.sanpham import BienTheSanPham, SanPham
-from app.models.nguoidung import DiaChi, NguoiDung
+from ..models.giohang_dathang import GioHang, ChiTietGioHang, DonHang, ChiTietDonHang, ThanhToan
+from ..models.sanpham import BienTheSanPham, SanPham
+from ..models.nguoidung import DiaChi, NguoiDung
 # --- Import Enum từ file mới ---
-from app.models.enums import TrangThaiDonHangEnum, TrangThaiThanhToanEnum, PhuongThucThanhToanEnum
+from ..models.enums import TrangThaiDonHangEnum, TrangThaiThanhToanEnum, PhuongThucThanhToanEnum
 
 # Import Schemas (Sửa đường dẫn nếu cần)
-from app.schemas.giohang_dathang import DonHangCreate, DonHangUpdate
+from ..schemas.giohang_dathang import DonHangCreate, DonHangUpdate
 
 # Import lỗi từ các service khác
-from app.services.giohang_service import VariantNotFound, OutOfStockError, CartItemNotFoundError
+from.giohang_service import VariantNotFound, OutOfStockError, CartItemNotFoundError
 
 # --- Định nghĩa lỗi nghiệp vụ (Giữ nguyên) ---
 

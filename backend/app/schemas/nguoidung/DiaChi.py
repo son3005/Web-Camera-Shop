@@ -7,7 +7,6 @@ class DiaChiBase(BaseModel):
     so_dien_thoai: str = Field(..., max_length=15, description="Số điện thoại người nhận")
     dia_chi_cu_the: str = Field(..., max_length=255, description="Số nhà, tên đường")
     phuong_xa: str = Field(..., max_length=100, description="Phường / Xã")
-    quan_huyen: str = Field(..., max_length=100, description="Quận / Huyện")
     tinh_thanh: str = Field(..., max_length=100, description="Tỉnh / Thành phố")
     ma_buu_dien: Optional[str] = Field(None, max_length=20, description="Mã bưu điện (nếu có)")
     la_mac_dinh: bool = Field(False, description="Có phải địa chỉ mặc định không?")
@@ -23,7 +22,6 @@ class DiaChiUpdate(BaseModel):
     so_dien_thoai: Optional[str] = Field(None, max_length=15)
     dia_chi_cu_the: Optional[str] = Field(None, max_length=255)
     phuong_xa: Optional[str] = Field(None, max_length=100)
-    quan_huyen: Optional[str] = Field(None, max_length=100)
     tinh_thanh: Optional[str] = Field(None, max_length=100)
     ma_buu_dien: Optional[str] = Field(None, max_length=20)
     la_mac_dinh: Optional[bool] = None

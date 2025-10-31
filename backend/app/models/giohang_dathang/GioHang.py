@@ -1,6 +1,6 @@
 # app/models/gio_hang.py
 
-from app.extensions import db
+from ...extensions import db
 
 class GioHang(db.Model):
     __tablename__ = 'gio_hang'
