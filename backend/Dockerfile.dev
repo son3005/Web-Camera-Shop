@@ -1,17 +1,25 @@
+# /backend/Dockerfile.dev
 FROM python:3.11-slim
 
 WORKDIR /app
 
+# Copy requirements
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
 
+# Install pip, upgrade, install deps + pydantic[email]
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "pydantic[email]" 
+
+# Copy code
 COPY . .
 
-EXPOSE 5000
-
-ENV FLASK_APP=app.main
+# Environment
+ENV FLASK_APP=app.main:app
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
+ENV PYTHONUNBUFFERED=1
+EXPOSE 5000
 
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+# DÙNG flask run với reload
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--reload"]

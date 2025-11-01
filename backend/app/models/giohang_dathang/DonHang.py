@@ -18,7 +18,6 @@ class DonHang(db.Model):
     dia_chi_giao = db.Column(db.String(500),nullable= False)
     trang_thai = db.Column(db.Enum(TrangThaiDonHangEnum), default=TrangThaiDonHangEnum.CHO_XAC_NHAN, nullable=False)
     phi_van_chuyen = db.Column(db.Numeric(14, 2), default=0)
-    giam_gia = db.Column(db.Numeric(15, 2), default=0)
     ghi_chu = db.Column(db.Text, nullable=True)
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
     ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -32,7 +31,6 @@ class DonHang(db.Model):
     # --- Ràng buộc ---
     __table_args__ = (
         db.CheckConstraint('phi_van_chuyen >= 0', name='ck_phivanchuyen'),
-        db.CheckConstraint('giam_gia >= 0', name='ck_giamgia'),
     )
 
     def __repr__(self):

@@ -39,6 +39,10 @@ class DevelopmentConfig(Config):
         'mysql+pymysql://root:password@db:3306/camera_shop'
     )
 
+    # BẬT LOGGING CHO SQLALCHEMY
+    SQLALCHEMY_ECHO = True  # IN RA TẤT CẢ SQL QUERY
+    SQLALCHEMY_RECORD_QUERIES = True
+
 
 class ProductionConfig(Config):
     DEBUG = False

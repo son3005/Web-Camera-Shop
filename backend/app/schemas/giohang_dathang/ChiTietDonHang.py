@@ -1,33 +1,34 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+# /backend/app/schemas/giohang_dathang/ChiTietDonHang.py
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 
 class ChiTietDonHangBase(BaseModel):
-    ten_san_pham_luc_mua: str = Field(..., max_length=200)
-    ten_bien_the_luc_mua: Optional[str] = Field(None, max_length=150)
-    don_gia_luc_mua: Decimal = Field(..., ge=1)
-    so_luong: int
+    don_hang_id: int = Field(..., description="ID đơn hàng")
+    bien_the_san_pham_id: Optional[int] = Field(None, description="ID biến thể sản phẩm")
+    ten_san_pham_luc_mua: str = Field(..., max_length=255, description="Tên sản phẩm lúc mua")
+    ten_bien_the_luc_mua: Optional[str] = Field(None, max_length=150, description="Tên biến thể lúc mua")
+    don_gia_luc_mua: Decimal = Field(..., ge=0, description="Đơn giá lúc mua")
+    so_luong: int = Field(..., ge=1, description="Số lượng")
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
-class ChiTietDonHangResponse(ChiTietDonHangBase):
-    id: int
-    ten_san_pham_luc_mua: str
-    ten_bien_the_luc_mua: Optional[str]
-    don_gia_luc_mua: Decimal
-    so_luong: int
-
-    class Config:
-        orm_mode = True
 
 class ChiTietDonHangCreate(ChiTietDonHangBase):
-    """Schema dùng khi tạo mới chi tiết đơn hàng."""
     pass
+
 
 class ChiTietDonHangUpdate(BaseModel):
     so_luong: Optional[int] = Field(None, ge=1)
     don_gia_luc_mua: Optional[Decimal] = Field(None, ge=0)
 
+    model_config = ConfigDict(from_attributes=True)
 
+
+class ChiTietDonHangResponse(ChiTietDonHangBase):
+    id: int = Field(..., description="ID chi tiết đơn hàng")
+    ngay_them: datetime = Field(..., description="Ngày thêm vào đơn")
+
+    model_config = ConfigDict(from_attributes=True)

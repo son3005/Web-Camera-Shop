@@ -29,6 +29,7 @@ class HinhAnhSanPham(db.Model):
     public_id = db.Column(db.String(255), nullable=False, unique=True, index=True) 
     alt_text = db.Column(db.String(200), nullable=True) 
     la_anh_dai_dien = db.Column(db.Boolean, default=False, nullable=False)
+    
     bien_the = db.relationship('BienTheSanPham', back_populates='hinh_anhs')
     rep_key = db.Column(
         db.Integer,

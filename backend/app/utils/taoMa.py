@@ -30,10 +30,3 @@ def generate_ma_san_pham(category_prefix: str, brand_prefix: str, length=24):
     code = f"{prefix}{category_prefix}{brand_prefix}{date_part}{random_part}"
     return code[:length]
 
-def generate_unique_ma_san_pham(category_prefix: str, brand_prefix: str, length=24):
-    max_retries = 5
-    for _ in range(max_retries):
-        code = generate_ma_san_pham(category_prefix, brand_prefix, length)
-        if not SanPham.query.filter_by(ma_san_pham=code).first():
-            return code
-    raise Exception("Không thể tạo mã sản phẩm duy nhất sau 5 lần thử")

@@ -1,9 +1,8 @@
 # /backend/app/schemas/Shared.py
 from typing import List, TypeVar, Generic
-from pydantic import BaseModel, Field
-from pydantic.generics import GenericModel
+from pydantic import BaseModel, ConfigDict, Field
 
-# --- (SỬA) Import Enums từ file trung lập ---
+# --- Import Enums ---
 from ..models.enums import (
     TrangThaiSanPhamEnum,
     VaiTroNguoiDungEnum,
@@ -13,11 +12,9 @@ from ..models.enums import (
     PhuongThucThanhToanEnum
 )
 
-
-# Dùng lại cho tất cả các loại phân trang
 ItemType = TypeVar('ItemType')
 
-class PaginatedResponse(GenericModel, Generic[ItemType]):
+class PaginatedResponse(BaseModel, Generic[ItemType]):  # SỬA: GenericModel → BaseModel, Generic[T]
     """
     Schema chung cho mọi response dạng phân trang.
     """
@@ -27,12 +24,13 @@ class PaginatedResponse(GenericModel, Generic[ItemType]):
     total_items: int = Field(..., description="Tổng số mục")
     total_pages: int = Field(..., description="Tổng số trang")
 
-    class Config:
-        orm_mode = True # Vẫn giữ orm_mode cho Pydantic v1
+    model_config = ConfigDict(from_attributes=True)  # SỬA: model_config ở ngoài class Config
+
 
 class TrangThaiUpdate(BaseModel):
     """
     Schema chung cho các request chỉ cập nhật 'trang_thai'
-    (Sẽ được dùng trong nhiều route, ví dụ: sanpham_service)
     """
     trang_thai: str = Field(..., description="Trạng thái mới")
+
+    model_config = ConfigDict(from_attributes=True)

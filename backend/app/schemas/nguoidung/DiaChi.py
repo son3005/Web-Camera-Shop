@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
+# /backend/app/schemas/DiaChi.py
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
+
 
 class DiaChiBase(BaseModel):
     ten_nguoi_nhan: str = Field(..., max_length=100, description="Họ tên người nhận hàng")
@@ -11,13 +13,12 @@ class DiaChiBase(BaseModel):
     ma_buu_dien: Optional[str] = Field(None, max_length=20, description="Mã bưu điện (nếu có)")
     la_mac_dinh: bool = Field(False, description="Có phải địa chỉ mặc định không?")
 
+
 class DiaChiCreate(DiaChiBase):
-    # Khi tạo địa chỉ, ID người dùng sẽ được lấy từ token JWT,
-    # không cần client phải gửi lên.
     pass
 
+
 class DiaChiUpdate(BaseModel):
-    # Tất cả các trường đều là Optional khi cập nhật
     ten_nguoi_nhan: Optional[str] = Field(None, max_length=100)
     so_dien_thoai: Optional[str] = Field(None, max_length=15)
     dia_chi_cu_the: Optional[str] = Field(None, max_length=255)
@@ -26,10 +27,12 @@ class DiaChiUpdate(BaseModel):
     ma_buu_dien: Optional[str] = Field(None, max_length=20)
     la_mac_dinh: Optional[bool] = None
 
+    model_config = ConfigDict(from_attributes=True)
+
+
 class DiaChiResponse(DiaChiBase):
     id: int
     ngay_tao: datetime
     ngay_cap_nhat: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

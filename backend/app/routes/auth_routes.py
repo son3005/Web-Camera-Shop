@@ -1,161 +1,182 @@
-from flask import Blueprint, request, jsonify, current_app
-from ..extensions import db, spec
-from ..services.auth_service import AuthService, AuthError
+# /backend/app/routes/auth_routes.py
+
+from typing import Dict, Optional
+from flask import jsonify, current_app, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from pydantic import BaseModel, Field, EmailStr
-from flask_pydantic_spec import Request, Response
-from ..schemas.nguoidung import NguoiDungResponse, NguoiDungCreate, LoginRequest
-from ..models.nguoidung import NguoiDung
+from flask_openapi3 import APIBlueprint, OpenAPI
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import ValidationError  # only for global handler (if needed)
+from ..schemas.nguoidung import NguoiDungBase,NguoiDungCreate,NguoiDungUpdate,NguoiDungResponse,NguoiDungCoBanResponse
+
+from ..extensions import db
+from ..services.auth_service import AuthService, AuthError
 import traceback
 
-auth_api = Blueprint("auth_api", __name__, url_prefix="/api/auth")
+# -------------------------------------------------------
+# Tạo APIBlueprint: giống Blueprint nhưng có OpenAPI + validation
+# -------------------------------------------------------
+auth_api = APIBlueprint("auth_api", __name__, url_prefix="/api/auth")
 
-# -------------------- SCHEMAS --------------------
+
+# -------------------------------------------------------
+# Pydantic schemas (request & response). 
+# model_config={"from_attributes": True} để model_validate ORM object
+# -------------------------------------------------------
+class LoginRequest(BaseModel):
+    email: EmailStr = Field(..., description="Email người dùng")
+    mat_khau: str = Field(..., min_length=8, description="Mật khẩu")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class LoginResponse(BaseModel):
-    user: NguoiDungResponse
-    token: str = Field(..., description="JWT access token")
+    user: Dict = Field(..., description="Thông tin người dùng")
+    token: str = Field(..., description="JWT Access Token")
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
+
+
+class RegisterRequest(BaseModel):
+    ho_ten: str = Field(..., max_length=100, description="Họ và tên")
+    email: EmailStr = Field(..., description="Email")
+    mat_khau: str = Field(..., min_length=8, description="Mật khẩu")
+    so_dien_thoai: Optional[str] = Field(None, max_length=15, description="SĐT")
+
+    model_config = {"from_attributes": True}
+
+
+class RegisterResponse(BaseModel):
+    id: int = Field(..., description="ID người dùng")
+    ho_ten: str = Field(..., description="Họ và tên")
+    email: EmailStr = Field(..., description="Email")
+    so_dien_thoai: Optional[str] = Field(None, description="SĐT")
+
+    model_config = {"from_attributes": True}
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    email: EmailStr = Field(..., description="Email cần đặt lại mật khẩu")
 
 
 class ResetPasswordRequest(BaseModel):
-    mat_khau: str = Field(..., min_length=8)
+    mat_khau: str = Field(..., min_length=8, description="Mật khẩu mới")
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-# -------------------- LOGIN --------------------
-@auth_api.route("/login", methods=["POST"])
-@spec.validate(
-    body=Request(LoginRequest),
-    tags=["Auth"],
-)
-def login():
-    """Đăng nhập người dùng"""
-    data = request.context.body.dict()
+class ResetPasswordPath(BaseModel):
+    token: str = Field(..., description="Reset password token (được mã hóa)")
 
+    model_config = {"from_attributes": True}
+
+
+# -------------------------------------------------------
+# 1) LOGIN
+# -------------------------------------------------------
+@auth_api.post("/login", responses={"200": LoginResponse})
+def login(body: LoginRequest):  # ← Giữ param 'body: Model'
     try:
-        result = AuthService.login(data["email"], data["mat_khau"])
-        return jsonify(result), 200
+        result = AuthService.login(body.email, body.mat_khau)
+        user = result["user"]  # AuthService.login trả về dict
+        token = result["token"]
 
+        response = LoginResponse(user=user, token=token)
+        return jsonify(response.model_dump()), 200
     except AuthError as e:
-        return jsonify(error=str(e)), 401
-    except Exception as e:
-        traceback.print_exc()
-        current_app.logger.exception("❌ Lỗi server khi đăng nhập:")
-        return jsonify(error="Lỗi máy chủ nội bộ."), 500
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"[auth.login] {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ."}), 500
 
 
-# -------------------- REGISTER --------------------
-@auth_api.route("/register", methods=["POST"])
-@spec.validate(
-    body=Request(NguoiDungCreate),
-    tags=["Auth"],
-)
-def register():
-    """Đăng ký tài khoản mới"""
-    user_data = request.context.body
-
+# -------------------------------------------------------
+# 2) REGISTER
+# -------------------------------------------------------
+@auth_api.post("/register", responses={"201": RegisterResponse})
+def register(body: RegisterRequest): 
     try:
-        new_user = AuthService.register(user_data)
+        new_user = AuthService.register(body)
         db.session.commit()
-        db.session.refresh(new_user)
-
-        user_resp = NguoiDungResponse.from_orm(new_user).dict()
-        return jsonify(user_resp), 201
+        response = RegisterResponse.model_validate(new_user)
+        return jsonify(response.model_dump()), 201
     except AuthError as e:
         db.session.rollback()
-        return jsonify(error=str(e)), 400
-    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception:
         db.session.rollback()
-        traceback.print_exc()
-        current_app.logger.exception("❌ Lỗi khi đăng ký:")
-        return jsonify(error="Lỗi máy chủ khi đăng ký tài khoản."), 500
+        current_app.logger.error(f"[auth.register] {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ."}), 500
 
 
-# -------------------- FORGOT PASSWORD --------------------
-@auth_api.route("/forgot-password", methods=["POST"])
-@spec.validate(body=Request(ForgotPasswordRequest), tags=["Auth"])
-def forgot_password():
-    """Gửi email reset mật khẩu"""
-    data: ForgotPasswordRequest = request.context.body
-
+# -------------------------------------------------------
+# 3) FORGOT PASSWORD
+# -------------------------------------------------------
+@auth_api.post("/forgot-password", responses={"200": None})
+def forgot_password(body: ForgotPasswordRequest):  # ← Giữ param 'body: Model'
     try:
-        AuthService.forgot_password(data.email)
-        return jsonify(message="✅ Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi."), 200
+        reset_token = AuthService.forgot_password(body.email)
+        return jsonify({"message": "Gửi email đặt lại mật khẩu thành công!"}), 200
     except AuthError as e:
-        return jsonify(error=str(e)), 400
-    except Exception as e:
-        traceback.print_exc()
-        current_app.logger.exception("❌ Lỗi khi gửi email quên mật khẩu:")
-        return jsonify(error="Lỗi máy chủ khi gửi yêu cầu."), 500
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"[auth.forgot_password] {traceback.format_exc()}")
+        return jsonify({"error": "Không thể gửi email. Vui lòng thử lại sau."}), 500
 
 
-# -------------------- VERIFY RESET TOKEN --------------------
-@auth_api.route("/verify-reset-token/<token>", methods=["GET"])
-@spec.validate(tags=["Auth"])
-def verify_reset_token(token):
-    """Xác thực token reset mật khẩu"""
+# -------------------------------------------------------
+# 4) VERIFY RESET TOKEN
+# -------------------------------------------------------
+@auth_api.get("/verify-reset-token/<token>", responses={"200": None})
+def verify_reset_token(token: str):
     try:
         email = AuthService.verify_reset_token(token)
-        return jsonify({"message": "Liên kết hợp lệ.", "email": email}), 200
+        return jsonify({"message": "Token hợp lệ", "email": email}), 200
     except AuthError as e:
-        return jsonify(error=str(e)), 400
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify(error="Lỗi máy chủ khi xác thực liên kết."), 500
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"[auth.verify_reset_token] {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ."}), 500
 
 
-# -------------------- RESET PASSWORD --------------------
-@auth_api.route("/reset-password/<token>", methods=["POST"])
-@spec.validate(body=Request(ResetPasswordRequest), tags=["Auth"])
-def reset_password(token):
-    """Đặt lại mật khẩu"""
-    data: ResetPasswordRequest = request.context.body
-
-    try:
-        AuthService.reset_password(token, data.mat_khau)
-        db.session.commit()
-        return jsonify(message="✅ Đặt lại mật khẩu thành công! Bạn có thể đăng nhập."), 200
-    except AuthError as e:
-        db.session.rollback()
-        return jsonify(error=str(e)), 400
-    except Exception as e:
-        db.session.rollback()
-        traceback.print_exc()
-        current_app.logger.exception("❌ Lỗi khi đặt lại mật khẩu:")
-        return jsonify(error="Lỗi máy chủ khi đặt lại mật khẩu."), 500
-
-
-# -------------------- GET CURRENT USER --------------------
-@auth_api.route("/me", methods=["GET"])
-@jwt_required()
-@spec.validate(
-    tags=["Auth"]
+# -------------------------------------------------------
+# 5) RESET PASSWORD
+# -------------------------------------------------------
+@auth_api.post(
+    "/reset-password/<path:token>",
+    responses={"200": None}
 )
-def get_current_user():
-    """Lấy thông tin người dùng hiện tại"""
-    user_id_str = get_jwt_identity()
-
-    if not user_id_str:
-        return jsonify(error="Token không hợp lệ hoặc thiếu thông tin user ID."), 401
-
+def reset_password(
+    path: ResetPasswordPath,      # ← NHẬN PATH PARAM QUA MODEL
+    body: ResetPasswordRequest    # ← BODY
+):
     try:
-        user_id_int = int(user_id_str)
-        user = db.session.get(NguoiDung, user_id_int)
-        
-        if not user:
-            return jsonify(error="Người dùng không tồn tại."), 404
-
-        user_resp = NguoiDungResponse.from_orm(user).dict()
-        return jsonify(user_resp), 200
-    
-    except (ValueError, TypeError):
-        return jsonify(error="Định dạng token không hợp lệ."), 401
+        AuthService.reset_password(path.token, body.mat_khau)
+        db.session.commit()
+        return jsonify({"message": "Đặt lại mật khẩu thành công!"}), 200
+    except AuthError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
-        traceback.print_exc()
-        current_app.logger.exception("❌ Lỗi khi lấy thông tin người dùng hiện tại:")
-        return jsonify(error="Lỗi máy chủ khi lấy thông tin người dùng."), 500
+        db.session.rollback()
+        current_app.logger.error(f"[auth.reset_password] {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ nội bộ."}), 500
+
+
+# -------------------------------------------------------
+# 6) GET CURRENT USER - Protected endpoint
+# -------------------------------------------------------
+@auth_api.get("/me", responses={"200": RegisterResponse})
+@jwt_required()
+def get_current_user():
+    try:
+        user_id = get_jwt_identity()
+        from ..models.nguoidung import NguoiDung  # local import để tránh cycles
+        user = db.session.get(NguoiDung, int(user_id))
+        if not user:
+            return jsonify({"error": "Người dùng không tồn tại."}), 404
+
+        response = RegisterResponse.model_validate(user)
+        return jsonify(response.model_dump()), 200
+    except Exception:
+        current_app.logger.error(f"[auth.get_current_user] {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ."}), 500

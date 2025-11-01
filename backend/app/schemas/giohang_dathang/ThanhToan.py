@@ -1,28 +1,41 @@
-from pydantic import BaseModel, Field
+# /backend/app/schemas/giohang_dathang/ThanhToan.py
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
 from ...models.enums import TrangThaiThanhToanEnum, PhuongThucThanhToanEnum
 
+
 class ThanhToanBase(BaseModel):
-    so_tien: Decimal = Field(..., description="Số tiền thanh toán")
-    phuong_thuc: PhuongThucThanhToanEnum = Field(PhuongThucThanhToanEnum.COD, description="Phương thức thanh toán")
-    trang_thai: TrangThaiThanhToanEnum = Field(TrangThaiThanhToanEnum.CHO_THANH_TOAN, description="Trạng thái thanh toán")
-    ma_giao_dich_ben_thu_3: Optional[str] = Field(None, description="Mã giao dịch từ bên thứ 3, nếu có")
-    ngay_tao: Optional[datetime] = Field(None, description="Ngày tạo bản ghi")
-    ngay_cap_nhat: Optional[datetime] = Field(None, description="Ngày cập nhật bản ghi")
+    don_hang_id: int = Field(..., description="ID đơn hàng")
+    so_tien: Decimal = Field(..., ge=0, description="Số tiền thanh toán")
+    phuong_thuc: PhuongThucThanhToanEnum = Field(
+        default=PhuongThucThanhToanEnum.COD,
+        description="Phương thức thanh toán"
+    )
+    trang_thai: TrangThaiThanhToanEnum = Field(
+        default=TrangThaiThanhToanEnum.CHO_THANH_TOAN,
+        description="Trạng thái thanh toán"
+    )
+    ma_giao_dich_ben_thu_3: Optional[str] = Field(None, max_length=255, description="Mã giao dịch bên thứ 3")
+    ngay_tao: datetime = Field(default_factory=datetime.utcnow, description="Ngày tạo")
+    ngay_cap_nhat: datetime = Field(default_factory=datetime.utcnow, description="Ngày cập nhật")
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ThanhToanCreate(ThanhToanBase):
-    don_hang_id: int = Field(..., description="ID của đơn hàng liên kết")
+    pass
+
 
 class ThanhToanUpdate(BaseModel):
-    trang_thai: Optional[TrangThaiThanhToanEnum] = Field(None, description="Cập nhật trạng thái thanh toán")
-    ma_giao_dich_ben_thu_3: Optional[str] = Field(None, description="Cập nhật mã giao dịch từ bên thứ 3")
+    trang_thai: Optional[TrangThaiThanhToanEnum] = None
+    ma_giao_dich_ben_thu_3: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ThanhToanResponse(ThanhToanBase):
-    id: int = Field(..., description="ID của bản ghi thanh toán")
-    don_hang_id: int = Field(..., description="ID của đơn hàng liên kết")
+    id: int = Field(..., description="ID thanh toán")
 
-    class Config:
-        orm_mode = True
-
+    model_config = ConfigDict(from_attributes=True)
