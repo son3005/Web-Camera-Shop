@@ -1,45 +1,48 @@
+// src/pages/DangKy.jsx
 import React, { useState } from "react";
 import { FaUser, FaEnvelope, FaLock, FaArrowRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { register } from "../api/authApi"; // ✅ đổi sang hàm đúng trong authApi.js
+import { register as registerApi } from "../api/authApi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { registerSchema } from "../validation/loginSchema";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import BG from "../assets/images/BG.jpg";
 import LoginImage from "../assets/images/Login.jpg";
 
 function DangKy() {
-  const [hoTen, setHoTen] = useState("");
-  const [email, setEmail] = useState("");
-  const [matKhau, setMatKhau] = useState("");
-  const [xacNhan, setXacNhan] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dangnhap = "/dangnhap";
+ 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm({
+    resolver: yupResolver(registerSchema),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  
+  const matKhau = watch("mat_khau");
 
-    // Kiểm tra xác nhận mật khẩu
-    if (matKhau !== xacNhan) {
+  
+  const onSubmit = async (data) => {
+    const { ho_ten, email, mat_khau, xac_nhan } = data;
+
+    if (mat_khau !== xac_nhan) {
       toast.error("❌ Mật khẩu xác nhận không khớp!", { position: "top-center" });
       return;
     }
 
     setLoading(true);
     try {
-      // Gọi API đăng ký
-      await register({
-        ho_ten: hoTen,
-        email,
-        mat_khau: matKhau,
-        xac_nhan_mat_khau: xacNhan,
-      });
-
+      await registerApi({ ho_ten, email, mat_khau });
       toast.success("🎉 Đăng ký thành công! Hãy đăng nhập để tiếp tục.", {
         position: "top-center",
       });
-
-      // Điều hướng về trang đăng nhập sau 1.5 giây
       setTimeout(() => navigate("/dangnhap"), 1500);
     } catch (err) {
       console.error("Lỗi đăng ký:", err);
@@ -84,57 +87,71 @@ function DangKy() {
         {/* Right */}
         <div className="w-1/2 p-10 flex flex-col justify-center h-full bg-white rounded-r-2xl shadow-xl">
           <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Đăng ký</h2>
-          <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
+
+          
+          <form className="flex flex-col space-y-4" onSubmit={handleSubmit(onSubmit)}>
             {/* Họ tên */}
-            <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-green-500">
-              <FaUser className="text-gray-400 mr-3" />
-              <input
-                type="text"
-                placeholder="Họ và tên"
-                className="w-full outline-none"
-                value={hoTen}
-                onChange={(e) => setHoTen(e.target.value)}
-                required
-              />
+            <div>
+              <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-green-500">
+                <FaUser className="text-gray-400 mr-3" />
+                <input
+                  type="text"
+                  placeholder="Họ và tên"
+                  className="w-full outline-none"
+                  {...register("ho_ten")}
+                />
+              </div>
+              {errors.ho_ten && (
+                <p className="text-red-500 text-sm mt-1">{errors.ho_ten.message}</p>
+              )}
             </div>
 
             {/* Email */}
-            <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-green-500">
-              <FaEnvelope className="text-gray-400 mr-3" />
-              <input
-                type="email"
-                placeholder="Nhập email"
-                className="w-full outline-none"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+            <div>
+              <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-green-500">
+                <FaEnvelope className="text-gray-400 mr-3" />
+                <input
+                  type="email"
+                  placeholder="Nhập email"
+                  className="w-full outline-none"
+                  {...register("email")}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+              )}
             </div>
 
             {/* Mật khẩu */}
-            <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-green-500">
-              <FaLock className="text-gray-400 mr-3" />
-              <input
-                type="password"
-                placeholder="Nhập mật khẩu"
-                className="w-full outline-none"
-                value={matKhau}
-                onChange={(e) => setMatKhau(e.target.value)}
-                required
-              />
+            <div>
+              <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-green-500">
+                <FaLock className="text-gray-400 mr-3" />
+                <input
+                  type="password"
+                  placeholder="Nhập mật khẩu"
+                  className="w-full outline-none"
+                  {...register("mat_khau")}
+                />
+              </div>
+              {errors.mat_khau && (
+                <p className="text-red-500 text-sm mt-1">{errors.mat_khau.message}</p>
+              )}
             </div>
 
             {/* Xác nhận mật khẩu */}
-            <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-green-500">
-              <FaLock className="text-gray-400 mr-3" />
-              <input
-                type="password"
-                placeholder="Xác nhận mật khẩu"
-                className="w-full outline-none"
-                value={xacNhan}
-                onChange={(e) => setXacNhan(e.target.value)}
-                required
-              />
+            <div>
+              <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-green-500">
+                <FaLock className="text-gray-400 mr-3" />
+                <input
+                  type="password"
+                  placeholder="Xác nhận mật khẩu"
+                  className="w-full outline-none"
+                  {...register("xac_nhan")}
+                />
+              </div>
+              {errors.xac_nhan && (
+                <p className="text-red-500 text-sm mt-1">{errors.xac_nhan.message}</p>
+              )}
             </div>
 
             {/* Nút đăng ký */}
@@ -151,7 +168,7 @@ function DangKy() {
 
           <p className="text-center mt-4 text-sm text-gray-600">
             Đã có tài khoản?{" "}
-            <a href="/dangnhap" className="text-green-600 hover:underline">
+            <a href={dangnhap} className="text-green-600 hover:underline">
               Đăng nhập
             </a>
           </p>

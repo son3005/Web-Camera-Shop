@@ -1,303 +1,253 @@
-import React, { useState, useEffect } from "react"; 
-import { useSanPhams } from "../../hooks/useSanPham";
-import { useXoaSanPham } from "../../hooks/useSanphamBienDoi";
+// src/pages/Admin/Inventory.jsx
+// Đây là file trang chính, kết hợp logic từ Inventory.jsx và SanPhamListPage.jsx
+import React, { useState, useMemo } from "react";
+import { useSanPhams, useXoaSanPham } from "../../hooks/useSanPham"; //
+import { useDebounce } from "../../hooks/useDebounce"; //
+import {
+  tinhTongTonKho,
+  tinhKhoangGia, // Cần cho export
+  formatCurrency, // Cần cho export
+} from "../../utils/productUtils"; // Giả sử bạn đã tạo file này
 
-import { Search, Plus, ChevronLeft, ChevronRight, Download, Inbox, AlertCircle, Filter, LoaderCircle } from "lucide-react"; 
-import { toast } from "react-toastify";
-import TableRow from "../../components/common/Inventory/TableRow";
-import ExportMenu from "../../components/common/Inventory/ExportMenu";
-import AddProductModal from "../../components/common/Inventory/AddProduct/AddProductModal";
-import ProductDetailModal from "../../components/common/Inventory/ProductDetailModal";
-import FilterPopup from "../../components/common/Inventory/FilterPopup";
+// Import các component con
+import { SanPhamTable } from "./SanPhamTable"; //
+import { ChiTietSanPhamModal } from "./ChiTietSanPhamModal"; //
+import { SanPhamFormModal } from "./SanPhamFormModal"; //
 
-// (Component Pagination của bạn - Giữ nguyên)
-const Pagination = ({ currentPage, totalPages, setCurrentPage, dataLength, totalLength }) => {
-    if (totalPages <= 1) return null;
-    return (
-        <div className="flex items-center justify-between mt-6">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-                Hiển thị {dataLength} trên tổng số {totalLength} sản phẩm
-            </p>
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
-                >
-                    <ChevronLeft size={20} />
-                </button>
-                <span className="text-sm font-semibold">
-                    Trang {currentPage} / {totalPages}
-                </span>
-                <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
-                >
-                    <ChevronRight size={20} />
-                </button>
-            </div>
-        </div>
-    );
-};
+// Import thư viện
+import { LucideSearch, Plus, FileDown } from "lucide-react";
+import Swal from "sweetalert2";
+import * as ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
+// Đổi tên component thành Inventory
+export const Inventory = () => {
+  // --- State Quản lý ---
+  const [showAddEditModal, setShowAddEditModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedSanPhamId, setSelectedSanPhamId] = useState(null);
 
-const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-    useEffect(() => {
-        const handler = setTimeout(() => { setDebouncedValue(value); }, delay);
-        return () => { clearTimeout(handler); };
-    }, [value, delay]);
-    return debouncedValue;
-};
+  // --- State Bộ lọc & Tìm kiếm ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pagination, setPagination] = useState({ page: 1, per_page: 10 });
+  const debouncedSearchTerm = useDebounce(searchTerm, 500); //
 
+  // --- Data Fetching ---
+  const queryParams = useMemo(() => {
+    const params = {
+      ...pagination,
+    };
+    if (debouncedSearchTerm) {
+      params.search = debouncedSearchTerm;
+    }
+    return params;
+  }, [pagination, debouncedSearchTerm]);
 
-// (Hook UI - Giữ nguyên)
-const useInventoryUI = () => {
-    const [searchTerm, setSearchTerm] = useState("");
-    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const {
+    data: sanPhamsData,
+    isLoading,
+    isError,
+    error,
+  } = useSanPhams(queryParams); //
 
-    const [activeProductId, setActiveProductId] = useState(null);
-    const [modalType, setModalType] = useState(null);
+  // --- Mutations ---
+  const xoaSanPhamMutation = useXoaSanPham(); //
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10; 
+  // --- Handlers (Modal) ---
+  const handleViewDetails = (id) => {
+    setSelectedSanPhamId(id);
+    setShowViewModal(true);
+  };
 
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const handleEdit = (id) => {
+    setSelectedSanPhamId(id);
+    setShowAddEditModal(true);
+  };
+
+  const handleAddNew = () => {
+    setSelectedSanPhamId(null); // Đặt ID là null để Form biết là "Thêm mới"
+    setShowAddEditModal(true);
+  };
+
+  const handleDelete = (id, tenSanPham) => {
+    Swal.fire({
+      title: `Bạn có chắc chắn muốn xóa "${tenSanPham}"?`,
+      text: "Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Đồng ý, xóa!",
+      cancelButtonText: "Hủy bỏ",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Gọi mutation khi người dùng xác nhận
+        xoaSanPhamMutation.mutate(id);
+      }
+    });
+  };
+
+  // Hàm đóng tất cả modal
+  const closeModal = () => {
+    setShowViewModal(false);
+    setShowAddEditModal(false);
+    setSelectedSanPhamId(null);
+  };
+
+  // --- Handlers (Export) ---
+  const handleExportExcel = () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Sản Phẩm");
+
+    sheet.columns = [
+      { header: "Mã SP", key: "ma_san_pham", width: 10 },
+      { header: "Tên Sản Phẩm", key: "ten_san_pham", width: 30 },
+      { header: "Danh Mục", key: "danh_muc", width: 20 },
+      { header: "Thương Hiệu", key: "thuong_hieu", width: 20 },
+      { header: "Giá Min", key: "gia_min", width: 15 },
+      { header: "Giá Max", key: "gia_max", width: 15 },
+      { header: "Tổng Tồn", key: "tong_ton", width: 10 },
+    ];
+
+    const products = sanPhamsData?.data || [];
+    products.forEach((sp) => {
+      const khoangGia = tinhKhoangGia(sp.cac_bien_the);
+      sheet.addRow({
+        ma_san_pham: sp.ma_san_pham,
+        ten_san_pham: sp.ten_san_pham,
+        danh_muc: sp.danh_muc.ten_danh_muc,
+        thuong_hieu: sp.thuong_hieu.ten_thuong_hieu,
+        gia_min: khoangGia.min,
+        gia_max: khoangGia.max,
+        tong_ton: tinhTongTonKho(sp.cac_bien_the),
+      });
+    });
     
-    const defaultFilters = {
-        brands: [],
-        stockStatus: [],
-        priceRange: ["", ""], 
-        sort: 'new',
+    // Style cho hàng header
+    sheet.getRow(1).font = { bold: true };
+    sheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFDDDDDD" },
     };
 
-    const [filters, setFilters] = useState(defaultFilters);
+    workbook.xlsx.writeBuffer().then((buffer) => {
+      saveAs(new Blob([buffer]), "DanhSachSanPham.xlsx");
+    });
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const products = sanPhamsData?.data || [];
     
-    const onApplyFilters = (newFilters) => {
-        setFilters(prev => ({ ...prev, ...newFilters }));
-        setCurrentPage(1); 
-    };
+    // Cần font hỗ trợ tiếng Việt (ví dụ: Arimo)
+    // doc.addFont("Arimo-Regular.ttf", "Arimo", "normal");
+    // doc.setFont("Arimo");
+    doc.text("Danh Sách Sản Phẩm", 14, 10);
 
-    const onResetFilters = () => {
-        setFilters(defaultFilters);
-        setCurrentPage(1); 
-    };
+    const tableData = products.map((sp) => {
+      const khoangGia = tinhKhoangGia(sp.cac_bien_the);
+      const gia =
+        khoangGia.min === khoangGia.max
+          ? formatCurrency(khoangGia.min)
+          : `${formatCurrency(khoangGia.min)} - ${formatCurrency(khoangGia.max)}`;
 
-    const handleOpenModal = (type, productId = null) => {
-        setModalType(type);
-        setActiveProductId(productId);
-    };
-
-    const handleCloseModal = () => {
-        setModalType(null);
-        setActiveProductId(null);
-    };
-
-    return {
-        searchTerm, setSearchTerm, debouncedSearchTerm,
-        activeProductId, modalType, handleOpenModal, handleCloseModal,
-        currentPage, setCurrentPage, itemsPerPage,
-        isFilterOpen, setIsFilterOpen, filters, setFilters,
-        onApplyFilters,
-        onResetFilters
-    };
-};
-
-
-const Inventory = () => {
-    const {
-        searchTerm, setSearchTerm, debouncedSearchTerm,
-        activeProductId, modalType, handleOpenModal, handleCloseModal,
-        currentPage, setCurrentPage, itemsPerPage,
-        isFilterOpen, setIsFilterOpen, filters, setFilters,
-        onApplyFilters,
-        onResetFilters
-    } = useInventoryUI();
-
-    const { 
-      data: productData, 
-      isLoading: isLoadingProducts, 
-      isError, 
-      error 
-    } = useSanPhams({
-        page: currentPage,
-        limit: itemsPerPage,
-        search: debouncedSearchTerm,
-        brands: filters.brands.join(','), 
-        minPrice: filters.priceRange[0] || null, 
-        maxPrice: filters.priceRange[1] || null, 
-        sort: filters.sort,
+      return [
+        sp.ma_san_pham,
+        sp.ten_san_pham,
+        sp.danh_muc.ten_danh_muc,
+        gia,
+        tinhTongTonKho(sp.cac_bien_the),
+      ];
     });
 
-    const { mutate: xoaSanPhamMutate } = useXoaSanPham();
+    doc.autoTable({
+      head: [["Mã SP", "Tên Sản Phẩm", "Danh Mục", "Khoảng Giá", "Tổng Tồn"]],
+      body: tableData,
+      // styles: { font: "Arimo" }, // Áp dụng font
+    });
 
-    const handleDelete = (productId) => {
-        if (window.confirm("Bạn có chắc muốn xóa sản phẩm này? Thao tác này không thể hoàn tác.")) {
-            xoaSanPhamMutate(productId);
-        }
-    };
+    doc.save("DanhSachSanPham.pdf");
+  };
 
-    const products = productData?.items || [];
-    const totalItems = productData?.total_items || 0;
-    const totalPages = productData?.total_pages || 1;
-    
-    // (Ánh xạ dữ liệu - Giữ nguyên)
-    const normalizedProducts = products.map(item => ({
-        id: item.id,
-        name: item.ten_san_pham,
-        brand: item.thuong_hieu?.ten_thuong_hieu || 'N/A',
-        category: item.danh_muc?.ten_danh_muc || 'N/A',
-        price_from: item.gia_goc,
-        total_stock: item.tong_ton_kho,
-        isActive: item.trang_thai === 'DANG_BAN',
-    }));
+  // --- Render ---
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Quản lý Sản phẩm</h1>
 
-    return (
-        <div className="p-6  min-h-screen">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8">
-                {/* Header: Tiêu đề và Nút bấm */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Quản lý Kho</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tổng cộng {totalItems} sản phẩm</p>
-                    </div>
-                    
-                    {/* --- LAYOUT ĐÚNG THEO YÊU CẦU CỦA BẠN --- */}
-                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                        
-                        {/* 1. Nút Export (Bên trái) */}
-                        <ExportMenu /> 
-                        
-                        {/* 2. Nút Thêm sản phẩm (Bên phải) */}
-                        <button 
-                            onClick={() => handleOpenModal('add')} 
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 font-bold rounded-lg text-white bg-gradient-to-br from-cyan-500 to-blue-600 hover:scale-[1.02] transition-transform duration-300 shadow-lg hover:shadow-cyan-500/30"
-                        >
-                            <Plus size={20} /> Thêm sản phẩm
-                        </button>
-                    </div>
-                </div>
-
-                {/* Thanh Tìm kiếm và Lọc (Giữ nguyên) */}
-                <div className="flex flex-col md:flex-row items-center gap-4 mb-5">
-                    <div className="relative w-full md:flex-1">
-                        <input
-                            type="text"
-                            placeholder="Tìm kiếm sản phẩm (tên, SKU...)"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
-                        />
-                        <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    </div>
-                    <div className="relative w-full md:w-auto">
-                         <button onClick={() => setIsFilterOpen(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold transition-colors">
-                            <Filter size={18} /> Lọc
-                        </button>
-                        
-                        {isFilterOpen && (
-                            <FilterPopup 
-                                onClose={() => setIsFilterOpen(false)}
-                                filters={filters}
-                                setFilters={setFilters}
-                                onApplyFilters={onApplyFilters}
-                                onResetFilters={onResetFilters}
-                            />
-                        )}
-                    </div>
-                </div>
-
-                {/* Bảng dữ liệu (Giữ nguyên) */}
-                <div className="overflow-x-auto w-full">
-                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                        <thead className="bg-slate-100 dark:bg-slate-700/50">
-                            <tr>
-                                <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Mã SP</th>
-                                <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Tên sản phẩm</th>
-                                <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Thương hiệu</th>
-                                <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Giá bán</th>
-                                <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Tồn kho</th>
-                                <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Tình trạng kho</th>
-                                <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Trạng thái</th>
-                                <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Hành động</th>
-                            </tr>
-                        </thead>
-                        
-                        {isLoadingProducts ? (
-                            <tbody>
-                                <tr>
-                                    <td colSpan="8" className="h-[504px]">
-                                        <div className="flex justify-center items-center h-full">
-                                            <LoaderCircle size={48} className="animate-spin text-cyan-500" />
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        ) : isError ? (
-                            <tbody>
-                                <tr>
-                                    <td colSpan="8" className="h-[504px]">
-                                        <div className="flex flex-col items-center justify-center text-center h-full text-red-500">
-                                            <AlertCircle size={48} className="mb-4" />
-                                            <h3 className="text-xl font-semibold">Lỗi khi tải dữ liệu</h3>
-                                            <p className="mt-1 text-sm">{error?.response?.data?.error || "Đã có lỗi xảy ra."}</p>
-        
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        ) : (
-                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                                {normalizedProducts.length > 0 ? (
-                                  <>
-                                    {normalizedProducts.map((item, index) => (
-                                        <TableRow
-                                            key={item.id}
-                                            item={item}
-                                            onView={() => handleOpenModal('detail', item.id)}
-                                            onEdit={() => handleOpenModal('edit', item.id)}
-                                            onDelete={() => handleDelete(item.id)}
-                                        />
-                                    ))}
-                                    {Array.from({ length: Math.max(0, itemsPerPage - normalizedProducts.length) }).map((_, i) => (
-                                        <tr key={`placeholder-${i}`} className="h-[61px]"><td colSpan="8">&nbsp;</td></tr>
-                                    ))}
-                                  </>
-                                ) : (
-                                    <tr>
-                                        <td colSpan="8" className="h-[504px]">
-                                            <div className="flex flex-col items-center justify-center text-center h-full text-slate-500 dark:text-slate-400">
-                                                <Inbox size={48} className="mb-4" />
-                                                <h3 className="text-xl font-semibold">Không tìm thấy sản phẩm nào</h3>
-                                                <p className="mt-1 text-sm">Hãy thử thay đổi từ khóa tìm kiếm hoặc các bộ lọc.</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        )}
-                    </table>
-                </div>
-            </div>
-
-            {/* Phần Phân trang (Giữ nguyên) */}
-            {totalPages > 1 && (
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    setCurrentPage={setCurrentPage}
-                    dataLength={products.length}
-                    totalLength={totalItems}
-                />
-            )}
-
-            {/* Các Modal (Giữ nguyên) */}
-            {modalType === 'add' && <AddProductModal mode="add" onClose={handleCloseModal} />}
-            {modalType === 'edit' && activeProductId && <AddProductModal mode="edit" productId={activeProductId} onClose={handleCloseModal} />}
-            {modalType === 'detail' && activeProductId && <ProductDetailModal productId={activeProductId} onClose={handleCloseModal} />}
+      {/* Thanh công cụ: Search, Thêm mới, Export */}
+      <div className="flex justify-between items-center mb-4 gap-4">
+        {/* Search */}
+        <div className="relative w-full md:w-1/3">
+          <input
+            type="text"
+            placeholder="Tìm theo tên hoặc mã sản phẩm..."
+            className="border p-2 rounded w-full pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <LucideSearch
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            size={20}
+          />
         </div>
-    );
+        
+        {/* Buttons */}
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={handleExportExcel}
+            className="bg-green-600 text-white px-3 py-2 rounded flex items-center gap-2"
+          >
+            <FileDown size={18} /> <span className="hidden md:inline">Excel</span>
+          </button>
+          <button
+            onClick={handleExportPDF}
+            className="bg-red-600 text-white px-3 py-2 rounded flex items-center gap-2"
+          >
+            <FileDown size={18} /> <span className="hidden md:inline">PDF</span>
+          </button>
+          <button
+            onClick={handleAddNew}
+            className="bg-blue-600 text-white px-3 py-2 rounded flex items-center gap-2"
+          >
+            <Plus size={18} /> <span className="hidden md:inline">Thêm mới</span>
+          </button>
+        </div>
+      </div>
+      
+      {/* Bảng dữ liệu */}
+      {isLoading && <div>Đang tải dữ liệu...</div>}
+      {isError && <div>Lỗi: {error?.message}</div>}
+      {sanPhamsData && (
+        <SanPhamTable
+          sanPhams={sanPhamsData.data}
+          onView={handleViewDetails}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
+      
+      {/* TODO: Thêm component Phân Trang (Pagination) ở đây nếu API hỗ trợ */}
+
+      {/* Modals (Render có điều kiện) */}
+      {showViewModal && (
+        <ChiTietSanPhamModal
+          sanPhamId={selectedSanPhamId}
+          onClose={closeModal}
+        />
+      )}
+      
+      {showAddEditModal && (
+        <SanPhamFormModal
+          sanPhamId={selectedSanPhamId}
+          onClose={closeModal}
+        />
+      )}
+    </div>
+  );
 };
 
+// Thêm export default để lazy load trong AdminRoutes hoạt động
 export default Inventory;

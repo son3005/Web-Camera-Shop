@@ -1,6 +1,6 @@
 # /backend/app/schemas/DanhMuc.py
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+from typing import List, Optional
 
 
 class DanhMucBase(BaseModel):
@@ -24,5 +24,15 @@ class DanhMucDelete(BaseModel):
 
 class DanhMucResponse(DanhMucBase):
     id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DanhMucListResponse(BaseModel):
+    """
+    Schema cho API trả về danh sách danh mục (có phân trang).
+    """
+    data: List[DanhMucResponse]
+    pagination: dict = Field(..., description="Thông tin phân trang (page, per_page, total, pages)")
 
     model_config = ConfigDict(from_attributes=True)

@@ -180,3 +180,9 @@ def get_current_user():
     except Exception:
         current_app.logger.error(f"[auth.get_current_user] {traceback.format_exc()}")
         return jsonify({"error": "Lỗi máy chủ."}), 500
+    
+
+@auth_api.route("/doimatkhau/<token>", methods=["GET"])
+def doimatkhau(token):
+    # Route giả chỉ để url_for() build được link
+    return jsonify({"message": "This is a frontend route"}), 200

@@ -7,6 +7,7 @@ class Config:
     Lớp cấu hình cơ sở.
     Các cấu hình khác (Development, Production, Testing) sẽ kế thừa từ lớp này.
     """
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
     SECRET_KEY = os.environ.get('SECRET_KEY', 'myshop-secret-key-2025')
 
     JWT_SECRET_KEY = os.environ.get(

@@ -1,38 +1,45 @@
-// frontend/src/components/Doimatkhau.jsx
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { resetPassword } from "../api/authApi"; // ✅ dùng đúng hàm API đã định nghĩa
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { resetPasswordSchema } from "../validation/loginSchema"; // ✅ import schema yup
+import { resetPassword } from "../api/authApi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ResetPassword = () => {
-  const { token } = useParams(); // lấy token từ URL
+  const { token } = useParams();
   const navigate = useNavigate();
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const dangnhap = "/dangnhap";
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(resetPasswordSchema),
+  });
 
-    if (password !== confirm) {
+  const handleResetPassword = async (data) => {
+    const { mat_khau, xac_nhan_mat_khau } = data;
+
+    
+    if (mat_khau !== xac_nhan_mat_khau) {
       toast.error("❌ Mật khẩu xác nhận không khớp!", { position: "top-center" });
       return;
     }
 
     setLoading(true);
     try {
-      // --- BẮT ĐẦU SỬA LỖI ---
-      // Gọi hàm với 2 tham số riêng biệt: (token, passwordData)
-      await resetPassword(token, { mat_khau: password });
-      // --- KẾT THÚC SỬA LỖI ---
+      await resetPassword(token, { mat_khau });
 
       toast.success("✅ Đổi mật khẩu thành công! Hãy đăng nhập lại.", {
         position: "top-center",
       });
 
-      // Chuyển về trang đăng nhập sau 2s
       setTimeout(() => navigate("/dangnhap"), 2000);
     } catch (err) {
       console.error("Lỗi đặt lại mật khẩu:", err);
@@ -52,17 +59,18 @@ const ResetPassword = () => {
           🔒 Đặt lại mật khẩu
         </h2>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(handleResetPassword)}>
           {/* Mật khẩu mới */}
           <div className="mb-4">
             <label className="block text-gray-700 mb-1">Mật khẩu mới</label>
             <input
               type="password"
               className="border rounded-lg w-full px-3 py-2 focus:ring-2 focus:ring-blue-300 outline-none"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              {...register("mat_khau")}
             />
+            {errors.mat_khau && (
+              <p className="text-red-500 text-sm mt-1">{errors.mat_khau.message}</p>
+            )}
           </div>
 
           {/* Xác nhận mật khẩu */}
@@ -71,9 +79,7 @@ const ResetPassword = () => {
             <input
               type="password"
               className="border rounded-lg w-full px-3 py-2 focus:ring-2 focus:ring-blue-300 outline-none"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              required
+              {...register("xac_nhan_mat_khau")}
             />
           </div>
 
@@ -91,7 +97,7 @@ const ResetPassword = () => {
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Nhớ mật khẩu?{" "}
-          <a href="/dangnhap" className="text-blue-600 hover:underline">
+          <a href={dangnhap} className="text-blue-600 hover:underline">
             Đăng nhập
           </a>
         </p>

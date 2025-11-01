@@ -6,6 +6,7 @@ from flask_mailman import EmailMessage
 from flask import current_app, url_for
 from typing import Dict, Any
 import logging  # THÊM: Import logging
+from flask import current_app
 
 from ..utils.taoMa import generate_ma_nguoi_dung
 from ..extensions import db, mail
@@ -110,7 +111,8 @@ class AuthService:
             raise AuthError("Email không tồn tại.")
 
         token = AuthService.create_reset_token(email)
-        reset_url = url_for("auth_api.reset_password", token=token, _external=True)
+        frontend_url = current_app.config["FRONTEND_URL"]
+        reset_url = f"{frontend_url}/doimatkhau/{token}"
 
         msg = EmailMessage(
             subject="Đặt lại mật khẩu - CameraShop",
