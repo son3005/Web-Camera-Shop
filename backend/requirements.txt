@@ -52,6 +52,12 @@ email-validator==2.1.1
 cloudinary==1.44.1
 
 ##############################
+# Excel & PDF Export
+##############################
+openpyxl==3.1.2
+reportlab==4.0.4
+
+##############################
 # Utilities / Dependencies
 ##############################
 MarkupSafe==3.0.2

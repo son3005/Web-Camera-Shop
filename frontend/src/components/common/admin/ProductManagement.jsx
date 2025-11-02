@@ -2,16 +2,11 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Download, FileText, Edit, Trash2, Eye } from 'lucide-react';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
-
-// API functions
-const productApi = {
-  getProducts: () => axios.get('/api/san-pham').then(res => res.data),
-  deleteProduct: (id) => axios.delete(`/api/san-pham/${id}`),
-  exportExcel: () => axios.get('/api/san-pham/export/excel', { responseType: 'blob' }),
-  exportPDF: () => axios.get('/api/san-pham/export/pdf', { responseType: 'blob' })
-};
+import { productApi } from '../../../api/productApi';
+import ProductDetailModal from './ProductDetailModal';
+import ProductEditModal from './ProductEditModal';
+import ProductAddModal from './ProductAddModal';
 
 const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,10 +17,15 @@ const ProductManagement = () => {
 
   const queryClient = useQueryClient();
 
-  // Fetch products
-  const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: productApi.getProducts
+  // Fetch products với React Query
+  const { 
+    data: productsData, 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ['products', searchTerm],
+    queryFn: () => productApi.getProducts({ search: searchTerm || undefined }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Delete mutation
@@ -35,7 +35,44 @@ const ProductManagement = () => {
       queryClient.invalidateQueries(['products']);
       toast.success('Xóa sản phẩm thành công');
     },
-    onError: () => toast.error('Lỗi khi xóa sản phẩm')
+    onError: (error) => {
+      toast.error(error.response?.data?.error || 'Lỗi khi xóa sản phẩm');
+    }
+  });
+
+  // Export mutations
+  const exportExcelMutation = useMutation({
+    mutationFn: productApi.exportExcel,
+    onSuccess: (data) => {
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'danh-sach-san-pham.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Xuất Excel thành công');
+    },
+    onError: (error) => {
+      toast.error('Lỗi khi xuất Excel');
+    }
+  });
+
+  const exportPDFMutation = useMutation({
+    mutationFn: productApi.exportPDF,
+    onSuccess: (data) => {
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'danh-sach-san-pham.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Xuất PDF thành công');
+    },
+    onError: (error) => {
+      toast.error('Lỗi khi xuất PDF');
+    }
   });
 
   // Filtered products
@@ -62,34 +99,12 @@ const ProductManagement = () => {
   };
 
   // Export handlers
-  const handleExportExcel = async () => {
-    try {
-      const response = await productApi.exportExcel();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'san-pham.xlsx');
-      document.body.appendChild(link);
-      link.click();
-      toast.success('Xuất Excel thành công');
-    } catch (error) {
-      toast.error('Lỗi khi xuất Excel');
-    }
+  const handleExportExcel = () => {
+    exportExcelMutation.mutate();
   };
 
-  const handleExportPDF = async () => {
-    try {
-      const response = await productApi.exportPDF();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'san-pham.pdf');
-      document.body.appendChild(link);
-      link.click();
-      toast.success('Xuất PDF thành công');
-    } catch (error) {
-      toast.error('Lỗi khi xuất PDF');
-    }
+  const handleExportPDF = () => {
+    exportPDFMutation.mutate();
   };
 
   // Action handlers
@@ -116,10 +131,10 @@ const ProductManagement = () => {
     }).format(price);
   };
 
-  if (isLoading) {
+  if (error) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-red-600">Lỗi khi tải dữ liệu: {error.message}</div>
       </div>
     );
   }
@@ -147,17 +162,19 @@ const ProductManagement = () => {
           <div className="flex gap-2">
             <button
               onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              disabled={exportExcelMutation.isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
             >
               <FileText className="h-4 w-4" />
-              Excel
+              {exportExcelMutation.isLoading ? 'Đang xuất...' : 'Excel'}
             </button>
             <button
               onClick={handleExportPDF}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              disabled={exportPDFMutation.isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-400 transition-colors"
             >
               <Download className="h-4 w-4" />
-              PDF
+              {exportPDFMutation.isLoading ? 'Đang xuất...' : 'PDF'}
             </button>
             <button
               onClick={() => setIsAddModalOpen(true)}
@@ -240,7 +257,8 @@ const ProductManagement = () => {
                         </button>
                         <button
                           onClick={() => handleDelete(product.id)}
-                          className="text-red-600 hover:text-red-900"
+                          disabled={deleteMutation.isLoading}
+                          className="text-red-600 hover:text-red-900 disabled:text-red-300"
                           title="Xóa"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -254,12 +272,19 @@ const ProductManagement = () => {
           </table>
         </div>
 
-        {filteredProducts.length === 0 && (
+        {filteredProducts.length === 0 && !isLoading && (
           <div className="text-center py-8 text-gray-500">
             Không tìm thấy sản phẩm nào
           </div>
         )}
       </div>
+
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      )}
 
       {/* Modals */}
       {isDetailModalOpen && (
@@ -274,7 +299,7 @@ const ProductManagement = () => {
           product={selectedProduct}
           onClose={() => setIsEditModalOpen(false)}
           onSave={(updatedProduct) => {
-            // Handle save logic
+            // Implementation for update will be in the modal
             setIsEditModalOpen(false);
           }}
         />
@@ -284,7 +309,7 @@ const ProductManagement = () => {
         <ProductAddModal
           onClose={() => setIsAddModalOpen(false)}
           onSave={(newProduct) => {
-            // Handle add logic
+            // Implementation for add will be in the modal
             setIsAddModalOpen(false);
           }}
         />
