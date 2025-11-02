@@ -23,9 +23,9 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />, // App chứa <Outlet/>
     children: [
-      // Nhánh 1: Các route public (sẽ dùng MainLayout bên trong MainRoutes)
+  
       MainRoutes,
-      // Nhánh 2: Các route admin (sẽ dùng AdminLayoutWrapper bên trong AdminRoutes)
+
       AdminRoutes,
     ],
   },
