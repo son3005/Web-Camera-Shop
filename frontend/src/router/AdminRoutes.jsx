@@ -7,7 +7,7 @@ import ProtectedRoute from './ProtectedRoute'; // --- (1) Import ProtectedRoute 
 
 // Lazy load các trang con
 const Dashboard = lazy(() => import('../pages/Admin/Dashboard'));
-const Inventory = lazy(() => import('../components/common/admin/Inventory'));
+const ProductManagement = lazy(() => import('../components/common/admin/ProductManagement'));
 const Orders = lazy(() => import('../pages/Admin/Orders'));
 // Thêm các trang admin khác nếu có
 
@@ -37,7 +37,7 @@ const AdminRoutes = {
     },
     {
       path: 'inventory', // Trang /admin/inventory
-      element: <Inventory />,
+      element: <ProductManagement />,
     },
     {
       path: 'orders', // Trang /admin/orders

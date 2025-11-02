@@ -1,6 +1,6 @@
 // frontend/src/components/common/ProductCard.jsx
 import { Link } from "react-router-dom";
-import PriceTag from "./priceTag";
+import PriceTag from "./PriceTag";
 import RatingStars from "./RatingStars";
 
 export default function ProductCard({ p }) {

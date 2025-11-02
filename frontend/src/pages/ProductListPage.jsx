@@ -61,33 +61,41 @@ function useListParams() {
   const sort = sp.get("sort") || "default";
 
   // nhiều giá trị
-  const brands = sp.getAll("brand"); // ['sony','canon',...]
-  const mp = sp.getAll("mp"); // ['16-22','>=40',...]
-  const mem = sp.getAll("mem"); // ['SD','SDXC',...]
-  const vres = sp.getAll("vres"); // ['4K','Full HD']
-  const focus = sp.getAll("focus"); // ['<200','200-300',...]
-  const mount = sp.getAll("mount"); // ['SONY MOUNT',...]
+  const brands = sp.getAll("brand");
+  const mp = sp.getAll("mp");
+  const mem = sp.getAll("mem");
+  const vres = sp.getAll("vres");
+  const focus = sp.getAll("focus");
+  const mount = sp.getAll("mount");
 
   // giá
   const priceMin = Number(sp.get("min") || 0);
   const priceMax = Number(sp.get("max") || 66_000_000);
 
-  // helpers
   const options = { replace: true, preventScrollReset: true };
 
+  // set 1 param và reset page = 1 (trừ khi đang chỉnh chính 'page')
   const setParam = (k, v) => {
     const next = new URLSearchParams(sp);
     if (v === null || v === undefined || v === "") next.delete(k);
     else next.set(k, v);
-    next.set("page", "1");
+    if (k !== "page") next.set("page", "1");
     setSp(next, options);
   };
 
+  // set nhiều giá trị cho 1 key và reset page = 1
   const setMulti = (k, arr) => {
     const next = new URLSearchParams(sp);
     next.delete(k);
     (arr || []).forEach((v) => next.append(k, v));
     next.set("page", "1");
+    setSp(next, options);
+  };
+
+  // riêng page
+  const setPage = (p) => {
+    const next = new URLSearchParams(sp);
+    next.set("page", String(p));
     setSp(next, options);
   };
 
@@ -114,6 +122,7 @@ function useListParams() {
     setParam,
     setMulti,
     setPriceRange,
+    setPage,
   };
 }
 
@@ -133,12 +142,13 @@ export default function ProductListPage() {
     setParam,
     setMulti,
     setPriceRange,
+    setPage,
   } = useListParams();
 
   // build filters cho publicApi
   const filters = useMemo(
     () => ({
-      brands, // đã là lower-case từ URL
+      brands,
       priceRange: { min: priceMin, max: priceMax },
       mpRanges: mp,
       memoryTypes: mem,
@@ -165,6 +175,33 @@ export default function ProductListPage() {
   const items = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
 
+  // helper build dãy số trang rút gọn (…)
+  const buildPageList = (current, total, delta = 1) => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = new Set([
+      1,
+      2,
+      total - 1,
+      total,
+      current,
+      current - 1,
+      current + 1,
+    ]);
+    const list = [...pages]
+      .filter((p) => p >= 1 && p <= total)
+      .sort((a, b) => a - b);
+    const out = [];
+    for (let i = 0; i < list.length; i++) {
+      const prev = list[i - 1];
+      const cur = list[i];
+      if (prev && cur - prev > 1) out.push("…");
+      out.push(cur);
+    }
+    return out;
+  };
+
+  const pageList = buildPageList(page, totalPages);
+
   return (
     <div className="min-h-dvh">
       <div className="container mx-auto px-4 py-6">
@@ -184,7 +221,6 @@ export default function ProductListPage() {
                 Bộ lọc
               </h3>
 
-              {/* Thương hiệu */}
               <CheckboxGroup
                 title="Thương hiệu"
                 options={BRAND_OPTS}
@@ -203,39 +239,30 @@ export default function ProductListPage() {
                 />
               </div>
 
-              {/* Số điểm ảnh */}
               <CheckboxGroup
                 title="Số điểm ảnh (MP)"
                 options={MP_OPTS}
                 values={mp}
                 onChange={(vals) => setMulti("mp", vals)}
               />
-
-              {/* Loại thẻ nhớ */}
               <CheckboxGroup
                 title="Loại thẻ nhớ"
                 options={MEMORY_OPTS}
                 values={mem}
                 onChange={(vals) => setMulti("mem", vals)}
               />
-
-              {/* Độ phân giải video */}
               <CheckboxGroup
                 title="Độ phân giải video"
                 options={VIDEO_OPTS}
                 values={vres}
                 onChange={(vals) => setMulti("vres", vals)}
               />
-
-              {/* Số điểm lấy nét */}
               <CheckboxGroup
                 title="Số điểm lấy nét"
                 options={FOCUS_OPTS}
                 values={focus}
                 onChange={(vals) => setMulti("focus", vals)}
               />
-
-              {/* Ngàm ống kính */}
               <CheckboxGroup
                 title="Ngàm ống kính"
                 options={LENS_MOUNT_OPTS}
@@ -288,23 +315,62 @@ export default function ProductListPage() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-6">
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    const pageNum = i + 1;
-                    const active = pageNum === page;
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setParam("page", String(pageNum))}
-                        className={`min-w-9 h-9 px-3 rounded ${
-                          active
-                            ? "bg-black text-white"
-                            : "bg-white dark:bg-slate-700 border dark:border-slate-600 dark:text-slate-100"
-                        }`}
+                  {/* Prev */}
+                  <button
+                    onClick={() => page > 1 && setPage(page - 1)}
+                    disabled={page <= 1}
+                    className={`min-w-9 h-9 px-3 rounded border
+                      ${
+                        page <= 1
+                          ? "opacity-40 cursor-not-allowed dark:border-slate-700"
+                          : "hover:bg-black/5 dark:hover:bg-white/10 dark:border-slate-600"
+                      }
+                      bg-white dark:bg-slate-700 dark:text-slate-100`}
+                    aria-label="Trang trước"
+                  >
+                    ‹
+                  </button>
+
+                  {/* Numbers (có …) */}
+                  {pageList.map((p, idx) =>
+                    p === "…" ? (
+                      <span
+                        key={`e${idx}`}
+                        className="min-w-9 h-9 grid place-items-center text-gray-500 dark:text-slate-400"
                       >
-                        {pageNum}
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`min-w-9 h-9 px-3 rounded ${
+                          p === page
+                            ? "bg-black text-white dark:bg-emerald-600 dark:text-white"
+                            : "bg-white dark:bg-slate-700 border dark:border-slate-600 dark:text-slate-100 hover:bg-black/5 dark:hover:bg-white/10"
+                        }`}
+                        aria-current={p === page ? "page" : undefined}
+                      >
+                        {p}
                       </button>
-                    );
-                  })}
+                    )
+                  )}
+
+                  {/* Next */}
+                  <button
+                    onClick={() => page < totalPages && setPage(page + 1)}
+                    disabled={page >= totalPages}
+                    className={`min-w-9 h-9 px-3 rounded border
+                      ${
+                        page >= totalPages
+                          ? "opacity-40 cursor-not-allowed dark:border-slate-700"
+                          : "hover:bg-black/5 dark:hover:bg白/10 dark:border-slate-600"
+                      }
+                      bg-white dark:bg-slate-700 dark:text-slate-100`}
+                    aria-label="Trang sau"
+                  >
+                    ›
+                  </button>
                 </div>
               )}
             </div>

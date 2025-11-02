@@ -1,3 +1,4 @@
+
 // src/router/index.jsx
 import React, { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
@@ -15,16 +16,16 @@ const DangKy = lazy(() => import("../pages/Dangky")); // Giả sử có trang Da
 const QuenMatKhau = lazy(() => import("../pages/Quenmatkhau"));
 const DoiMatKhau = lazy(() => import("../pages/Doimatkhau"));
 
-// --- Tạo Router tổng hợp ---
+
 const router = createBrowserRouter([
   {
     // Route gốc sử dụng App layout
     path: "/",
     element: <App />, // App chứa <Outlet/>
     children: [
-      // Nhánh 1: Các route public (sẽ dùng MainLayout bên trong MainRoutes)
+  
       MainRoutes,
-      // Nhánh 2: Các route admin (sẽ dùng AdminLayoutWrapper bên trong AdminRoutes)
+
       AdminRoutes,
     ],
   },
@@ -63,12 +64,6 @@ const router = createBrowserRouter([
       </Suspense>
     ),
   },
-
-  // (Tùy chọn) Route bắt lỗi 404
-  // {
-  //   path: "*",
-  //   element: <div>Trang không tồn tại (404)</div>,
-  // },
 ]);
 
 export default router;
