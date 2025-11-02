@@ -5,7 +5,7 @@ import re
 
 
 class HinhAnhBase(BaseModel):
-    url: str = Field(..., max_length=512, description="URL của hình ảnh")
+    url: str = Field(..., description="URL của hình ảnh")
     public_id: str = Field(..., max_length=255)
     alt_text: Optional[str] = Field(None, max_length=200)
     la_anh_dai_dien: bool = Field(False, description="Có phải là ảnh đại diện không")
@@ -26,7 +26,7 @@ class HinhAnhCreate(HinhAnhBase):
 
 
 class HinhAnhUpdate(BaseModel):
-    url: Optional[str] = Field(None, max_length=512)
+    url: Optional[str] = Field(None)
     public_id: Optional[str] = Field(None, max_length=255)
     alt_text: Optional[str] = Field(None, max_length=200)
     la_anh_dai_dien: Optional[bool] = None

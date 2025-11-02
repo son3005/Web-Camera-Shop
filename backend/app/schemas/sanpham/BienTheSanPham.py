@@ -1,5 +1,5 @@
 # /backend/app/schemas/BienTheSanPham.py
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, validator
 from typing import List, Optional
 from datetime import datetime
 from decimal import Decimal
@@ -38,7 +38,30 @@ class BienTheSanPhamUpdate(BaseModel):
     new_hinh_anhs: Optional[List[HinhAnhCreate]] = Field([], description="Ảnh mới")
     deleted_hinh_anh_ids: Optional[List[int]] = Field([], description="ID ảnh xóa")
 
-    model_config = ConfigDict(from_attributes=True)
+    # Thêm validator parse ngày (hỗ trợ nhiều format)
+    @validator('ngay_bat_dau_khuyen_mai', 'ngay_ket_thuc_khuyen_mai', pre=True, always=True)
+    def parse_date(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, datetime):
+            return v
+        if isinstance(v, str):
+            formats = [
+                "%Y-%m-%dT%H:%M:%S.%fZ",  # ISO with ms
+                "%Y-%m-%dT%H:%M:%SZ",     # ISO without ms
+                "%Y-%m-%d %H:%M:%S",      # Simple
+                "%Y-%m-%d",               # Date only
+                "%a, %d %b %Y %H:%M:%S GMT"  # GMT format from toUTCString()
+            ]
+            for fmt in formats:
+                try:
+                    return datetime.strptime(v.strip(), fmt)
+                except ValueError:
+                    continue
+            raise ValueError(f"Invalid date format: {v}")
+        raise ValueError("Invalid date type")
+
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)  # Sửa: thêm use_enum_values
 
 
 class BienTheSanPhamDelete(BaseModel):

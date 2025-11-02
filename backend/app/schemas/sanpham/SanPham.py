@@ -1,5 +1,5 @@
 # /backend/app/schemas/SanPham.py
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, validator
 from typing import List, Optional, Any, Dict
 from datetime import datetime
 from decimal import Decimal
@@ -7,7 +7,7 @@ from decimal import Decimal
 from ..Shared import TrangThaiSanPhamEnum
 from .DanhMuc import DanhMucResponse
 from .ThuongHieu import ThuongHieuResponse
-from .BienTheSanPham import BienTheSanPhamCreate, BienTheSanPhamResponse
+from .BienTheSanPham import BienTheSanPhamCreate, BienTheSanPhamResponse, BienTheSanPhamUpdate
 
 
 class SanPhamBase(BaseModel):
@@ -39,7 +39,9 @@ class SanPhamUpdate(BaseModel):
     mo_ta: Optional[str] = Field(None)
     thong_so_ky_thuat: Optional[Dict[str, Any]] = Field(None)
     trang_thai: Optional[TrangThaiSanPhamEnum] = None
+    cac_bien_the: Optional[List[BienTheSanPhamUpdate]] = None
 
+    # Validator cho ngày (nếu có trong cac_bien_the, nhưng đẩy xuống BienTheUpdate)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -52,12 +54,12 @@ class SanPhamResponse(SanPhamBase):
     ma_san_pham: str = Field(..., max_length=24, description="Mã sản phẩm")
     danh_muc: DanhMucResponse
     thuong_hieu: ThuongHieuResponse
-    cac_bien_the: List[BienTheSanPhamResponse] = Field(  # Sửa: dùng Response
+    cac_bien_the: List[BienTheSanPhamResponse] = Field(
         default_factory=list,
         description="Danh sách biến thể (đã có ảnh, giá, tồn kho)"
     )
 
-    model_config = ConfigDict(from_attributes=True)  # XÓA extra='allow' → nguy hiểm!
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SanPhamPublic(SanPhamResponse):

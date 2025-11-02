@@ -4,7 +4,6 @@ import enum
 class TrangThaiSanPhamEnum(str, enum.Enum):
     DANG_BAN = 'dang_ban'
     AN = 'ngung_ban'
-    HET_HANG = 'het_hang'
 
 # --- ENUMS CHO ĐÁNH GIÁ (Lấy từ file sanpham.py của bạn) ---
 class TrangThaiDanhGiaEnum(str, enum.Enum):

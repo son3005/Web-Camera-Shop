@@ -64,6 +64,8 @@ def create_app(config_class=None):
 
     logger.info(f"=== Flask App Started ({env}) ===")
 
+    
+
     # --- EXTENSIONS ---
     db.init_app(app)
     migrate.init_app(app, db)

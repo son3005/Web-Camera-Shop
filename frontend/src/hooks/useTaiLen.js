@@ -1,17 +1,13 @@
 // src/hooks/useTaiLen.js
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { layChuKyTaiLen, taiLenCloudinary } from "../api/taiLenApi";
+import { layChuKyTaiLen, taiLenCloudinary } from "../api/taiLenApi.js";
 
 export const useTaiLen = () => {
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async (file) => {
-      // B1: Lấy chữ ký
-      const chuKyData = await layChuKyTaiLen(); // Không cần folder → backend mặc định
-
-      // B2: Upload
+      const chuKyData = await layChuKyTaiLen();
       const result = await taiLenCloudinary(file, chuKyData);
-
       return {
         url: result.secure_url,
         public_id: result.public_id,
@@ -24,4 +20,10 @@ export const useTaiLen = () => {
       console.error("Upload error:", error);
     },
   });
+
+  // Trả về cả mutate và mutateAsync
+  return {
+    ...mutation,
+    mutateAsync: mutation.mutateAsync, // ← Thêm dòng này
+  };
 };
