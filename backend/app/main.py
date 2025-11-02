@@ -17,6 +17,7 @@ from .routes.danhgia_routes import review_api
 from .routes.giohang_routes import cart_api
 from .routes.donhang_routes import order_api
 from .routes.khac_routes import catalogs_api
+from .routes.export_routes import export_api
 
 # =====================================================
 # LOGGING CONFIG
@@ -110,6 +111,7 @@ def create_app(config_class=None):
         cart_api,
         order_api,
         catalogs_api,
+        export_api,
     ]
 
     for api in api_blueprints:
