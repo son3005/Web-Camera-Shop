@@ -1,11 +1,15 @@
 // frontend/src/components/common/ProductCard.jsx
 import { Link } from "react-router-dom";
-import PriceTag from "./priceTag";
+import PriceTag from "./PriceTag";
 import RatingStars from "./RatingStars";
 
 export default function ProductCard({ p }) {
   const img =
     p?.primaryImage || p?.image_url || p?.image || p?.images?.[0] || "";
+
+  // Giá hiển thị: ưu tiên price_from (khớp publicApi), fallback price
+  const price = p?.price_from ?? p?.price ?? 0;
+  const compareAt = p?.compareAt ?? p?.original_price ?? p?.list_price ?? null;
 
   return (
     <Link
@@ -22,7 +26,7 @@ export default function ProductCard({ p }) {
         "
       >
         {/* Ảnh */}
-        <div className="ui-card-thumb">
+        <div className="ui-card-thumb md:aspect-square aspect-[4/3]">
           {img ? (
             <img
               src={img}
@@ -30,7 +34,7 @@ export default function ProductCard({ p }) {
               className="
                 w-full h-full object-cover
                 transition-transform duration-300
-                group-hover:scale-110
+                group-hover:scale-105
               "
               loading="lazy"
             />
@@ -63,9 +67,9 @@ export default function ProductCard({ p }) {
           </div>
 
           <div className="mt-2 space-y-1">
-            <PriceTag price={p?.price} compareAt={p?.compareAt} />
+            <PriceTag price={price} compareAt={compareAt} />
             <RatingStars value={p?.rating ?? 0} count={p?.reviewCount ?? 0} />
-            {/* Vẫn render badge để giữ chiều cao đồng đều */}
+            {/* Giữ chiều cao đồng đều cho hàng badge */}
             <div className="h-6 flex items-center">
               {p?.promoText ? (
                 <div className="badge">{p.promoText}</div>

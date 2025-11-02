@@ -1,63 +1,54 @@
 // frontend/src/components/product/ProductTabs.jsx
-// 3 tab chính: Tổng quan, Thông số kỹ thuật, Nhận xét & Đánh giá
-
 import { useState } from "react";
 import ProductSpecsTable from "./ProductSpecsTable";
-import ReviewSection from "./ReviewSection";
+import ReviewsPanel from "./ReviewsPanel";
 
-export default function ProductTabs({ description, specs, reviews = [] }) {
-  const [activeTab, setActiveTab] = useState("overview");
-
-  const tabs = [
-    { key: "overview", label: "Tổng quan" },
-    { key: "specs", label: "Thông số kỹ thuật" },
-    { key: "reviews", label: "Nhận xét & Đánh giá" },
-  ];
+export default function ProductTabs({ productId, description, specs }) {
+  const [tab, setTab] = useState("overview");
 
   return (
-    <section className="mt-12">
-      {/* ======= Nút chọn tab ======= */}
-      <div className="flex justify-center gap-4 border-b border-gray-200 dark:border-slate-700 pb-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-6 py-3 text-lg font-semibold rounded-t-lg transition-colors duration-300
-              ${
-                activeTab === tab.key
-                  ? "bg-emerald-600 text-white dark:bg-emerald-500"
-                  : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-slate-700"
-              }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="container mx-auto px-4 mt-6 mb-10">
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-3 mb-4">
+        {[
+          { key: "overview", label: "Tổng quan" },
+          { key: "specs", label: "Thông số kỹ thuật" },
+          { key: "reviews", label: "Nhận xét & Đánh giá" },
+        ].map((t) => {
+          const active = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold border transition
+                ${
+                  active
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "bg-white text-slate-900 border-black/15 hover:bg-black/5 dark:bg-slate-800 dark:text-slate-100 dark:border-white/15 dark:hover:bg-white/10"
+                }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* ======= Nội dung tab ======= */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-b-xl shadow-lg border border-gray-200 dark:border-slate-700 mt-2">
-        {activeTab === "overview" && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
-              Tổng quan sản phẩm
-            </h2>
-            {description ? (
-              <div
-                className="prose dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: description }}
-              />
-            ) : (
-              <p className="text-gray-500 dark:text-slate-400 italic">
-                Chưa có mô tả chi tiết cho sản phẩm này.
-              </p>
-            )}
+      {/* Content */}
+      <div className="surface-panel p-4 md:p-6 text-slate-900 dark:text-slate-100">
+        {tab === "overview" && (
+          <div className="prose">
+            <div
+              dangerouslySetInnerHTML={{
+                __html: description || "<p>Chưa có mô tả.</p>",
+              }}
+            />
           </div>
         )}
 
-        {activeTab === "specs" && <ProductSpecsTable specs={specs} />}
+        {tab === "specs" && <ProductSpecsTable specs={specs} />}
 
-        {activeTab === "reviews" && <ReviewSection reviews={reviews} />}
+        {tab === "reviews" && <ReviewsPanel productId={productId} />}
       </div>
-    </section>
+    </div>
   );
 }

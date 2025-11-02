@@ -4,14 +4,14 @@
 import axios from "axios";
 
 // --- CHẾ ĐỘ DEV / PROD ---
-const USE_MOCK_API = true;
+export const USE_MOCK_API = true; // <- bật/tắt mock
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || "http://localhost:5000/api",
 });
 
-// === Tiện ích ===
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+// tiện ích delay dùng chung (mock)
+export const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ========================= MOCK DATA (DEV) =========================
 const brands = ["Sony", "Canon", "Nikon", "Fujifilm", "Panasonic", "Leica"];
@@ -35,61 +35,16 @@ const MOCK_PRODUCTS = Array.from({ length: 20 }, (_, i) => {
   }));
 
   const specs = {
-    lighting: {
-      iso: "100–51200",
-      shutter_speed: "1/4000 giây",
-      metering: "Đa vùng, Trung tâm, Điểm",
-      white_balance: "Tự động, Ánh sáng ban ngày, Mây",
-      continuous_shooting_speed: "10 fps",
-    },
+    lighting: { iso: "100–51200", shutter_speed: "1/4000 giây" },
     image: {
       sensor_format: "Full-Frame",
-      resolution: "24.2 MP",
-      image_size: "6000 x 4000",
-      aspect_ratio: "3:2",
-      sensor_type: "CMOS",
-      image_format: "JPEG, RAW",
-      stabilization: "5 trục trong thân máy",
-      lens_mount: `${brand.toUpperCase()} Mount`,
+      resolution: `${24 + (i % 4) * 2}.0 MP`,
+      lens_mount: `${brand.toUpperCase()} MOUNT`,
     },
-    video: {
-      encoding: "H.264, H.265",
-      resolution: "4K UHD, Full HD",
-      microphone: "Stereo tích hợp",
-      audio_format: "AAC, Linear PCM",
-    },
-    focus: {
-      type: "Tự động & Thủ công",
-      mode: "Liên tục, Đơn lẻ",
-      points: "273 điểm",
-    },
-    viewfinder_monitor: {
-      viewfinder_type: "Điện tử OLED",
-      monitor_features: "Cảm ứng, Xoay lật",
-      monitor_resolution: "1.44 triệu điểm",
-      monitor_size: "3.0 inch",
-      viewfinder_magnification: "0.78x",
-      viewfinder_coverage: "100%",
-      viewfinder_size: "0.5 inch",
-      viewfinder_resolution: "2.36 triệu điểm",
-    },
-    flash: {
-      built_in_flash: "Không",
-      flash_mode: "Tự động, On, Off, Slow Sync",
-      sync_speed: "1/200 giây",
-      hot_shoe: "Có",
-      flash_compensation: "-3 to +3 EV",
-      external_flash_sync: "Có",
-    },
-    connectivity: {
-      gps: "Không",
-      wireless: "Wi-Fi, Bluetooth",
-      jacks: "USB-C, HDMI, 3.5mm Mic",
-      card_slots: "2 x SD (UHS-II)",
-    },
-    other: {
-      battery: "NP-FZ100 Lithium-Ion",
-    },
+    video: { resolution: "4K UHD, Full HD" },
+    focus: { points: `${200 + (i % 4) * 50} điểm` },
+    connectivity: { wireless: "Wi-Fi, Bluetooth" },
+    other: { battery: "NP-FZ100 Lithium-Ion" },
   };
 
   return {
@@ -130,51 +85,115 @@ const MOCK_BANNERS = [
 // ========================= CHUẨN HOÁ DỮ LIỆU =========================
 const normalizeProduct = (p) => ({
   id: String(p.id),
-  name: p.name,
-  brand: p.brand || "",
-  price_from: p.price_from ?? p.sale_price ?? p.selling_price ?? 0,
+  name: p.name ?? p.ten_san_pham ?? "",
+  brand: p.brand ?? p.thuong_hieu?.ten_thuong_hieu ?? "",
+  price_from: p.price_from ?? p.sale_price ?? p.gia_goc ?? p.selling_price ?? 0,
   compareAt: p.compareAt ?? p.original_price ?? null,
-  rating: p.rating ?? 0,
-  reviewCount: p.reviewCount ?? 0,
-  total_stock: p.total_stock ?? 0,
+  rating: p.rating ?? p.avg_rating ?? 0,
+  reviewCount: p.reviewCount ?? p.review_count ?? 0,
+  total_stock: p.total_stock ?? p.tong_ton_kho ?? 0,
   promoText: p.promoText || p.promotion || "",
   description: p.description || "",
-  primaryImage: p.primaryImage || p.image || p.images?.[0] || "",
-  images: p.images || [],
-  variants: p.variants || [],
-  specs: p.specs || {},
+  primaryImage:
+    p.primaryImage || p.anh_dai_dien || p.image || p.images?.[0] || "",
+  images: p.images || p.hinh_anh?.map((x) => x.url) || [],
+  variants: p.variants || p.bien_the || [],
+  specs: p.specs || p.thong_so || {},
 });
 
 // ========================= PUBLIC API =========================
-
-// Lấy danh sách sản phẩm
 export async function getProducts({
   page = 1,
   limit = 12,
   searchTerm = "",
-  brands = [],
-  minPrice,
-  maxPrice,
   sort,
+  filters = {},
 } = {}) {
+  const {
+    brands = [],
+    priceRange = { min: 0, max: 66_000_000 },
+    mpRanges = [],
+    memoryTypes = [],
+    videoRes = [],
+    focusRanges = [],
+    lensMounts = [],
+  } = filters;
+
   if (USE_MOCK_API) {
     await delay(400);
     let data = [...MOCK_PRODUCTS];
 
+    // search
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       data = data.filter((p) => p.name.toLowerCase().includes(q));
     }
 
+    // brand
     if (brands?.length) {
       const set = new Set(brands.map((b) => b.toLowerCase()));
       data = data.filter((p) => set.has(p.brand.toLowerCase()));
     }
 
-    const min = Number(minPrice) || 0;
-    const max = Number(maxPrice) || Infinity;
+    // price
+    const min = Number(priceRange.min) || 0;
+    const max = Number(priceRange.max) || Infinity;
     data = data.filter((p) => p.price_from >= min && p.price_from <= max);
 
+    // mp
+    if (mpRanges?.length) {
+      data = data.filter((p) => {
+        const mpNum = Number(
+          (p.specs?.image?.resolution || "0").replace(/[^\d.]/g, "")
+        );
+        return mpRanges.some((range) => {
+          if (range === ">=40") return mpNum >= 40;
+          const [a, b] = range.split("-").map(Number);
+          return mpNum >= a && mpNum <= b;
+        });
+      });
+    }
+
+    // memory
+    if (memoryTypes?.length) {
+      data = data.filter((p) => {
+        const slots = (p.specs?.connectivity?.card_slots || "").toUpperCase();
+        return memoryTypes.some((m) => slots.includes(m.toUpperCase()));
+      });
+    }
+
+    // video
+    if (videoRes?.length) {
+      data = data.filter((p) => {
+        const rv = (p.specs?.video?.resolution || "").toUpperCase();
+        return videoRes.some((v) => rv.includes(v.toUpperCase()));
+      });
+    }
+
+    // focus
+    if (focusRanges?.length) {
+      data = data.filter((p) => {
+        const pts = Number(
+          (p.specs?.focus?.points || "0").replace(/[^\d]/g, "")
+        );
+        return focusRanges.some((r) => {
+          if (r === "<200") return pts < 200;
+          if (r === ">=300") return pts >= 300;
+          const [a, b] = r.split("-").map(Number);
+          return pts >= a && pts <= b;
+        });
+      });
+    }
+
+    // mount
+    if (lensMounts?.length) {
+      data = data.filter((p) => {
+        const m = (p.specs?.image?.lens_mount || "").toUpperCase();
+        return lensMounts.some((x) => m.includes(x.toUpperCase()));
+      });
+    }
+
+    // sort
     if (sort) {
       const s = sort.toLowerCase();
       data.sort((a, b) => {
@@ -193,29 +212,33 @@ export async function getProducts({
     const total = data.length;
     const start = (page - 1) * limit;
     const items = data.slice(start, start + limit);
-
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  // === API thật ===
   const res = await api.get("/products", {
     params: {
       page,
       limit,
       search: searchTerm,
-      brands,
-      minPrice,
-      maxPrice,
       sort,
+      // khớp backend (tuỳ bạn map lại ở server)
+      brands,
+      minPrice: priceRange.min,
+      maxPrice: priceRange.max,
+      mp: mpRanges,
+      mem: memoryTypes,
+      vres: videoRes,
+      focus: focusRanges,
+      mount: lensMounts,
     },
   });
+
   return {
     ...res.data,
     items: (res.data.items || res.data.data || []).map(normalizeProduct),
   };
 }
 
-// Chi tiết sản phẩm
 export async function getProduct(id) {
   if (USE_MOCK_API) {
     await delay(300);
@@ -227,7 +250,6 @@ export async function getProduct(id) {
   return normalizeProduct(res.data);
 }
 
-// Banner trang chủ
 export async function getBanners() {
   if (USE_MOCK_API) {
     await delay(200);

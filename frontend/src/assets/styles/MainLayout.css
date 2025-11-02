@@ -1,194 +1,160 @@
-/* frontend/src/styles/storefront.css
-   ————————————————————————————————————————————
-   Mục tiêu:
-   - Tailwind-first, chỉ bổ sung lớp tái sử dụng cho UI storefront
-   - Đồng bộ theme với Admin: xanh emerald + slate
-   - Dùng cho: HomePage, ProductListPage, ProductDetailPage, Header/Footer
-*/
-
-/* 1) Kích hoạt Tailwind (v4) */
+/* MainLayout.css — Storefront LIGHT + DARK (auto follow OS/browser) */
 @import "tailwindcss";
 
-/* 2) Biến màu & token theme (đồng bộ gần với admin) */
-:root {
-  --color-accent-green: #10b981; /* emerald-500 */
-  --color-accent-green-600: #059669; /* emerald-600 */
-  --color-navy-800: #1f2937; /* slate-800-ish */
-  --color-navy-600: #334155; /* slate-700-ish */
-  --color-muted: #f8fafc; /* slate-50 */
-  --color-card-bg: #ffffff;
-
-  --header-h: 80px; /* để canh mt cho main khi header sticky */
-}
-
-/* 3) Base reset nhẹ + nền trang */
+/* ========= BASE ========= */
 @layer base {
   html,
   body {
-    @apply antialiased;
+    @apply antialiased scroll-smooth;
   }
+
+  /* Auto follow system theme */
   body {
-    @apply bg-[var(--color-muted)] text-gray-900;
+    @apply bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans;
   }
+
   h1,
   h2,
   h3,
   h4 {
-    @apply font-semibold text-gray-900;
+    @apply font-semibold text-slate-900 dark:text-white;
+  }
+
+  a {
+    @apply text-inherit no-underline transition duration-200;
+  }
+  a:hover {
+    @apply text-emerald-600 dark:text-emerald-400;
   }
 }
 
-/* 4) Components tái sử dụng */
+/* ========= COMPONENTS ========= */
 @layer components {
-  /* Khối section có khoảng cách dọc đồng đều */
-  .page-section {
-    @apply container mx-auto px-4 py-8;
+  /* Background gradient behind pages (nhẹ cho light, đậm cho dark) */
+  .app-bg {
+    @apply bg-gradient-to-br from-emerald-50 via-emerald-100 to-white
+           dark:from-emerald-950 dark:via-emerald-900 dark:to-slate-900;
   }
 
-  /* Card chuẩn cho sản phẩm/list item */
-  .ui-card {
-    @apply bg-white rounded-xl border shadow-sm hover:shadow transition;
+  /* Header / Footer */
+  .site-header {
+    @apply fixed top-0 left-0 w-full z-50 backdrop-blur-md shadow-sm;
+    @apply bg-white/80 border-b border-gray-200
+           dark:bg-slate-900/85 dark:border-slate-700;
+    height: 64px;
+  }
+  .site-footer {
+    @apply bg-gray-50 border-t border-gray-200 text-slate-700
+           dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300;
   }
 
-  /* Ảnh tỉ lệ vuông trong card */
-  .ui-card-thumb {
-    @apply aspect-square overflow-hidden rounded-t-xl bg-gray-50;
+  /* Surfaces */
+  .surface-panel {
+    @apply rounded-2xl border shadow;
+    @apply bg-white/90 border-gray-200
+           dark:bg-slate-800/70 dark:border-slate-700/50;
+    @apply backdrop-blur-md;
+  }
+  .surface-card {
+    @apply rounded-2xl transition shadow-sm hover:shadow-lg border;
+    @apply bg-white border-gray-200
+           dark:bg-slate-800 dark:border-slate-700;
   }
 
-  /* Nút chính/phụ (đồng bộ admin) */
+  /* ---------- Buttons ---------- */
+  .btn,
+  .btn-primary,
+  .btn-emerald,
+  .btn-outline,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5
+           font-semibold text-sm transition active:scale-95;
+  }
+
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition;
+    /* neutral */
+    @apply border;
+    @apply bg-white text-slate-900 border-black/10 hover:bg-black/5
+           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700;
   }
   .btn-primary {
-    @apply btn bg-black text-white hover:opacity-90;
+    @apply bg-black text-white hover:bg-gray-900 shadow-md hover:shadow-lg
+           dark:bg-slate-900 dark:hover:bg-black;
   }
   .btn-emerald {
-    @apply btn bg-[var(--color-accent-green)] text-white hover:bg-[var(--color-accent-green-600)];
+    @apply bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg;
   }
   .btn-outline {
-    @apply btn border bg-white hover:bg-gray-50;
+    @apply bg-transparent border;
+    @apply text-slate-700 border-gray-300 hover:bg-gray-50
+           dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-800;
   }
   .btn-ghost {
-    @apply btn hover:bg-gray-100;
+    @apply text-slate-700 hover:bg-gray-100
+           dark:text-slate-200 dark:hover:bg-slate-800;
   }
 
-  /* Input, Select dùng chung filter/search/sort */
+  /* Inputs / Selects */
   .ui-input {
-    @apply w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500;
+    @apply w-full rounded-xl px-4 py-2 text-sm outline-none border shadow-sm;
+    @apply bg-white text-slate-900 placeholder-slate-400 border-gray-300
+           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500;
+    @apply dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400 dark:border-slate-600;
   }
   .ui-select {
-    @apply rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white;
+    @apply rounded-xl px-4 py-2 text-sm outline-none border shadow-sm;
+    @apply bg-white text-slate-900 border-gray-300
+           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500;
+    @apply dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600;
   }
 
-  /* Badge promo */
+  .ui-card-thumb {
+    @apply aspect-square overflow-hidden rounded-t-2xl bg-gray-100 dark:bg-slate-900;
+  }
+
+  /* Badge */
   .badge {
-    @apply inline-block text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-700;
+    @apply inline-block text-xs px-2 py-1 rounded-full font-medium;
+    @apply bg-emerald-100 text-emerald-700
+           dark:bg-emerald-900/40 dark:text-emerald-300;
   }
 
-  /* Skeleton loading khớp grid/list */
+  /* Prose (mô tả) */
+  .prose {
+    @apply leading-relaxed text-slate-700 dark:text-slate-200;
+  }
+  .prose h1,
+  .prose h2,
+  .prose h3 {
+    @apply font-semibold text-slate-900 dark:text-white mt-4 mb-2;
+  }
+  .prose p {
+    @apply my-3;
+  }
+  .prose a {
+    @apply text-emerald-600 underline decoration-emerald-600/30 hover:text-emerald-700
+                   dark:text-emerald-400 dark:decoration-emerald-600/40 dark:hover:text-emerald-300;
+  }
+
+  /* Skeleton */
   .skeleton {
-    @apply relative overflow-hidden bg-gray-200;
-  }
-  .skeleton::after {
-    content: "";
-    @apply absolute inset-0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.6),
-      transparent
-    );
-    animation: shimmer 1.2s infinite;
-  }
-
-  /* Header sticky (dùng trong Header.jsx) */
-  .site-header {
-    @apply sticky top-0 z-50 bg-white/90 backdrop-blur border-b;
-    height: var(--header-h);
-  }
-
-  /* Footer */
-  .site-footer {
-    @apply bg-white border-t;
+    @apply relative overflow-hidden rounded-xl bg-gray-200 dark:bg-slate-700;
   }
 }
 
-/* 5) Utilities mở rộng (scrollbar, line-clamp, grid-carousel) */
-@layer utilities {
-  /* Scrollbar tinh gọn (WebKit) */
-  .scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-  }
-  .scrollbar::-webkit-scrollbar {
-    height: 8px;
-    width: 8px;
-  }
-  .scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 9999px;
-  }
-  .scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  /* Ẩn scrollbar nhưng còn cuộn được */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  /* Line clamp (nếu chưa dùng plugin) */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Dòng kéo ngang kiểu "carousel" dùng grid (HomePage ProductCarousel) */
-  .grid-carousel {
-    /* mỗi item min 220px, tự co giãn */
-    grid-auto-columns: minmax(220px, 1fr);
-    grid-auto-flow: column;
-  }
+/* Skeleton shimmer */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shimmer 1.2s infinite;
 }
-
-/* 6) Prose tối giản cho description (ProductDetailPage) */
-.prose {
-  @apply text-gray-700 leading-relaxed;
-}
-.prose h1,
-.prose h2,
-.prose h3 {
-  @apply font-semibold text-gray-900 mt-4 mb-2;
-}
-.prose p {
-  @apply my-3;
-}
-.prose ul {
-  @apply list-disc pl-5 my-3;
-}
-.prose ol {
-  @apply list-decimal pl-5 my-3;
-}
-.prose a {
-  @apply text-emerald-600 underline decoration-emerald-300 hover:text-emerald-700;
-}
-.prose img {
-  @apply rounded-lg;
-}
-
-/* 7) Animations */
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -198,20 +164,31 @@
   }
 }
 
-/* 8) Dark mode tối thiểu (nếu dùng html.dark giống admin) */
-html.dark body {
-  @apply bg-slate-900 text-slate-100;
+/* ========= UTILITIES ========= */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
-html.dark .ui-card {
-  @apply bg-slate-800 border-slate-700;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-html.dark .ui-input,
-html.dark .ui-select {
-  @apply bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-400;
+
+.grid-carousel {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
 }
-html.dark .site-header {
-  @apply bg-slate-900/80 border-slate-700;
+@media (max-width: 1024px) {
+  .grid-carousel {
+    grid-auto-columns: minmax(220px, 1fr);
+  }
 }
-html.dark .site-footer {
-  @apply bg-slate-900 border-slate-700;
+@media (max-width: 768px) {
+  .grid-carousel {
+    grid-auto-columns: minmax(200px, 85%);
+  }
+}
+@media (max-width: 480px) {
+  .grid-carousel {
+    grid-auto-columns: minmax(170px, 80%);
+  }
 }

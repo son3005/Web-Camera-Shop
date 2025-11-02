@@ -1,0 +1,150 @@
+/* =========================================================
+   Auth.css – style cho: Đăng nhập / Đăng ký / Quên / Đổi mật khẩu
+   Tự động theo theme (light/dark) dựa trên class html.dark
+   Không can thiệp JSX/logic
+   ========================================================= */
+
+/* ---- Màu chủ đạo đồng bộ storefront (emerald) ---- */
+:root {
+  --auth-emerald: #10b981; /* emerald-500 */
+  --auth-emerald-dark: #047857; /* emerald-700 */
+  --auth-text: #111827; /* gray-900 */
+  --auth-subtext: #6b7280; /* gray-500 */
+  --auth-border: #d1d5db; /* gray-300 */
+  --auth-surface: #ffffff; /* white */
+  --auth-input: #ffffff; /* input bg (light) */
+  --auth-placeholder: #9ca3af; /* gray-400 */
+}
+
+/* Dark mode variables (html.dark do Tailwind set) */
+html.dark {
+  --auth-text: #f1f5f9; /* slate-100 */
+  --auth-subtext: #cbd5e1; /* slate-300/400 */
+  --auth-border: #334155; /* slate-700 */
+  --auth-surface: #0f172a; /* slate-900 */
+  --auth-input: #1e293b; /* slate-800 */
+  --auth-placeholder: #cbd5e1; /* slate-300/400 */
+}
+
+/* =========================================================
+   KHUNG CARD BÊN PHẢI (form) – áp cho: login/register/forgot
+   - Đặc điểm duy nhất: .rounded-r-2xl.bg-white trên khối phải
+   ========================================================= */
+
+.min-h-screen .rounded-r-2xl.bg-white {
+  background: var(--auth-surface) !important;
+  color: var(--auth-text) !important;
+  border-left: 1px solid color-mix(in srgb, var(--auth-border), transparent 40%);
+}
+
+.min-h-screen .rounded-r-2xl.bg-white h2 {
+  color: var(--auth-text) !important;
+}
+
+.min-h-screen .rounded-r-2xl.bg-white p,
+.min-h-screen .rounded-r-2xl.bg-white p a {
+  color: var(--auth-subtext) !important;
+}
+.min-h-screen .rounded-r-2xl.bg-white p a:hover {
+  color: var(--auth-emerald) !important;
+  text-decoration: underline;
+}
+
+/* =========================================================
+   INPUT GROUP (icon + input) – giữ nguyên markup hiện tại
+   Mẫu khối: .flex.items-center.border.rounded-lg.p-3 > svg + input.w-full
+   ========================================================= */
+
+.min-h-screen .flex.items-center.border.rounded-lg.p-3 {
+  background: var(--auth-input) !important;
+  border-color: var(--auth-border) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.min-h-screen .flex.items-center.border.rounded-lg.p-3:focus-within {
+  border-color: var(--auth-emerald) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--auth-emerald) 25%, transparent);
+}
+
+.min-h-screen .flex.items-center.border.rounded-lg.p-3 svg {
+  color: var(--auth-placeholder) !important; /* màu icon */
+}
+
+.min-h-screen .flex.items-center.border.rounded-lg.p-3 .w-full {
+  background: transparent !important;
+  color: var(--auth-text) !important;
+}
+
+.min-h-screen .flex.items-center.border.rounded-lg.p-3 .w-full::placeholder {
+  color: var(--auth-placeholder) !important;
+  opacity: 1; /* tránh mờ ở dark */
+}
+
+/* =========================================================
+   BUTTON SUBMIT (giữ gradient, đồng bộ emerald)
+   ========================================================= */
+.min-h-screen .rounded-r-2xl.bg-white button[type="submit"] {
+  background-image: linear-gradient(
+    to right,
+    var(--auth-emerald),
+    var(--auth-emerald-dark)
+  ) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: none;
+  transition: box-shadow 0.25s ease, transform 0.1s ease;
+}
+.min-h-screen .rounded-r-2xl.bg-white button[type="submit"]:hover {
+  box-shadow: 0 6px 18px
+    color-mix(in srgb, var(--auth-emerald) 35%, transparent);
+  transform: translateY(-1px);
+}
+.min-h-screen .rounded-r-2xl.bg-white button[type="submit"]:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================================================
+   TRANG ĐỔI MẬT KHẨU – card nhỏ chính giữa
+   Markup: .bg-white.p-8.rounded-2xl.shadow-lg.w-96
+   ========================================================= */
+
+.bg-white.p-8.rounded-2xl.shadow-lg.w-96 {
+  background: var(--auth-surface) !important;
+  color: var(--auth-text) !important;
+  border: 1px solid color-mix(in srgb, var(--auth-border), transparent 40%);
+}
+
+.bg-white.p-8.rounded-2xl.shadow-lg.w-96 label {
+  color: var(--auth-subtext) !important;
+}
+
+.bg-white.p-8.rounded-2xl.shadow-lg.w-96 input {
+  background: var(--auth-input) !important;
+  color: var(--auth-text) !important;
+  border: 1px solid var(--auth-border) !important;
+}
+.bg-white.p-8.rounded-2xl.shadow-lg.w-96 input::placeholder {
+  color: var(--auth-placeholder) !important;
+}
+.bg-white.p-8.rounded-2xl.shadow-lg.w-96 input:focus {
+  outline: none;
+  border-color: var(--auth-emerald) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--auth-emerald) 25%, transparent);
+}
+
+/* Nút xác nhận */
+.bg-white.p-8.rounded-2xl.shadow-lg.w-96 button[type="submit"] {
+  background-image: linear-gradient(
+    to right,
+    var(--auth-emerald),
+    var(--auth-emerald-dark)
+  ) !important;
+  color: #fff !important;
+  border: none !important;
+}
+.bg-white.p-8.rounded-2xl.shadow-lg.w-96 button[type="submit"]:hover {
+  box-shadow: 0 6px 18px
+    color-mix(in srgb, var(--auth-emerald) 35%, transparent);
+}
