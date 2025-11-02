@@ -1,36 +1,78 @@
-from pydantic import BaseModel, Field, validator
+# /backend/app/schemas/BienTheSanPham.py
+from pydantic import BaseModel, Field, ConfigDict, validator
 from typing import List, Optional
+from datetime import datetime
 from decimal import Decimal
+from .HinhAnhSanPham import HinhAnhResponse, HinhAnhCreate
+from ..Shared import TrangThaiSanPhamEnum
 
-# Import schema từ file khác
-from .HinhAnhSanPham import HinhAnhCreate, HinhAnhResponse
 
-class BienTheBase(BaseModel):
-    ma_sku: str = Field(..., max_length=120, description="Mã SKU định danh duy nhất cho biến thể")
-    ten_bien_the: Optional[str] = Field(None, max_length=100, description="Tên của biến thể, ví dụ: 'Màu đen, 128GB'")
-    gia: Decimal = Field(..., gt=0, description="Giá bán của biến thể")
-    gia_khuyen_mai: Optional[Decimal] = Field(None, gt=0, description="Giá sau khi khuyến mãi")
+class BienTheSanPhamBase(BaseModel):
+    san_pham_id: Optional[int] = Field(None, description="ID của sản phẩm cha")
+    ten_bien_the: Optional[str] = Field(None, max_length=100, description="Tên biến thể sản phẩm")
+    trang_thai_kich_hoat: Optional[TrangThaiSanPhamEnum] = Field(
+        TrangThaiSanPhamEnum.DANG_BAN,
+        description="Trạng thái kích hoạt của biến thể sản phẩm"
+    )
+    gia_ban: Decimal = Field(..., gt=0, description="Giá bán của biến thể sản phẩm")
+    gia_khuyen_mai: Optional[Decimal] = Field(None, gt=0, description="Giá khuyến mãi")
+    ngay_bat_dau_khuyen_mai: Optional[datetime] = Field(None, description="Ngày bắt đầu KM")
+    ngay_ket_thuc_khuyen_mai: Optional[datetime] = Field(None, description="Ngày kết thúc KM")
     so_luong_ton: int = Field(..., ge=0, description="Số lượng tồn kho")
 
-    @validator('gia_khuyen_mai')
-    def gia_khuyen_mai_must_be_less_than_gia(cls, v, values, **kwargs):
-        if v is not None and 'gia' in values and v >= values['gia']:
-            raise ValueError('Giá khuyến mãi phải nhỏ hơn giá gốc')
-        return v
 
-class BienTheCreate(BienTheBase):
-    hinh_anhs: Optional[List[HinhAnhCreate]] = Field([], description="Danh sách hình ảnh cho biến thể này")
+class BienTheSanPhamCreate(BienTheSanPhamBase):
+    hinh_anhs: Optional[List[HinhAnhCreate]] = Field(
+        [], description="Danh sách ảnh của biến thể"
+    )
 
-class BienTheUpdate(BaseModel):
-    ma_sku: Optional[str] = Field(None, max_length=120)
+
+class BienTheSanPhamUpdate(BaseModel):
     ten_bien_the: Optional[str] = Field(None, max_length=100)
-    gia: Optional[Decimal] = Field(None, gt=0)
+    trang_thai_kich_hoat: Optional[TrangThaiSanPhamEnum] = None
+    gia_ban: Optional[Decimal] = Field(None, gt=0)
     gia_khuyen_mai: Optional[Decimal] = Field(None, gt=0)
+    ngay_bat_dau_khuyen_mai: Optional[datetime] = None
+    ngay_ket_thuc_khuyen_mai: Optional[datetime] = None
     so_luong_ton: Optional[int] = Field(None, ge=0)
+    new_hinh_anhs: Optional[List[HinhAnhCreate]] = Field([], description="Ảnh mới")
+    deleted_hinh_anh_ids: Optional[List[int]] = Field([], description="ID ảnh xóa")
 
-class BienTheResponse(BienTheBase):
+    # Thêm validator parse ngày (hỗ trợ nhiều format)
+    @validator('ngay_bat_dau_khuyen_mai', 'ngay_ket_thuc_khuyen_mai', pre=True, always=True)
+    def parse_date(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, datetime):
+            return v
+        if isinstance(v, str):
+            formats = [
+                "%Y-%m-%dT%H:%M:%S.%fZ",  # ISO with ms
+                "%Y-%m-%dT%H:%M:%SZ",     # ISO without ms
+                "%Y-%m-%d %H:%M:%S",      # Simple
+                "%Y-%m-%d",               # Date only
+                "%a, %d %b %Y %H:%M:%S GMT"  # GMT format from toUTCString()
+            ]
+            for fmt in formats:
+                try:
+                    return datetime.strptime(v.strip(), fmt)
+                except ValueError:
+                    continue
+            raise ValueError(f"Invalid date format: {v}")
+        raise ValueError("Invalid date type")
+
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)  # Sửa: thêm use_enum_values
+
+
+class BienTheSanPhamDelete(BaseModel):
     id: int
-    hinh_anhs: List[HinhAnhResponse] = []
 
-    class Config:
-        orm_mode = True
+
+class BienTheSanPhamResponse(BienTheSanPhamBase):
+    id: int
+    hinh_anhs: List[HinhAnhResponse] = Field(
+        default_factory=list,
+        description="Danh sách ảnh của biến thể"
+    )
+
+    model_config = ConfigDict(from_attributes=True)

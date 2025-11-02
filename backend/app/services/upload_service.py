@@ -1,56 +1,122 @@
-from flask import Blueprint, request, jsonify
+# /backend/app/services/upload_service.py
 import cloudinary
 import cloudinary.uploader
-from app.utils.decorators import admin_required # Import decorator đã tạo
-from app.extensions import spec
-from flask_pydantic_spec import Response
-from pydantic import BaseModel, Field
+import cloudinary.utils
+import time
+from typing import Dict, Any
+from werkzeug.datastructures import FileStorage
+import logging
 
-# Tạo một blueprint mới cho việc upload
-upload_api = Blueprint('upload_api', __name__, url_prefix='/api/upload')
+# THÊM: Logger riêng cho service
+logger = logging.getLogger(__name__)
 
-# === SỬA ĐỔI 1: Thêm 'public_id' vào Pydantic schema ===
-# Định nghĩa Pydantic schema cho response trả về
-class UploadResponse(BaseModel):
-    message: str = Field(default="Upload thành công!")
-    url: str = Field(..., description="URL an toàn (https) của ảnh đã được upload")
-    public_id: str = Field(..., description="ID định danh file trên Cloudinary (dùng để xóa)") # <-- THÊM DÒNG NÀY
 
-@upload_api.route('/image', methods=['POST'])
-@admin_required() # Chỉ có admin mới được upload ảnh sản phẩm
-@spec.validate(resp=Response(HTTP_201=UploadResponse), tags=['Upload'])
-def upload_product_image():
+class UploadService:
     """
-    Endpoint để upload một file ảnh lên Cloudinary cho sản phẩm.
-    Frontend phải gửi file dưới dạng 'multipart/form-data' với key là 'file'.
+    Chứa logic nghiệp vụ cho việc upload và quản lý file trên Cloudinary.
     """
-    # 1. Kiểm tra xem có file nào được gửi lên không
-    if 'file' not in request.files:
-        return jsonify(error="Không tìm thấy file trong request"), 400
-    
-    file_to_upload = request.files['file']
-    
-    # 2. Kiểm tra nếu người dùng không chọn file (tên file rỗng)
-    if file_to_upload.filename == '':
-        return jsonify(error="Chưa chọn file để upload"), 400
 
-    try:
-        # 3. Thực hiện upload lên Cloudinary
-        # 'folder' giúp bạn tổ chức ảnh gọn gàng trên Cloudinary
-        upload_result = cloudinary.uploader.upload(
-            file_to_upload,
-            folder="san_pham" # Ví dụ: lưu tất cả ảnh sản phẩm vào thư mục 'san_pham'
-        )
-        
-        # === SỬA ĐỔI 2: Trả về 'public_id' trong response ===
-        # 4. Trả về response thành công với URL an toàn (https) và public_id
-        # Pydantic sẽ tự động validate response này theo schema UploadResponse
-        return jsonify({
-            "message": "Upload thành công!",
-            "url": upload_result.get('secure_url'),
-            "public_id": upload_result.get('public_id') # <-- THÊM DÒNG NÀY
-        }), 201
+    @staticmethod
+    def generate_signature(folder: str = "san_pham") -> Dict[str, Any]:
+        """
+        Tạo chữ ký (signed signature) cho phép React upload thẳng lên Cloudinary.
+        """
+        logger.info(f"Bắt đầu tạo signature upload | folder: '{folder}'")
 
-    except Exception as e:
-        # 5. Xử lý nếu có lỗi từ Cloudinary hoặc các lỗi khác
-        return jsonify(error=f"Lỗi khi upload: {str(e)}"), 500
+        try:
+            timestamp = int(time.time())
+            config = cloudinary.config()
+
+            # Kiểm tra cấu hình Cloudinary
+            if not config.api_key:
+                logger.error("Thiếu CLOUDINARY_API_KEY trong config")
+                raise Exception("Thiếu CLOUDINARY_API_KEY")
+            if not config.api_secret:
+                logger.error("Thiếu CLOUDINARY_API_SECRET trong config")
+                raise Exception("Chưa cấu hình Cloudinary API Secret")
+
+            # Payload để ký
+            payload_to_sign = {
+                "timestamp": timestamp,
+                "folder": folder
+            }
+            logger.debug(f"Payload ký: {payload_to_sign}")
+
+            # Ký payload
+            signature = cloudinary.utils.api_sign_request(
+                payload_to_sign,
+                config.api_secret
+            )
+
+            result = {
+                "signature": signature,
+                "timestamp": timestamp,
+                "api_key": config.api_key,
+                "folder": folder
+            }
+
+            logger.info("Tạo signature thành công")
+            logger.debug(f"Signature result: {result}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Lỗi khi tạo signature: {str(e)}", exc_info=True)
+            raise Exception(f"Không thể tạo chữ ký upload: {str(e)}")
+
+    @staticmethod
+    def upload_direct_to_server(file: FileStorage, folder: str = "san_pham") -> Dict[str, str]:
+        """
+        Upload file trực tiếp qua server Flask (dùng làm fallback).
+        """
+        if not file or not file.filename:
+            logger.warning("File không hợp lệ hoặc không có tên")
+            raise Exception("File không hợp lệ")
+
+        logger.info(f"Bắt đầu upload file qua server | filename: '{file.filename}', folder: '{folder}'")
+
+        # Lấy kích thước file (log để debug)
+        try:
+            file.seek(0, 2)  # Di chuyển đến cuối
+            file_size = file.tell()
+            file.seek(0)     # Reset về đầu
+            logger.debug(f"Kích thước file: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
+        except Exception as e:
+            logger.warning(f"Không thể đọc kích thước file: {e}")
+            file_size = "unknown"
+
+        try:
+            # Upload lên Cloudinary
+            logger.debug("Gửi request upload tới Cloudinary...")
+            upload_result = cloudinary.uploader.upload(
+                file,
+                folder=folder,
+                use_filename=True,
+                unique_filename=False
+            )
+
+            secure_url = upload_result.get('secure_url')
+            public_id = upload_result.get('public_id')
+            resource_type = upload_result.get('resource_type', 'image')
+            format_type = upload_result.get('format', 'unknown')
+
+            if not secure_url or not public_id:
+                logger.error("Upload thất bại: Không nhận được URL hoặc public_id từ Cloudinary")
+                raise Exception("Upload lên Cloudinary thất bại, không có URL hoặc Public ID.")
+
+            logger.info(f"Upload thành công | public_id: {public_id}")
+            logger.debug(
+                f"Upload details → URL: {secure_url}, "
+                f"Type: {resource_type}, Format: {format_type}, Size: {file_size} bytes"
+            )
+
+            return {
+                "url": secure_url,
+                "public_id": public_id
+            }
+
+        except cloudinary.exceptions.Error as ce:
+            logger.error(f"Lỗi Cloudinary API: {ce}", exc_info=True)
+            raise Exception(f"Cloudinary API error: {str(ce)}")
+        except Exception as e:
+            logger.error(f"Lỗi upload file: {str(e)}", exc_info=True)
+            raise Exception(f"Upload file thất bại: {str(e)}")

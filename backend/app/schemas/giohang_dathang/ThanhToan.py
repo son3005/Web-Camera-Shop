@@ -1,28 +1,41 @@
-from pydantic import BaseModel, Field
+# /backend/app/schemas/giohang_dathang/ThanhToan.py
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
+from ...models.enums import TrangThaiThanhToanEnum, PhuongThucThanhToanEnum
 
-from ..Shared import TrangThaiThanhToanEnum, PhuongThucThanhToanEnum
 
 class ThanhToanBase(BaseModel):
-    """Schema cơ sở cho thanh toán."""
-    so_tien: Decimal = Field(..., description="Số tiền thanh toán")
-    phuong_thuc: PhuongThucThanhToanEnum = Field(..., description="Phương thức thanh toán đã chọn")
-    trang_thai: TrangThaiThanhToanEnum = Field(..., description="Trạng thái của giao dịch thanh toán")
-    ma_giao_dich_ben_thu_3: Optional[str] = Field(None, description="Mã giao dịch từ cổng thanh toán")
+    don_hang_id: int = Field(..., description="ID đơn hàng")
+    so_tien: Decimal = Field(..., ge=0, description="Số tiền thanh toán")
+    phuong_thuc: PhuongThucThanhToanEnum = Field(
+        default=PhuongThucThanhToanEnum.COD,
+        description="Phương thức thanh toán"
+    )
+    trang_thai: TrangThaiThanhToanEnum = Field(
+        default=TrangThaiThanhToanEnum.CHO_THANH_TOAN,
+        description="Trạng thái thanh toán"
+    )
+    ma_giao_dich_ben_thu_3: Optional[str] = Field(None, max_length=255, description="Mã giao dịch bên thứ 3")
+    ngay_tao: datetime = Field(default_factory=datetime.utcnow, description="Ngày tạo")
+    ngay_cap_nhat: datetime = Field(default_factory=datetime.utcnow, description="Ngày cập nhật")
 
-class ThanhToanResponse(ThanhToanBase):
-    """Schema trả về thông tin chi tiết của thanh toán."""
-    id: int
-    don_hang_id: int
-    ngay_tao: datetime
-    ngay_cap_nhat: datetime
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
+
+class ThanhToanCreate(ThanhToanBase):
+    pass
+
 
 class ThanhToanUpdate(BaseModel):
-    """Schema dành cho admin hoặc webhook cập nhật trạng thái thanh toán."""
-    trang_thai: TrangThaiThanhToanEnum
+    trang_thai: Optional[TrangThaiThanhToanEnum] = None
     ma_giao_dich_ben_thu_3: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ThanhToanResponse(ThanhToanBase):
+    id: int = Field(..., description="ID thanh toán")
+
+    model_config = ConfigDict(from_attributes=True)

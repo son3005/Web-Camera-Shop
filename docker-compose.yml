@@ -1,17 +1,14 @@
 version: "3.9"
 
-# --- Định nghĩa Mạng (Network) ---
 networks:
   camera_shop_network:
     driver: bridge
 
-# --- Định nghĩa Volume ---
 volumes:
   mysql_data:
     driver: local
 
 services:
-  # --- Dịch vụ Database ---
   db:
     image: mysql:8.0
     container_name: camera-shop-db
@@ -30,7 +27,6 @@ services:
     networks:
       - camera_shop_network
 
-  # --- Dịch vụ Redis (Cho Caching và Celery) ---
   redis:
     image: "redis:7-alpine"
     container_name: camera-shop-redis
@@ -39,7 +35,6 @@ services:
     networks:
       - camera_shop_network
 
-  # --- Dịch vụ Backend ---
   backend:
     build:
       context: ./backend
@@ -51,20 +46,18 @@ services:
       - ./backend:/app
     env_file:
       - ./backend/.env
+    command: flask run --host=0.0.0.0 --port=5000
     depends_on:
       - db
       - redis
     networks:
       - camera_shop_network
 
-  # --- Dịch vụ Celery Worker (Xử lý tác vụ nền) ---
   celery-worker:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
     container_name: camera-shop-celery-worker
-    # !!! THAY ĐỔI QUAN TRỌNG Ở ĐÂY !!!
-    # Trỏ đúng vào biến `celery_app` trong file `app/celery_worker.py`
     command: celery -A app.celery_worker:celery_app worker --loglevel=info
     volumes:
       - ./backend:/app
@@ -76,7 +69,6 @@ services:
     networks:
       - camera_shop_network
 
-  # --- Dịch vụ Frontend ---
   frontend:
     build:
       context: ./frontend

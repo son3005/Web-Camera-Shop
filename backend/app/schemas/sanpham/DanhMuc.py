@@ -1,20 +1,38 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+# /backend/app/schemas/DanhMuc.py
+from pydantic import BaseModel, Field, ConfigDict
+from typing import List, Optional
+
 
 class DanhMucBase(BaseModel):
-    ma_danh_muc: str = Field(..., max_length=10, description="Mã của danh mục")
+    ma_danh_muc: str = Field(..., max_length=5, description="Mã của danh mục")
     ten_danh_muc: str = Field(..., max_length=100, description="Tên của danh mục")
+
 
 class DanhMucCreate(DanhMucBase):
     pass
 
+
 class DanhMucUpdate(BaseModel):
-    ma_danh_muc: Optional[str] = Field(None, max_length=10)
+    ma_danh_muc: Optional[str] = Field(None, max_length=5)
     ten_danh_muc: Optional[str] = Field(None, max_length=100)
+
+    model_config = ConfigDict(from_attributes=True)
+
+class DanhMucDelete(BaseModel):
+    id: int
+
 
 class DanhMucResponse(DanhMucBase):
     id: int
-    slug: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DanhMucListResponse(BaseModel):
+    """
+    Schema cho API trả về danh sách danh mục (có phân trang).
+    """
+    data: List[DanhMucResponse]
+    pagination: dict = Field(..., description="Thông tin phân trang (page, per_page, total, pages)")
+
+    model_config = ConfigDict(from_attributes=True)

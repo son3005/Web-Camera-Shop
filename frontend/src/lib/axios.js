@@ -1,53 +1,77 @@
 // src/lib/axios.js
 import axios from "axios";
 import { store } from "../redux/store";
-
-// --- (1) SỬA Ở ĐÂY ---
-// Import thẳng action "dangXuat" thay vì "authActions"
 import { dangXuat } from "../redux/slices/authSlice";
 
+// ✅ 1. Cấu hình base URL chuẩn
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-// --- Instance 1: Dùng cho các API CÔNG KHAI ---
+// ===============================
+// 🔹 Instance cho API Public
+// ===============================
 export const apiPublic = axios.create({
   baseURL: API_BASE_URL,
+  headers: { "Content-Type": "application/json" },
 });
 
-// --- Instance 2: Dùng cho các API BẢO MẬT (Admin, User) ---
+// ===============================
+// 🔹 Instance cho API Private (có token)
+// ===============================
 export const apiPrivate = axios.create({
   baseURL: API_BASE_URL,
+  headers: { "Content-Type": "application/json" },
 });
 
-// --- Tích hợp Interceptor (TRÁI TIM của việc bảo mật) ---
+// ===============================
+// 🔹 Helper log lỗi (debug dễ hơn)
+// ===============================
+function logAxiosError(error) {
+  if (error.response) {
+    console.error(
+      `❌ [${error.response.status}] ${error.config?.url}:`,
+      error.response?.data
+    );
+  } else if (error.request) {
+    console.error("⚠️ Không nhận được phản hồi từ server:", error.request);
+  } else {
+    console.error("🚨 Lỗi axios:", error.message);
+  }
+}
+
+// ===============================
+// 🔹 Request Interceptor
+// ===============================
 apiPrivate.interceptors.request.use(
   (config) => {
     const token = store.getState().auth.token;
-
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
+    if (token) config.headers["Authorization"] = `Bearer ${token}`;
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// --- Interceptor xử lý khi token HẾT HẠN (lỗi 401) ---
+// ===============================
+// 🔹 Response Interceptor
+// ===============================
 apiPrivate.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // ⚙️ Trả về luôn `response.data` cho gọn
+    return response.data;
+  },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      console.error("Lỗi 401: Token hết hạn. Đang đăng xuất...");
-
-      // --- (2) SỬA Ở ĐÂY ---
-      // Gọi thẳng hàm dangXuat()
+    // ⚠️ Nếu lỗi 401 (token hết hạn)
+    if (error.response?.status === 401) {
+      console.warn("🔒 Token hết hạn, đang đăng xuất...");
       store.dispatch(dangXuat());
 
-      // (Tùy chọn) Chuyển hướng người dùng về trang đăng nhập
-      // window.location.href = '/login';
+      // (Tuỳ chọn) Tránh redirect khi đã ở /login
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
+
+    logAxiosError(error);
     return Promise.reject(error);
   }
 );

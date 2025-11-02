@@ -1,87 +1,106 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { resetPasswordSchema } from "../validation/loginSchema"; // ✅ import schema yup
+import { resetPassword } from "../api/authApi";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ResetPassword = () => {
-  const { token } = useParams(); // lấy token từ URL
+  const { token } = useParams();
   const navigate = useNavigate();
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const dangnhap = "/dangnhap";
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(resetPasswordSchema),
+  });
 
-    if (password !== confirm) {
-      setMessage("❌ Mật khẩu xác nhận không khớp");
+  const handleResetPassword = async (data) => {
+    const { mat_khau, xac_nhan_mat_khau } = data;
+
+    
+    if (mat_khau !== xac_nhan_mat_khau) {
+      toast.error("❌ Mật khẩu xác nhận không khớp!", { position: "top-center" });
       return;
     }
 
+    setLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/auth/reset-password/${token}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ mat_khau: password }),
-        }
-      );
+      await resetPassword(token, { mat_khau });
 
-      const data = await response.json();
+      toast.success("✅ Đổi mật khẩu thành công! Hãy đăng nhập lại.", {
+        position: "top-center",
+      });
 
-      if (response.ok) {
-        alert("✅ Đổi mật khẩu thành công! Hãy đăng nhập lại.");
-        navigate("/login");
-      } else {
-        setMessage(`❌ ${data.error || "Lỗi đổi mật khẩu"}`);
-      }
-    } catch (error) {
-      setMessage("⚠️ Không thể kết nối tới máy chủ.");
+      setTimeout(() => navigate("/dangnhap"), 2000);
+    } catch (err) {
+      console.error("Lỗi đặt lại mật khẩu:", err);
+      toast.error(err.response?.data?.error || "❌ Lỗi đổi mật khẩu!", {
+        position: "top-center",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gradient-to-br from-green-100 to-blue-100">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-96">
+    <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-100 to-indigo-100">
+      <ToastContainer />
+      <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 border border-gray-200">
         <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">
           🔒 Đặt lại mật khẩu
         </h2>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(handleResetPassword)}>
+          {/* Mật khẩu mới */}
           <div className="mb-4">
-            <label className="block text-gray-700">Mật khẩu mới</label>
+            <label className="block text-gray-700 mb-1">Mật khẩu mới</label>
             <input
               type="password"
-              className="border rounded-lg w-full px-3 py-2 mt-1 focus:ring focus:ring-green-200"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              className="border rounded-lg w-full px-3 py-2 focus:ring-2 focus:ring-blue-300 outline-none"
+              {...register("mat_khau")}
+            />
+            {errors.mat_khau && (
+              <p className="text-red-500 text-sm mt-1">{errors.mat_khau.message}</p>
+            )}
+          </div>
+
+          {/* Xác nhận mật khẩu */}
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-1">Xác nhận mật khẩu</label>
+            <input
+              type="password"
+              className="border rounded-lg w-full px-3 py-2 focus:ring-2 focus:ring-blue-300 outline-none"
+              {...register("xac_nhan_mat_khau")}
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700">Xác nhận mật khẩu</label>
-            <input
-              type="password"
-              className="border rounded-lg w-full px-3 py-2 mt-1 focus:ring focus:ring-green-200"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              required
-            />
-          </div>
-
-          {message && (
-            <p className="text-red-500 text-sm text-center mb-3">{message}</p>
-          )}
-
+          {/* Nút xác nhận */}
           <button
             type="submit"
-            className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition"
+            disabled={loading}
+            className={`w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold py-2 rounded-lg hover:shadow-lg transition ${
+              loading ? "opacity-70 cursor-not-allowed" : ""
+            }`}
           >
-            Xác nhận
+            {loading ? "Đang xử lý..." : "Xác nhận"}
           </button>
         </form>
+
+        <p className="text-center text-sm text-gray-500 mt-4">
+          Nhớ mật khẩu?{" "}
+          <a href={dangnhap} className="text-blue-600 hover:underline">
+            Đăng nhập
+          </a>
+        </p>
       </div>
     </div>
   );

@@ -1,39 +1,31 @@
-// src/api/authApi.js
-import { apiPublic } from "../lib/axios";
+// frontend/src/api/authApi.js
+import { apiPublic } from "../lib/axios"; // đảm bảo file trên tồn tại
 
+// --- ĐĂNG NHẬP ---
 export const login = async (credentials) => {
-  // Đăng nhập là hành động public (chưa có token)
-  const res = await apiPublic.post("/auth/dangnhap", credentials);
-  // res.data sẽ chứa { user, token }
+  const res = await apiPublic.post("/auth/login", credentials);
   return res.data;
 };
 
+// --- ĐĂNG KÝ ---
 export const register = async (userData) => {
-  const res = await apiPublic.post("/auth/dangky", userData);
+  const res = await apiPublic.post("/auth/register", userData);
   return res.data;
 };
 
-import axios from "axios";
+export const registerUser = register;
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || "http://localhost:5000/api/auth",
-});
-
-// Đăng ký
-export async function registerUser({ email, ho_ten, mat_khau }) {
-  const res = await api.post("/register", { email, ho_ten, mat_khau });
+// --- QUÊN MẬT KHẨU ---
+export const forgotPassword = async (emailData) => {
+  const res = await apiPublic.post("/auth/forgot-password", emailData);
   return res.data;
-}
+};
 
-// Đăng nhập
-export async function loginUser({ email, mat_khau }) {
-  const res = await api.post("/login", { email, mat_khau });
-  localStorage.setItem("access_token", res.data.access_token);
+// --- ĐẶT LẠI MẬT KHẨU ---
+export const resetPassword = async (token, passwordData) => {
+  const res = await apiPublic.post(
+    `/auth/reset-password/${token}`,
+    passwordData
+  );
   return res.data;
-}
-
-// Quên mật khẩu
-export async function forgotPassword({ email }) {
-  const res = await api.post("/forgot-password", { email });
-  return res.data;
-}
+};
