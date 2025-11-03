@@ -4,6 +4,7 @@ import React, { lazy, Suspense } from 'react'; // Thêm Suspense
 import { Outlet } from 'react-router-dom'; // Thêm Outlet
 import AdminLayout from '../layouts/AdminLayout'; // Import Layout
 import ProtectedRoute from './ProtectedRoute'; // --- (1) Import ProtectedRoute ---
+import Inventory from '../pages/Admin/Inventory';
 
 // Lazy load các trang con
 const Dashboard = lazy(() => import('../pages/Admin/Dashboard'));
@@ -37,7 +38,7 @@ const AdminRoutes = {
     },
     {
       path: 'inventory', // Trang /admin/inventory
-      element: <ProductManagement />,
+      element: <Inventory />,
     },
     {
       path: 'orders', // Trang /admin/orders

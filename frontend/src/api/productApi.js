@@ -124,4 +124,20 @@ export const catalogApi = {
     apiClient.get("/catalogs/thuong-hieu").then((res) => res.data),
 };
 
+export const uploadApi = {
+  // Upload image through server
+  uploadImage: (formData) =>
+    apiClient
+      .post("/upload/image", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((res) => res.data),
+
+  // Get signature for direct Cloudinary upload
+  getSignature: (folder = "san_pham") =>
+    apiClient.post("/upload/signature", { folder }).then((res) => res.data),
+};
+
 export default apiClient;
