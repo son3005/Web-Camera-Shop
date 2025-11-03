@@ -7,6 +7,18 @@ import ProductCard from "../components/common/ProductCard";
 import PriceSlider from "../components/filters/PriceSlider";
 import CheckboxGroup from "../components/filters/CheckboxGroup";
 
+/**
+ * Ghi chú tích hợp Backend:
+ * - FE truyền các filter qua URLSearchParams (brand, mp, mem, vres, focus, mount, lvl, min, max,...)
+ * - Khi chuyển sang BE thật:
+ *    + BE chỉ cần nhận đúng tên params và giá trị (mảng hoặc chuỗi) và áp bộ lọc tương ứng.
+ *    + Ở FE, mình gom các params thành object `filters` rồi gọi getProducts({ searchTerm, sort, filters }).
+ *    + Trong `publicApi.getProducts()` đã chuẩn bị:
+ *        filters.levels -> mảng các level: ["beginner","enthusiast","professional"]
+ *        filters.priceRange.{min,max}, filters.brands, mpRanges, memoryTypes, videoRes, focusRanges, lensMounts
+ *    + Với dữ liệu thật, hãy map tên trường ở server về các key chuẩn này hoặc điều chỉnh ở publicApi.
+ */
+
 // ======= Options (khớp với publicApi) =======
 const BRAND_OPTS = [
   "Sony",
@@ -52,6 +64,13 @@ const LENS_MOUNT_OPTS = [
   { value: "LEICA MOUNT", label: "Leica Mount" },
 ];
 
+// 🆕 Cấp độ chuyên nghiệp (đồng bộ với publicApi: p.level ∈ {beginner|enthusiast|professional})
+const LEVEL_OPTS = [
+  { value: "beginner", label: "Dễ sử dụng (Entry-level)" },
+  { value: "enthusiast", label: "Bán chuyên (Enthusiast)" },
+  { value: "professional", label: "Chuyên nghiệp (Professional)" },
+];
+
 // ======= Helpers đọc/ghi URLSearchParams =======
 function useListParams() {
   const [sp, setSp] = useSearchParams();
@@ -60,15 +79,16 @@ function useListParams() {
   const q = sp.get("q") || "";
   const sort = sp.get("sort") || "default";
 
-  // nhiều giá trị
+  // Nhiều giá trị (mỗi key có thể xuất hiện nhiều lần trong query string)
   const brands = sp.getAll("brand");
   const mp = sp.getAll("mp");
   const mem = sp.getAll("mem");
   const vres = sp.getAll("vres");
   const focus = sp.getAll("focus");
   const mount = sp.getAll("mount");
+  const levels = sp.getAll("lvl"); // 🆕 cấp độ chuyên nghiệp
 
-  // giá
+  // Giá
   const priceMin = Number(sp.get("min") || 0);
   const priceMax = Number(sp.get("max") || 66_000_000);
 
@@ -83,7 +103,7 @@ function useListParams() {
     setSp(next, options);
   };
 
-  // set nhiều giá trị cho 1 key và reset page = 1
+  // set nhiều giá trị cho 1 key (ví dụ brand, lvl, ...)
   const setMulti = (k, arr) => {
     const next = new URLSearchParams(sp);
     next.delete(k);
@@ -92,7 +112,7 @@ function useListParams() {
     setSp(next, options);
   };
 
-  // riêng page
+  // Riêng page
   const setPage = (p) => {
     const next = new URLSearchParams(sp);
     next.set("page", String(p));
@@ -117,6 +137,7 @@ function useListParams() {
     vres,
     focus,
     mount,
+    levels, // 🆕
     priceMin,
     priceMax,
     setParam,
@@ -137,6 +158,7 @@ export default function ProductListPage() {
     vres,
     focus,
     mount,
+    levels, // 🆕
     priceMin,
     priceMax,
     setParam,
@@ -145,7 +167,7 @@ export default function ProductListPage() {
     setPage,
   } = useListParams();
 
-  // build filters cho publicApi
+  // Build filters truyền cho publicApi
   const filters = useMemo(
     () => ({
       brands,
@@ -155,8 +177,9 @@ export default function ProductListPage() {
       videoRes: vres,
       focusRanges: focus,
       lensMounts: mount,
+      levels, // 🆕 đồng bộ publicApi.getProducts()
     }),
-    [brands, priceMin, priceMax, mp, mem, vres, focus, mount]
+    [brands, priceMin, priceMax, mp, mem, vres, focus, mount, levels]
   );
 
   const { data, isLoading } = useQuery({
@@ -175,8 +198,8 @@ export default function ProductListPage() {
   const items = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
 
-  // helper build dãy số trang rút gọn (…)
-  const buildPageList = (current, total, delta = 1) => {
+  // helper build dãy số trang rút gọn (có "…")
+  const buildPageList = (current, total) => {
     if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
     const pages = new Set([
       1,
@@ -238,6 +261,14 @@ export default function ProductListPage() {
                   onChange={setPriceRange}
                 />
               </div>
+
+              {/* 🆕 Cấp độ chuyên nghiệp */}
+              <CheckboxGroup
+                title="Cấp độ chuyên nghiệp"
+                options={LEVEL_OPTS}
+                values={levels}
+                onChange={(vals) => setMulti("lvl", vals)}
+              />
 
               <CheckboxGroup
                 title="Số điểm ảnh (MP)"
@@ -364,7 +395,7 @@ export default function ProductListPage() {
                       ${
                         page >= totalPages
                           ? "opacity-40 cursor-not-allowed dark:border-slate-700"
-                          : "hover:bg-black/5 dark:hover:bg白/10 dark:border-slate-600"
+                          : "hover:bg-black/5 dark:hover:bg-white/10 dark:border-slate-600"
                       }
                       bg-white dark:bg-slate-700 dark:text-slate-100`}
                     aria-label="Trang sau"

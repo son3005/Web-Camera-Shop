@@ -1,23 +1,21 @@
 // src/pages/QuenMatKhau.jsx
+// — Đồng bộ emerald, form rõ ràng, giữ forgotPassword + yup
+
 import React, { useState } from "react";
 import { FaEnvelope, FaArrowRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { forgotPassword } from "../api/authApi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { forgotPasswordSchema } from "../validation/loginSchema";
-
 import BG from "../assets/images/BG.jpg";
 import LoginImage from "../assets/images/Login.jpg";
 
-function QuenMatKhau() {
+export default function QuenMatKhau() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const dangky ="/dangky";
-  const dangnhap ="/dangnhap";
 
   const {
     register,
@@ -27,17 +25,14 @@ function QuenMatKhau() {
     resolver: yupResolver(forgotPasswordSchema),
   });
 
-
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      await forgotPassword(data); // data = { email }
+      await forgotPassword(data); // { email }
       toast.success("📩 Email khôi phục mật khẩu đã được gửi!", {
         position: "top-center",
       });
-
-      
-      setTimeout(() => navigate("/dangnhap"), 2000);
+      setTimeout(() => navigate("/dangnhap"), 1200);
     } catch (err) {
       console.error("Lỗi quên mật khẩu:", err);
       toast.error(err.response?.data?.error || "❌ Không thể gửi email!", {
@@ -51,91 +46,107 @@ function QuenMatKhau() {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       <ToastContainer />
-
-      {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${BG})` }}
-      ></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/70 to-purple-700/80 backdrop-blur-sm"></div>
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-emerald-600/40 to-slate-900/60"
+        aria-hidden
+      />
 
-      {/* Card */}
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl flex max-w-5xl w-full h-[600px] relative z-10 overflow-hidden border border-white/20">
-        {/* Left */}
-        <div className="w-1/2 flex flex-col items-center justify-center p-10 bg-gradient-to-b from-purple-600/90 to-purple-800/90 text-white rounded-l-2xl h-full relative overflow-hidden">
-
+      <div className="relative z-10 flex w-full max-w-6xl h-[620px] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-white/5">
+        {/* Trái */}
+        <div className="hidden md:flex w-1/2 relative items-center justify-center text-white">
           <div
             className="absolute inset-0 bg-cover bg-center opacity-30"
             style={{ backgroundImage: `url(${LoginImage})` }}
-          ></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-700/70 to-purple-900/90"></div>
-
-          <div className="relative z-10 text-center">
-            <h1 className="text-4xl font-bold mb-4">Quên mật khẩu 🔑</h1>
-            <p className="text-lg">
-              Hãy nhập email của bạn để nhận liên kết khôi phục <br />
-              và tiếp tục hành trình nhiếp ảnh.
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-emerald-700/90 via-emerald-800/92 to-emerald-900/95"
+            aria-hidden
+          />
+          <div className="relative z-10 px-10">
+            <h1 className="text-4xl font-extrabold drop-shadow-md">
+              Quên mật khẩu 🔑
+            </h1>
+            <p className="mt-4 text-lg leading-relaxed text-emerald-50/90">
+              Nhập email để nhận liên kết khôi phục và tiếp tục hành trình nhiếp
+              ảnh.
             </p>
           </div>
         </div>
 
-        {/* Right */}
-        <div className="w-1/2 p-10 flex flex-col justify-center h-full bg-white rounded-r-2xl shadow-xl">
-          <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
+        {/* Phải */}
+        <div className="w-full md:w-1/2 h-full bg-white/95 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-6 md:p-10">
+          <h2 className="text-2xl font-extrabold text-center mb-6">
             Khôi phục mật khẩu
           </h2>
 
-          
-          <form className="flex flex-col space-y-4" onSubmit={handleSubmit(onSubmit)}>
-            {/* Email */}
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+          >
             <div>
-              <div className="flex items-center border rounded-lg p-3 focus-within:ring-2 focus-within:ring-purple-500">
-                <FaEnvelope className="text-gray-400 mr-3" />
+              <label className="block text-sm font-medium mb-1">
+                Email đã đăng ký
+              </label>
+              <div className="flex items-center ui-input">
+                <FaEnvelope className="mr-2 opacity-70" />
                 <input
                   type="email"
-                  placeholder="Nhập email đã đăng ký"
-                  className="w-full outline-none"
+                  placeholder="Nhập email"
+                  className="flex-1 bg-transparent outline-none"
                   {...register("email")}
                 />
               </div>
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className={`flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-purple-700 text-white font-semibold py-3 rounded-lg hover:shadow-xl transition ${
+              className={`btn-emerald w-full rounded-lg py-3 font-semibold ${
                 loading ? "opacity-70 cursor-not-allowed" : ""
               }`}
             >
               {loading ? (
                 "Đang gửi..."
               ) : (
-                <>
+                <span className="inline-flex items-center gap-2">
                   Gửi liên kết <FaArrowRight />
-                </>
+                </span>
               )}
             </button>
           </form>
 
-          <p className="text-center mt-4 text-sm text-gray-600 dark:text-slate-300">
+          <div className="text-center mt-4 text-sm text-slate-600 dark:text-slate-300">
             Nhớ mật khẩu?{" "}
-            <a href={dangnhap} className="text-purple-600 hover:underline">
+            <a
+              href="/dangnhap"
+              className="text-emerald-600 dark:text-emerald-400 hover:underline"
+            >
               Đăng nhập
             </a>
-          </p>
-          <p className="text-center text-sm text-gray-600">
+          </div>
+          <div className="text-center text-sm text-slate-600 dark:text-slate-300">
             Chưa có tài khoản?{" "}
-            <a href={dangky} className="text-purple-600 hover:underline">
+            <a
+              href="/dangky"
+              className="text-emerald-600 dark:text-emerald-400 hover:underline"
+            >
               Đăng ký
             </a>
-          </p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-export default QuenMatKhau;
