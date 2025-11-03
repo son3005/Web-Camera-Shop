@@ -1,7 +1,7 @@
 // src/pages/Admin/Inventory.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, ChevronLeft, ChevronRight, Download, Inbox, AlertCircle, Filter } from "lucide-react";
+import { Search, Plus, ChevronLeft, ChevronRight, Download, Inbox, AlertCircle, Filter, Loader2 } from "lucide-react";
 import TableRow from "../../components/common/Inventory/TableRow";
 import ExportMenu from "../../components/common/Inventory/ExportMenu";
 import AddProductModal from "../../components/common/Inventory/AddProductModal";
@@ -37,6 +37,8 @@ const useInventoryUI = () => {
         status: [],
         stockStatus: [],
         priceRange: { min: '', max: '' },
+        danh_muc_ids: [],
+        thuong_hieu_ids: [],
     };
 
     const [localFilters, setLocalFilters] = useState(initialFilters);
@@ -100,7 +102,7 @@ const useInventoryUI = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [debouncedSearchTerm]);
+    }, [debouncedSearchTerm, appliedFilters]);
 
     return {
         searchTerm, setSearchTerm, debouncedSearchTerm,
@@ -113,7 +115,7 @@ const useInventoryUI = () => {
     };
 };
 
-const Pagination = ({ currentPage, totalPages, setCurrentPage, dataLength, totalLength }) => {
+const Pagination = ({ currentPage, totalPages, setCurrentPage, dataLength, totalLength, isLoading }) => {
     const [goToPage, setGoToPage] = useState(currentPage);
     const handleGoToPage = (e) => {
         e.preventDefault();
@@ -129,18 +131,51 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage, dataLength, total
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mt-6">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-                Hiển thị {dataLength} trên {totalLength} kết quả
+                {isLoading ? (
+                    <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Đang tải...
+                    </div>
+                ) : (
+                    `Hiển thị ${dataLength} trên ${totalLength} kết quả`
+                )}
             </p>
             {totalPages > 1 && (
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 disabled:opacity-50 transition"> <ChevronLeft size={20} /> </button>
-                        <span className="text-sm font-semibold"> Trang {currentPage} / {totalPages} </span>
-                        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 rounded-md bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 disabled:opacity-50 transition"> <ChevronRight size={20} /> </button>
+                        <button 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                            disabled={currentPage === 1 || isLoading}
+                            className="p-2 rounded-md bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 disabled:opacity-50 transition"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                        <span className="text-sm font-semibold">Trang {currentPage} / {totalPages}</span>
+                        <button 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                            disabled={currentPage === totalPages || isLoading}
+                            className="p-2 rounded-md bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 disabled:opacity-50 transition"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
                     </div>
                     <form onSubmit={handleGoToPage} className="flex items-center gap-2">
-                        <input type="number" min="1" max={totalPages} value={goToPage} onChange={(e) => setGoToPage(e.target.value)} className="w-16 px-2 py-1.5 text-center rounded-md bg-white/40 dark:bg-slate-700/50 border border-transparent focus:border-cyan-500 focus:ring-cyan-500 transition" />
-                        <button type="submit" className="px-3 py-1.5 text-sm font-semibold rounded-md bg-slate-900/5 dark:bg-white/10 hover:bg-slate-900/10 dark:hover:bg-white/20 transition">Go</button>
+                        <input 
+                            type="number" 
+                            min="1" 
+                            max={totalPages} 
+                            value={goToPage} 
+                            onChange={(e) => setGoToPage(e.target.value)} 
+                            disabled={isLoading}
+                            className="w-16 px-2 py-1.5 text-center rounded-md bg-white/40 dark:bg-slate-700/50 border border-transparent focus:border-cyan-500 focus:ring-cyan-500 transition disabled:opacity-50" 
+                        />
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className="px-3 py-1.5 text-sm font-semibold rounded-md bg-slate-900/5 dark:bg-white/10 hover:bg-slate-900/10 dark:hover:bg-white/20 transition disabled:opacity-50"
+                        >
+                            Đến
+                        </button>
                     </form>
                 </div>
             )}
@@ -165,48 +200,43 @@ const Inventory = () => {
     // Sử dụng hooks API mới
     const { 
         useGetAllSanPham, 
-        useGetSanPhamById, 
-        useCreateSanPham, 
-        useUpdateSanPham, 
         useDeleteSanPham 
     } = useProducts();
 
     const { useGetAllDanhMuc, useGetAllThuongHieu } = useCatalogs();
 
-    // Lấy danh sách sản phẩm với filter
-    const { data: productsData, isLoading, isError, error } = useGetAllSanPham({
+    // Lấy danh sách danh mục và thương hiệu cho filter
+    const { data: danhMucData } = useGetAllDanhMuc({ page: 1, per_page: 100 });
+    const { data: thuongHieuData } = useGetAllThuongHieu({ page: 1, per_page: 100 });
+
+    // Chuẩn bị filters cho API
+    const apiFilters = {
         page: currentPage,
         per_page: itemsPerPage,
-        search: debouncedSearchTerm,
+        search: debouncedSearchTerm || undefined,
         min_price: appliedFilters.priceRange.min || undefined,
         max_price: appliedFilters.priceRange.max || undefined,
         sort_by_price: appliedFilters.sortBy.price || undefined,
         sort_by_name: appliedFilters.sortBy.name || undefined,
-        thuong_hieu_ids: appliedFilters.brands.map(brand => {
-            // Chuyển đổi brand name sang ID nếu cần
-            const brandMap = { canon: 1, sony: 2, nikon: 3, fujifilm: 4, panasonic: 5 };
-            return brandMap[brand];
-        }).filter(id => id),
-        danh_muc_ids: appliedFilters.categories || []
-    });
+        thuong_hieu_ids: appliedFilters.thuong_hieu_ids,
+        danh_muc_ids: appliedFilters.danh_muc_ids,
+    };
+
+    // Lấy danh sách sản phẩm với filter
+    const { 
+        data: productsData, 
+        isLoading, 
+        isError, 
+        error,
+        isFetching 
+    } = useGetAllSanPham(apiFilters);
 
     const products = productsData?.data || [];
     const totalPages = productsData?.pagination?.pages || 0;
     const totalItems = productsData?.pagination?.total || 0;
 
-    // Mutations
-    const createMutation = useCreateSanPham();
-    const updateMutation = useUpdateSanPham();
+    // Mutation cho xóa sản phẩm
     const deleteMutation = useDeleteSanPham();
-
-    const handleSaveProduct = (productData) => {
-        if (modalType === 'add') {
-            createMutation.mutate(productData);
-        } else {
-            updateMutation.mutate({ id: activeProductId, ...productData });
-        }
-        closeModal();
-    };
 
     const handleDeleteProduct = (productId) => {
         if (window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
@@ -253,6 +283,12 @@ const Inventory = () => {
                         <AlertCircle size={48} className="mb-4" />
                         <h3 className="text-xl font-semibold">Không thể tải dữ liệu!</h3>
                         <p className="mt-1 text-sm">{error?.message || 'Đã có lỗi xảy ra'}</p>
+                        <button 
+                            onClick={() => queryClient.refetchQueries({ queryKey: ['san-pham'] })}
+                            className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                        >
+                            Thử lại
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -266,7 +302,6 @@ const Inventory = () => {
                     mode={modalType}
                     productId={activeProductId}
                     onClose={closeModal}
-                    onSave={handleSaveProduct}
                 />
             )}
             {modalType === 'view' && (
@@ -277,7 +312,15 @@ const Inventory = () => {
             )}
 
             <div className="w-full max-w-7xl mx-auto rounded-2xl shadow-xl bg-slate-200/80 dark:bg-slate-800/70 backdrop-blur-lg border border-white/20 dark:border-slate-700/50 p-6">
-                <h1 className="text-3xl font-bold mb-6">Quản lý Kho hàng</h1>
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-3xl font-bold">Quản lý Kho hàng</h1>
+                    {isFetching && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Đang tải dữ liệu...
+                        </div>
+                    )}
+                </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <div className="relative flex-1 min-w-[300px]">
@@ -287,7 +330,8 @@ const Inventory = () => {
                             placeholder="Tìm kiếm sản phẩm..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/40 dark:bg-slate-700/50 border border-transparent focus:border-cyan-500 focus:ring-cyan-500 transition"
+                            disabled={isLoading}
+                            className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/40 dark:bg-slate-700/50 border border-transparent focus:border-cyan-500 focus:ring-cyan-500 transition disabled:opacity-50"
                         />
                     </div>
                     <div className="flex items-center gap-3">
@@ -295,29 +339,31 @@ const Inventory = () => {
                         <div className="relative" ref={filterContainerRef}>
                             <button
                                 onClick={toggleFilterPopup}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-900/5 dark:bg-white/10 hover:bg-slate-900/10 dark:hover:bg-white/20 transition"
+                                disabled={isLoading}
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-900/5 dark:bg-white/10 hover:bg-slate-900/10 dark:hover:bg-white/20 transition disabled:opacity-50"
                             >
                                 <Filter size={20} /> Lọc & Sắp xếp
                             </button>
                             {isFilterOpen && (
-                                <div className="absolute right-0 mt-2 z-50">
-                                    <FilterPopup
-                                        onClose={() => setIsFilterOpen(false)}
-                                        localFilters={localFilters}
-                                        handleSortChange={handleSortChange}
-                                        handleMultiSelectChange={handleMultiSelectChange}
-                                        handleRangeChange={handleRangeChange}
-                                        onApply={applyFilters}
-                                        onReset={resetFilters}
-                                    />
-                                </div>
+                                <FilterPopup
+                                    onClose={() => setIsFilterOpen(false)}
+                                    localFilters={localFilters}
+                                    handleSortChange={handleSortChange}
+                                    handleMultiSelectChange={handleMultiSelectChange}
+                                    handleRangeChange={handleRangeChange}
+                                    onApply={applyFilters}
+                                    onReset={resetFilters}
+                                    danhMucList={danhMucData?.data || []}
+                                    thuongHieuList={thuongHieuData?.data || []}
+                                />
                             )}
                         </div>
 
                         {/* Nút thêm sản phẩm */}
                         <button
                             onClick={() => openModal('add')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold bg-gradient-to-r from-emerald-500 to-slate-600 shadow-lg hover:shadow-emerald-500/30 hover:scale-105 transition-transform duration-300"
+                            disabled={isLoading}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold bg-gradient-to-r from-emerald-500 to-slate-600 shadow-lg hover:shadow-emerald-500/30 hover:scale-105 transition-transform duration-300 disabled:opacity-50"
                         >
                             <Plus size={20} /> Thêm Sản phẩm
                         </button>
@@ -377,6 +423,7 @@ const Inventory = () => {
                     setCurrentPage={setCurrentPage}
                     dataLength={products.length}
                     totalLength={totalItems}
+                    isLoading={isLoading}
                 />
             </div>
         </div>

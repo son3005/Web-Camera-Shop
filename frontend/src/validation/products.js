@@ -11,7 +11,10 @@ export const hinhAnhCreateSchema = yup.object({
 
 // Schema cho Biến thể
 export const bienTheCreateSchema = yup.object({
-  ten_bien_the: yup.string().max(100, "Tên biến thể tối đa 100 ký tự"),
+  ten_bien_the: yup
+    .string()
+    .max(100, "Tên biến thể tối đa 100 ký tự")
+    .required("Tên biến thể là bắt buộc"),
   trang_thai_kich_hoat: yup
     .string()
     .oneOf(["dang_ban", "ngung_ban", "tam_het"])
@@ -23,13 +26,15 @@ export const bienTheCreateSchema = yup.object({
   gia_khuyen_mai: yup
     .number()
     .min(0, "Giá khuyến mãi phải lớn hơn 0")
-    .nullable(),
-  ngay_bat_dau_khuyen_mai: yup.date().nullable(),
-  ngay_ket_thuc_khuyen_mai: yup.date().nullable(),
+    .nullable()
+    .default(null),
+  ngay_bat_dau_khuyen_mai: yup.date().nullable().default(null),
+  ngay_ket_thuc_khuyen_mai: yup.date().nullable().default(null),
   so_luong_ton: yup
     .number()
     .min(0, "Số lượng tồn không được âm")
-    .required("Số lượng tồn là bắt buộc"),
+    .required("Số lượng tồn là bắt buộc")
+    .default(0),
   hinh_anhs: yup.array().of(hinhAnhCreateSchema).default([]),
 });
 
@@ -41,13 +46,17 @@ export const sanPhamCreateSchema = yup.object({
     .string()
     .max(200, "Tên sản phẩm tối đa 200 ký tự")
     .required("Tên sản phẩm là bắt buộc"),
-  mo_ta: yup.string(),
-  thong_so_ky_thuat: yup.object(),
+  mo_ta: yup.string().default(""),
+  thong_so_ky_thuat: yup.object().default({}),
   trang_thai: yup
     .string()
     .oneOf(["dang_ban", "ngung_ban", "tam_het"])
     .default("dang_ban"),
-  bien_the_san_phams: yup.array().of(bienTheCreateSchema).default([]),
+  bien_the_san_phams: yup
+    .array()
+    .of(bienTheCreateSchema)
+    .min(1, "Cần ít nhất một biến thể")
+    .required("Biến thể sản phẩm là bắt buộc"),
 });
 
 export const sanPhamUpdateSchema = yup.object({

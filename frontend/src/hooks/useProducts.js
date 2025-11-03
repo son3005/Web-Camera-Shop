@@ -5,7 +5,7 @@ import { useToast } from "./useToast";
 
 export const useProducts = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { success, error } = useToast();
 
   // Lấy danh sách sản phẩm với filter
   const useGetAllSanPham = (filters = {}) => {
@@ -41,11 +41,12 @@ export const useProducts = () => {
         const { data } = await apiClient.get(`/san-pham?${params.toString()}`);
         return data;
       },
+      keepPreviousData: true,
     });
   };
 
   // Lấy chi tiết sản phẩm
-  const useGetSanPhamById = (id) => {
+  const useGetSanPhamById = (id, options = {}) => {
     return useQuery({
       queryKey: ["san-pham", id],
       queryFn: async () => {
@@ -53,6 +54,7 @@ export const useProducts = () => {
         return data;
       },
       enabled: !!id,
+      ...options,
     });
   };
 
@@ -65,11 +67,8 @@ export const useProducts = () => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["san-pham"] });
-        toast.success("Tạo sản phẩm thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi tạo sản phẩm");
-      },
+      // Không xử lý toast ở đây, để component xử lý
     });
   };
 
@@ -83,11 +82,8 @@ export const useProducts = () => {
       onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: ["san-pham", variables.id] });
         queryClient.invalidateQueries({ queryKey: ["san-pham"] });
-        toast.success("Cập nhật sản phẩm thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi cập nhật sản phẩm");
-      },
+      // Không xử lý toast ở đây, để component xử lý
     });
   };
 
@@ -99,10 +95,10 @@ export const useProducts = () => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["san-pham"] });
-        toast.success("Xóa sản phẩm thành công");
+        success("Xóa sản phẩm thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi xóa sản phẩm");
+      onError: (err) => {
+        error(err.response?.data?.error || "Lỗi khi xóa sản phẩm");
       },
     });
   };
@@ -112,9 +108,9 @@ export const useProducts = () => {
   // ==============================================================
 
   // Tạo biến thể mới
-  const useCreateBienThe = (sanPhamId) => {
+  const useCreateBienThe = () => {
     return useMutation({
-      mutationFn: async (bienTheData) => {
+      mutationFn: async ({ sanPhamId, bienTheData }) => {
         const { data } = await apiClient.post(
           `/san-pham/${sanPhamId}/bien-the`,
           bienTheData
@@ -122,19 +118,21 @@ export const useProducts = () => {
         return data;
       },
       onSuccess: (_, variables) => {
-        queryClient.invalidateQueries({ queryKey: ["san-pham", sanPhamId] });
-        toast.success("Tạo biến thể thành công");
+        queryClient.invalidateQueries({
+          queryKey: ["san-pham", variables.sanPhamId],
+        });
+        success("Tạo biến thể thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi tạo biến thể");
+      onError: (err) => {
+        error(err.response?.data?.error || "Lỗi khi tạo biến thể");
       },
     });
   };
 
   // Cập nhật biến thể
-  const useUpdateBienThe = (sanPhamId, bienTheId) => {
+  const useUpdateBienThe = () => {
     return useMutation({
-      mutationFn: async (updateData) => {
+      mutationFn: async ({ sanPhamId, bienTheId, updateData }) => {
         const { data } = await apiClient.put(
           `/san-pham/${sanPhamId}/bien-the/${bienTheId}`,
           updateData
@@ -142,39 +140,43 @@ export const useProducts = () => {
         return data;
       },
       onSuccess: (_, variables) => {
-        queryClient.invalidateQueries({ queryKey: ["san-pham", sanPhamId] });
-        toast.success("Cập nhật biến thể thành công");
+        queryClient.invalidateQueries({
+          queryKey: ["san-pham", variables.sanPhamId],
+        });
+        success("Cập nhật biến thể thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi cập nhật biến thể");
+      onError: (err) => {
+        error(err.response?.data?.error || "Lỗi khi cập nhật biến thể");
       },
     });
   };
 
   // Xóa biến thể
-  const useDeleteBienThe = (sanPhamId) => {
+  const useDeleteBienThe = () => {
     return useMutation({
-      mutationFn: async (bienTheId) => {
+      mutationFn: async ({ sanPhamId, bienTheId }) => {
         await apiClient.delete(`/san-pham/${sanPhamId}/bien-the/${bienTheId}`);
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["san-pham", sanPhamId] });
-        toast.success("Xóa biến thể thành công");
+      onSuccess: (_, variables) => {
+        queryClient.invalidateQueries({
+          queryKey: ["san-pham", variables.sanPhamId],
+        });
+        success("Xóa biến thể thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi xóa biến thể");
+      onError: (err) => {
+        error(err.response?.data?.error || "Lỗi khi xóa biến thể");
       },
     });
   };
 
   // ==============================================================
-  // HÌNH ẢNH HOOKS
+  // HÌNH ẢNH HOOKS - ĐÃ KHÔI PHỤC
   // ==============================================================
 
   // Thêm ảnh cho biến thể
-  const useAddHinhAnh = (sanPhamId, bienTheId) => {
+  const useAddHinhAnh = () => {
     return useMutation({
-      mutationFn: async (hinhAnhData) => {
+      mutationFn: async ({ sanPhamId, bienTheId, hinhAnhData }) => {
         const { data } = await apiClient.post(
           `/san-pham/${sanPhamId}/bien-the/${bienTheId}/hinh-anh`,
           hinhAnhData
@@ -182,19 +184,21 @@ export const useProducts = () => {
         return data;
       },
       onSuccess: (_, variables) => {
-        queryClient.invalidateQueries({ queryKey: ["san-pham", sanPhamId] });
-        toast.success("Thêm ảnh thành công");
+        queryClient.invalidateQueries({
+          queryKey: ["san-pham", variables.sanPhamId],
+        });
+        success("Thêm ảnh thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi thêm ảnh");
+      onError: (err) => {
+        error(err.response?.data?.error || "Lỗi khi thêm ảnh");
       },
     });
   };
 
   // Cập nhật ảnh
-  const useUpdateHinhAnh = (sanPhamId, bienTheId, hinhAnhId) => {
+  const useUpdateHinhAnh = () => {
     return useMutation({
-      mutationFn: async (updateData) => {
+      mutationFn: async ({ sanPhamId, bienTheId, hinhAnhId, updateData }) => {
         const { data } = await apiClient.put(
           `/san-pham/${sanPhamId}/bien-the/${bienTheId}/hinh-anh/${hinhAnhId}`,
           updateData
@@ -202,29 +206,33 @@ export const useProducts = () => {
         return data;
       },
       onSuccess: (_, variables) => {
-        queryClient.invalidateQueries({ queryKey: ["san-pham", sanPhamId] });
-        toast.success("Cập nhật ảnh thành công");
+        queryClient.invalidateQueries({
+          queryKey: ["san-pham", variables.sanPhamId],
+        });
+        success("Cập nhật ảnh thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi cập nhật ảnh");
+      onError: (err) => {
+        error(err.response?.data?.error || "Lỗi khi cập nhật ảnh");
       },
     });
   };
 
   // Xóa ảnh
-  const useDeleteHinhAnh = (sanPhamId, bienTheId) => {
+  const useDeleteHinhAnh = () => {
     return useMutation({
-      mutationFn: async (hinhAnhId) => {
+      mutationFn: async ({ sanPhamId, bienTheId, hinhAnhId }) => {
         await apiClient.delete(
           `/san-pham/${sanPhamId}/bien-the/${bienTheId}/hinh-anh/${hinhAnhId}`
         );
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["san-pham", sanPhamId] });
-        toast.success("Xóa ảnh thành công");
+      onSuccess: (_, variables) => {
+        queryClient.invalidateQueries({
+          queryKey: ["san-pham", variables.sanPhamId],
+        });
+        success("Xóa ảnh thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi xóa ảnh");
+      onError: (err) => {
+        error(err.response?.data?.error || "Lỗi khi xóa ảnh");
       },
     });
   };
@@ -242,7 +250,7 @@ export const useProducts = () => {
     useUpdateBienThe,
     useDeleteBienThe,
 
-    // Hình ảnh
+    // Hình ảnh - ĐÃ KHÔI PHỤC
     useAddHinhAnh,
     useUpdateHinhAnh,
     useDeleteHinhAnh,

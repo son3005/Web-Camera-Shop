@@ -142,46 +142,77 @@ class SanPhamService:
     @staticmethod
     def create_san_pham(data: SanPhamCreate):
         """
-        Luồng thêm sản phẩm:
+        Luồng thêm sản phẩm FIXED:
         1. Kiểm tra danh_muc_id và thuong_hieu_id tồn tại.
-        2. Generate ma_san_pham dựa trên ma_danh_muc và ma_thuong_hieu.
+        2. Generate ma_san_pham.
         3. Thêm sản phẩm vào DB.
-        4. Thêm biến thể (gọi create_bien_the).
+        4. Thêm biến thể và ảnh (nếu có) trong cùng transaction.
         """
         logger.info("Tạo sản phẩm mới")
         
-        # Bước 1: Kiểm tra danh mục và thương hiệu
-        danh_muc = db.session.query(DanhMuc).get(data.danh_muc_id)
-        if not danh_muc:
-            raise NotFound("Danh mục không tồn tại")
-        thuong_hieu = db.session.query(ThuongHieu).get(data.thuong_hieu_id)
-        if not thuong_hieu:
-            raise NotFound("Thương hiệu không tồn tại")
-        
-        # Bước 2: Generate mã
-        ma_san_pham = generate_ma_san_pham(danh_muc.ma_danh_muc[:5], thuong_hieu.ma_thuong_hieu[:5])
-        
-        # Tạo sản phẩm
-        new_san_pham = SanPham(
-            ma_san_pham=ma_san_pham,
-            danh_muc_id=data.danh_muc_id,
-            thuong_hieu_id=data.thuong_hieu_id,
-            ten_san_pham=data.ten_san_pham,
-            mo_ta=data.mo_ta,
-            thong_so_ky_thuat=data.thong_so_ky_thuat,
-            trang_thai=data.trang_thai,
-            ngay_tao=datetime.utcnow(),
-            ngay_cap_nhat=datetime.utcnow()
-        )
-        db.session.add(new_san_pham)
-        db.session.flush()
-        
-        # Bước 4: Thêm biến thể
-        for bt in data.bien_the_san_phams or []:
-            SanPhamService.create_bien_the(new_san_pham.id, bt)
-        
-        logger.info(f"Tạo sản phẩm thành công: {new_san_pham.id}")
-        return new_san_pham
+        try:
+            # Bước 1: Kiểm tra danh mục và thương hiệu
+            danh_muc = db.session.query(DanhMuc).get(data.danh_muc_id)
+            if not danh_muc:
+                raise NotFound("Danh mục không tồn tại")
+            thuong_hieu = db.session.query(ThuongHieu).get(data.thuong_hieu_id)
+            if not thuong_hieu:
+                raise NotFound("Thương hiệu không tồn tại")
+            
+            # Bước 2: Generate mã
+            ma_san_pham = generate_ma_san_pham(danh_muc.ma_danh_muc[:5], thuong_hieu.ma_thuong_hieu[:5])
+            
+            # Bước 3: Tạo sản phẩm
+            new_san_pham = SanPham(
+                ma_san_pham=ma_san_pham,
+                danh_muc_id=data.danh_muc_id,
+                thuong_hieu_id=data.thuong_hieu_id,
+                ten_san_pham=data.ten_san_pham,
+                mo_ta=data.mo_ta,
+                thong_so_ky_thuat=data.thong_so_ky_thuat,
+                trang_thai=data.trang_thai,
+                ngay_tao=datetime.utcnow(),
+                ngay_cap_nhat=datetime.utcnow()
+            )
+            db.session.add(new_san_pham)
+            db.session.flush()  # Lấy ID sản phẩm
+            
+            # Bước 4: Thêm biến thể và ảnh
+            if data.bien_the_san_phams:
+                for bt_data in data.bien_the_san_phams:
+                    new_variant = BienTheSanPham(
+                        san_pham_id=new_san_pham.id,
+                        ten_bien_the=bt_data.ten_bien_the,
+                        trang_thai_kich_hoat=bt_data.trang_thai_kich_hoat,
+                        gia_ban=bt_data.gia_ban,
+                        gia_khuyen_mai=bt_data.gia_khuyen_mai,
+                        ngay_bat_dau_khuyen_mai=bt_data.ngay_bat_dau_khuyen_mai,
+                        ngay_ket_thuc_khuyen_mai=bt_data.ngay_ket_thuc_khuyen_mai,
+                        so_luong_ton=bt_data.so_luong_ton
+                    )
+                    db.session.add(new_variant)
+                    db.session.flush()  # Lấy ID biến thể
+                    
+                    # Thêm ảnh nếu có
+                    if bt_data.hinh_anhs:
+                        for img_data in bt_data.hinh_anhs:
+                            new_image = HinhAnhSanPham(
+                                bien_the_id=new_variant.id,
+                                url=img_data.url,
+                                public_id=img_data.public_id,
+                                alt_text=img_data.alt_text,
+                                la_anh_dai_dien=img_data.la_anh_dai_dien
+                            )
+                            db.session.add(new_image)
+            
+            db.session.commit()
+            logger.info(f"Tạo sản phẩm thành công: {new_san_pham.id}")
+            return new_san_pham
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Lỗi khi tạo sản phẩm: {e}", exc_info=True)
+            raise BadRequest(f"Lỗi tạo sản phẩm: {str(e)}")
 
     @staticmethod
     def update_san_pham(san_pham_id: int, data: SanPhamUpdate):
@@ -404,13 +435,14 @@ class SanPhamService:
     @staticmethod
     def update_bien_the(san_pham_id: int, bien_the_id: int, data: BienTheSanPhamUpdate):
         """
-        Luồng sửa biến thể:
+        Luồng sửa biến thể FIXED:
         1. Kiểm tra biến thể tồn tại và thuộc sản phẩm.
-        2. Update fields cơ bản. Nếu có new_hinh_anhs/deleted_hinh_anh_ids:
-           - Xóa ảnh: Kiểm tra không xóa ảnh đại diện nếu dẫn đến không còn ảnh nào.
-           - Thêm ảnh: Nếu xóa ảnh đại diện, set ảnh mới đầu tiên là đại diện.
+        2. Update fields cơ bản.
+        3. Xử lý ảnh: giữ ảnh cũ, thêm ảnh mới, xóa ảnh được đánh dấu.
         """
         logger.info(f"PUT /san-pham/{san_pham_id}/bien-the/{bien_the_id}")
+        
+        # 1. Kiểm tra biến thể
         variant = db.session.query(BienTheSanPham).options(
             selectinload(BienTheSanPham.hinh_anhs)
         ).filter(
@@ -422,57 +454,70 @@ class SanPhamService:
             logger.warning(f"Không tìm thấy biến thể | san_pham_id={san_pham_id}, bien_the_id={bien_the_id}")
             raise NotFound("Biến thể không tồn tại")
 
-        # Update fields cơ bản
-        update_data = data.model_dump(exclude_unset=True, exclude={'new_hinh_anhs', 'deleted_hinh_anh_ids'})
-        for key, value in update_data.items():
-            setattr(variant, key, value)
-
-        # Xử lý ảnh
-        deleted_hinh_anh_ids = data.deleted_hinh_anh_ids or []
-        new_hinh_anhs = data.new_hinh_anhs or []
-        public_ids_to_delete = []
-
-        # Tìm ảnh đại diện hiện tại
-        current_main = next((img for img in variant.hinh_anhs if img.la_anh_dai_dien), None)
-        
-        if current_main and current_main.id in deleted_hinh_anh_ids:
-            remaining_images = len(variant.hinh_anhs) - len(deleted_hinh_anh_ids)
-            if remaining_images == 0 and not new_hinh_anhs:
-                logger.error("Không thể xóa ảnh đại diện khi không còn ảnh nào")
-                raise BadRequest("Không thể xóa ảnh đại diện khi không còn ảnh nào hoặc không có ảnh mới")
-            # Set ảnh mới đầu tiên là đại diện nếu cần
-            if new_hinh_anhs:
-                new_hinh_anhs[0].la_anh_dai_dien = True
-
-        # Xóa ảnh cũ
-        for img_id in deleted_hinh_anh_ids:
-            img = db.session.query(HinhAnhSanPham).get(img_id)
-            if img and img.bien_the_id == bien_the_id:
-                if img.public_id:
-                    public_ids_to_delete.append(img.public_id)
-                db.session.delete(img)
-            else:
-                logger.warning(f"Ảnh ID {img_id} không tồn tại hoặc không thuộc biến thể")
-
-        # Thêm ảnh mới
-        for img_data in new_hinh_anhs:
-            SanPhamService.add_hinh_anh_to_bien_the(bien_the_id, img_data)
-
-        db.session.add(variant)
         try:
+            # 2. Update fields cơ bản
+            update_data = data.model_dump(exclude_unset=True, exclude={'hinh_anhs'})
+            for key, value in update_data.items():
+                if hasattr(variant, key):
+                    setattr(variant, key, value)
+
+            # 3. Xử lý ảnh - FIXED: Xử lý đúng cách
+            if hasattr(data, 'hinh_anhs') and data.hinh_anhs is not None:
+                current_images = {img.id: img for img in variant.hinh_anhs}
+                new_images = []
+                images_to_delete = []
+                
+                # Phân loại ảnh
+                for img_data in data.hinh_anhs:
+                    # Ảnh mới (không có id)
+                    if not getattr(img_data, 'id', None):
+                        new_images.append(img_data)
+                    # Ảnh cũ tồn tại
+                    elif img_data.id in current_images:
+                        # Update ảnh cũ nếu có thay đổi
+                        existing_img = current_images[img_data.id]
+                        if hasattr(img_data, 'la_anh_dai_dien'):
+                            existing_img.la_anh_dai_dien = img_data.la_anh_dai_dien
+                        if hasattr(img_data, 'alt_text'):
+                            existing_img.alt_text = img_data.alt_text
+                
+                # Thêm ảnh mới
+                for img_data in new_images:
+                    new_img = HinhAnhSanPham(
+                        bien_the_id=bien_the_id,
+                        url=img_data.url,
+                        public_id=img_data.public_id,
+                        alt_text=getattr(img_data, 'alt_text', ''),
+                        la_anh_dai_dien=getattr(img_data, 'la_anh_dai_dien', False)
+                    )
+                    db.session.add(new_img)
+                
+                # Reset ảnh đại diện nếu cần
+                main_image_set = any(img.la_anh_dai_dien for img in data.hinh_anhs if getattr(img, 'la_anh_dai_dien', False))
+                if not main_image_set and new_images:
+                    # Set ảnh đầu tiên làm đại diện nếu không có ảnh nào được set
+                    first_img = db.session.query(HinhAnhSanPham).filter(
+                        HinhAnhSanPham.bien_the_id == bien_the_id
+                    ).first()
+                    if first_img:
+                        first_img.la_anh_dai_dien = True
+
+            db.session.add(variant)
             db.session.commit()
             logger.info(f"Cập nhật biến thể thành công | ID: {bien_the_id}")
+            
+            # Refresh để lấy dữ liệu mới nhất
+            db.session.refresh(variant)
+            return variant
+
         except IntegrityError as e:
             db.session.rollback()
             logger.error(f"IntegrityError khi cập nhật biến thể: {e}", exc_info=True)
             raise BadRequest("Không thể cập nhật biến thể")
-
-        # Gửi task xóa Cloudinary
-        for public_id in public_ids_to_delete:
-            CloudinaryService.delete_image_task.delay(public_id)
-            logger.info(f"Gửi task xóa Cloudinary: {public_id}")
-
-        return variant
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Lỗi không xác định khi cập nhật biến thể: {e}", exc_info=True)
+            raise BadRequest(f"Lỗi cập nhật biến thể: {str(e)}")
 
     @staticmethod
     def delete_bien_the(san_pham_id: int, bien_the_id: int):

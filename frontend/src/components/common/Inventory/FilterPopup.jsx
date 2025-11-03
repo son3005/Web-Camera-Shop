@@ -1,3 +1,4 @@
+// src/components/common/Inventory/FilterPopup.jsx
 import React, { useRef, useEffect } from "react";
 import { X, ArrowDownUp, SlidersHorizontal, Boxes } from "lucide-react";
 
@@ -19,16 +20,6 @@ const SortButton = ({ onClick, isActive, children }) => (
   </button>
 );
 
-// Danh sách thương hiệu
-const brandOptions = ["canon", "sony", "nikon", "fujifilm", "panasonic"];
-
-// Danh sách trạng thái tồn kho
-const stockStatusOptions = [
-  { key: "in_stock", label: "Còn hàng" },
-  { key: "low_stock", label: "Sắp hết" },
-  { key: "out_of_stock", label: "Hết hàng" },
-];
-
 const CheckboxOption = ({ label, checked, onChange }) => (
   <label className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-white/40 dark:bg-slate-700/40 hover:bg-white/80 dark:hover:bg-slate-700/80 transition">
     <input
@@ -49,8 +40,10 @@ const FilterPopup = ({
   handleRangeChange,
   onApply,
   onReset,
+  danhMucList = [],
+  thuongHieuList = [],
 }) => {
-  const { sortBy, status, priceRange, brands, stockStatus } = localFilters;
+  const { sortBy, status, priceRange, danh_muc_ids, thuong_hieu_ids, stockStatus } = localFilters;
   const popupRef = useRef(null);
 
   // Chặn click bên trong để không đóng popup
@@ -67,7 +60,7 @@ const FilterPopup = ({
   return (
     <div
       ref={popupRef}
-      className="absolute top-full right-0 mt-2 w-[280px] rounded-2xl border border-white/20 dark:border-slate-700/40
+      className="absolute top-full right-0 mt-2 w-[320px] rounded-2xl border border-white/20 dark:border-slate-700/40
                 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-2xl shadow-emerald-500/10
                 transition-all z-50 flex flex-col"
     >
@@ -86,7 +79,7 @@ const FilterPopup = ({
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-5 max-h-[35vh] overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-5 max-h-[60vh] overflow-y-auto scrollbar-thin">
         {/* Trạng thái kinh doanh */}
         <div>
           <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -95,14 +88,34 @@ const FilterPopup = ({
           <div className="grid grid-cols-2 gap-2">
             <CheckboxOption
               label="Đang kinh doanh"
-              checked={status.includes("active")}
-              onChange={() => handleMultiSelectChange("status", "active")}
+              checked={status.includes('dang_ban')}
+              onChange={() => handleMultiSelectChange("status", "dang_ban")}
             />
             <CheckboxOption
               label="Ngừng kinh doanh"
-              checked={status.includes("inactive")}
-              onChange={() => handleMultiSelectChange("status", "inactive")}
+              checked={status.includes('ngung_ban')}
+              onChange={() => handleMultiSelectChange("status", "ngung_ban")}
             />
+          </div>
+        </div>
+
+        {/* Danh mục */}
+        <div>
+          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
+            Danh mục
+          </h4>
+          <div className="max-h-32 overflow-y-auto space-y-2">
+            {danhMucList.map((danhMuc) => (
+              <CheckboxOption
+                key={danhMuc.id}
+                label={danhMuc.ten_danh_muc}
+                checked={danh_muc_ids.includes(danhMuc.id)}
+                onChange={() => handleMultiSelectChange("danh_muc_ids", danhMuc.id)}
+              />
+            ))}
+            {danhMucList.length === 0 && (
+              <p className="text-sm text-slate-500 text-center py-2">Không có danh mục</p>
+            )}
           </div>
         </div>
 
@@ -111,15 +124,18 @@ const FilterPopup = ({
           <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
             Thương hiệu
           </h4>
-          <div className="grid grid-cols-2 gap-2">
-            {brandOptions.map((brand) => (
+          <div className="max-h-32 overflow-y-auto space-y-2">
+            {thuongHieuList.map((thuongHieu) => (
               <CheckboxOption
-                key={brand}
-                label={brand}
-                checked={brands.includes(brand)}
-                onChange={() => handleMultiSelectChange("brands", brand)}
+                key={thuongHieu.id}
+                label={thuongHieu.ten_thuong_hieu}
+                checked={thuong_hieu_ids.includes(thuongHieu.id)}
+                onChange={() => handleMultiSelectChange("thuong_hieu_ids", thuongHieu.id)}
               />
             ))}
+            {thuongHieuList.length === 0 && (
+              <p className="text-sm text-slate-500 text-center py-2">Không có thương hiệu</p>
+            )}
           </div>
         </div>
 
@@ -129,14 +145,21 @@ const FilterPopup = ({
             <Boxes size={16} /> Tồn kho
           </h4>
           <div className="grid grid-cols-2 gap-2">
-            {stockStatusOptions.map((state) => (
-              <CheckboxOption
-                key={state.key}
-                label={state.label}
-                checked={stockStatus.includes(state.key)}
-                onChange={() => handleMultiSelectChange("stockStatus", state.key)}
-              />
-            ))}
+            <CheckboxOption
+              label="Còn hàng"
+              checked={stockStatus.includes('in_stock')}
+              onChange={() => handleMultiSelectChange("stockStatus", "in_stock")}
+            />
+            <CheckboxOption
+              label="Sắp hết"
+              checked={stockStatus.includes('low_stock')}
+              onChange={() => handleMultiSelectChange("stockStatus", "low_stock")}
+            />
+            <CheckboxOption
+              label="Hết hàng"
+              checked={stockStatus.includes('out_of_stock')}
+              onChange={() => handleMultiSelectChange("stockStatus", "out_of_stock")}
+            />
           </div>
         </div>
 
@@ -176,7 +199,7 @@ const FilterPopup = ({
         {/* Khoảng giá */}
         <div>
           <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Khoảng giá
+            Khoảng giá (VNĐ)
           </h4>
           <div className="flex items-center gap-2">
             <input
@@ -190,6 +213,7 @@ const FilterPopup = ({
                         bg-white/50 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200
                         placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
+            <span className="text-slate-500">-</span>
             <input
               type="number"
               placeholder="Đến"

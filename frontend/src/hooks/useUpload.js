@@ -4,7 +4,7 @@ import apiClient from "../api/apiClient";
 import { useToast } from "./useToast";
 
 export const useUpload = () => {
-  const { toast } = useToast();
+  const { success, error } = useToast();
 
   // Lấy signature upload từ Cloudinary
   const useGetUploadSignature = () => {
@@ -15,16 +15,17 @@ export const useUpload = () => {
         });
         return data;
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi lấy chữ ký upload");
+      onError: (err) => {
+        error(err.response?.data?.error || "Lỗi khi lấy chữ ký upload");
       },
     });
   };
 
-  // Upload trực tiếp qua server (fallback)
+  // Upload trực tiếp qua server (fallback) - SỬA: nhận đúng tham số file
   const useUploadDirect = () => {
     return useMutation({
       mutationFn: async (file) => {
+        console.log("Uploading file to server:", file);
         const formData = new FormData();
         formData.append("file", file);
 
@@ -36,10 +37,11 @@ export const useUpload = () => {
         return data;
       },
       onSuccess: () => {
-        toast.success("Upload ảnh thành công");
+        success("Upload ảnh thành công");
       },
-      onError: (error) => {
-        toast.error(error.response?.data?.error || "Lỗi khi upload ảnh");
+      onError: (err) => {
+        console.error("Upload error:", err);
+        error(err.response?.data?.error || "Lỗi khi upload ảnh");
       },
     });
   };
