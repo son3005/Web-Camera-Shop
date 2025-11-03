@@ -1,27 +1,41 @@
 // frontend/src/api/publicApi.js
+// ===================================================================
 // API giao diện khách hàng — đồng bộ cấu trúc với phần Admin (productApi.js)
+// ===================================================================
 
 import axios from "axios";
 
 // --- CHẾ ĐỘ DEV / PROD ---
-export const USE_MOCK_API = true; // <- bật/tắt mock
+export const USE_MOCK_API = true; // ← bật mock (false = gọi backend thật)
 
+// --- Tạo axios instance chung ---
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || "http://localhost:5000/api",
 });
 
-// tiện ích delay dùng chung (mock)
+// Tiện ích delay (dùng cho mock)
 export const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// ========================= MOCK DATA (DEV) =========================
+// ===================================================================
+// --- DỮ LIỆU GIẢ LẬP (MOCK MODE) ---
+// ===================================================================
 const brands = ["Sony", "Canon", "Nikon", "Fujifilm", "Panasonic", "Leica"];
 
+// 🆕 Danh sách cấp độ chuyên nghiệp (giả lập)
+const LEVELS = ["beginner", "enthusiast", "professional"];
+//  - beginner: Dễ sử dụng / phổ thông
+//  - enthusiast: Bán chuyên
+//  - professional: Chuyên nghiệp
+
+// Tạo danh sách sản phẩm giả lập
 const MOCK_PRODUCTS = Array.from({ length: 20 }, (_, i) => {
   const brand = brands[i % brands.length];
   const id = `P${String(i + 1).padStart(4, "0")}`;
   const basePrice = Math.floor(Math.random() * 15 + 10) * 1_000_000;
   const salePrice = Math.random() > 0.5 ? basePrice * 0.9 : basePrice;
   const totalStock = Math.floor(Math.random() * 100 + 10);
+
+  const level = LEVELS[i % LEVELS.length];
 
   const variants = ["Đen", "Bạc", "Đỏ"].map((color, idx) => ({
     id: `V${i + 1}-${idx + 1}`,
@@ -63,6 +77,7 @@ const MOCK_PRODUCTS = Array.from({ length: 20 }, (_, i) => {
     specs,
     images: variants.map((v) => v.image),
     primaryImage: variants[0].image,
+    level,
   };
 });
 
@@ -82,7 +97,9 @@ const MOCK_BANNERS = [
   },
 ];
 
-// ========================= CHUẨN HOÁ DỮ LIỆU =========================
+// ===================================================================
+// --- CHUẨN HOÁ DỮ LIỆU ---
+// ===================================================================
 const normalizeProduct = (p) => ({
   id: String(p.id),
   name: p.name ?? p.ten_san_pham ?? "",
@@ -99,9 +116,12 @@ const normalizeProduct = (p) => ({
   images: p.images || p.hinh_anh?.map((x) => x.url) || [],
   variants: p.variants || p.bien_the || [],
   specs: p.specs || p.thong_so || {},
+  level: p.level || p.cap_do || p.segment || null,
 });
 
-// ========================= PUBLIC API =========================
+// ===================================================================
+// --- API CHÍNH ---
+// ===================================================================
 export async function getProducts({
   page = 1,
   limit = 12,
@@ -112,101 +132,30 @@ export async function getProducts({
   const {
     brands = [],
     priceRange = { min: 0, max: 66_000_000 },
-    mpRanges = [],
-    memoryTypes = [],
-    videoRes = [],
-    focusRanges = [],
-    lensMounts = [],
+    levels = [],
   } = filters;
 
   if (USE_MOCK_API) {
     await delay(400);
     let data = [...MOCK_PRODUCTS];
 
-    // search
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       data = data.filter((p) => p.name.toLowerCase().includes(q));
     }
 
-    // brand
     if (brands?.length) {
       const set = new Set(brands.map((b) => b.toLowerCase()));
       data = data.filter((p) => set.has(p.brand.toLowerCase()));
     }
 
-    // price
     const min = Number(priceRange.min) || 0;
     const max = Number(priceRange.max) || Infinity;
     data = data.filter((p) => p.price_from >= min && p.price_from <= max);
 
-    // mp
-    if (mpRanges?.length) {
-      data = data.filter((p) => {
-        const mpNum = Number(
-          (p.specs?.image?.resolution || "0").replace(/[^\d.]/g, "")
-        );
-        return mpRanges.some((range) => {
-          if (range === ">=40") return mpNum >= 40;
-          const [a, b] = range.split("-").map(Number);
-          return mpNum >= a && mpNum <= b;
-        });
-      });
-    }
-
-    // memory
-    if (memoryTypes?.length) {
-      data = data.filter((p) => {
-        const slots = (p.specs?.connectivity?.card_slots || "").toUpperCase();
-        return memoryTypes.some((m) => slots.includes(m.toUpperCase()));
-      });
-    }
-
-    // video
-    if (videoRes?.length) {
-      data = data.filter((p) => {
-        const rv = (p.specs?.video?.resolution || "").toUpperCase();
-        return videoRes.some((v) => rv.includes(v.toUpperCase()));
-      });
-    }
-
-    // focus
-    if (focusRanges?.length) {
-      data = data.filter((p) => {
-        const pts = Number(
-          (p.specs?.focus?.points || "0").replace(/[^\d]/g, "")
-        );
-        return focusRanges.some((r) => {
-          if (r === "<200") return pts < 200;
-          if (r === ">=300") return pts >= 300;
-          const [a, b] = r.split("-").map(Number);
-          return pts >= a && pts <= b;
-        });
-      });
-    }
-
-    // mount
-    if (lensMounts?.length) {
-      data = data.filter((p) => {
-        const m = (p.specs?.image?.lens_mount || "").toUpperCase();
-        return lensMounts.some((x) => m.includes(x.toUpperCase()));
-      });
-    }
-
-    // sort
-    if (sort) {
-      const s = sort.toLowerCase();
-      data.sort((a, b) => {
-        if (s === "price_asc") return a.price_from - b.price_from;
-        if (s === "price_desc") return b.price_from - a.price_from;
-        if (s === "name_asc") return a.name.localeCompare(b.name);
-        if (s === "name_desc") return b.name.localeCompare(a.name);
-        if (s === "new")
-          return (
-            Number(b.id.replace(/\D/g, "")) - Number(a.id.replace(/\D/g, ""))
-          );
-        return 0;
-      });
+    if (levels?.length) {
+      const set = new Set(levels.map((x) => x.toLowerCase()));
+      data = data.filter((p) => set.has((p.level || "").toLowerCase()));
     }
 
     const total = data.length;
@@ -221,15 +170,10 @@ export async function getProducts({
       limit,
       search: searchTerm,
       sort,
-      // khớp backend (tuỳ bạn map lại ở server)
       brands,
       minPrice: priceRange.min,
       maxPrice: priceRange.max,
-      mp: mpRanges,
-      mem: memoryTypes,
-      vres: videoRes,
-      focus: focusRanges,
-      mount: lensMounts,
+      levels,
     },
   });
 
@@ -239,6 +183,7 @@ export async function getProducts({
   };
 }
 
+// Chi tiết sản phẩm
 export async function getProduct(id) {
   if (USE_MOCK_API) {
     await delay(300);
@@ -250,6 +195,7 @@ export async function getProduct(id) {
   return normalizeProduct(res.data);
 }
 
+// Banner trang chủ
 export async function getBanners() {
   if (USE_MOCK_API) {
     await delay(200);
@@ -257,4 +203,75 @@ export async function getBanners() {
   }
   const res = await api.get("/banners");
   return res.data || [];
+}
+
+// ===================================================================
+// --- QUICK SEARCH (DÙNG CHO HEADER) ---
+// ===================================================================
+export async function quickSearch(term, limit = 6) {
+  const q = String(term || "")
+    .trim()
+    .toLowerCase();
+  if (!q) return [];
+
+  // Tách model thành từng mảnh: ví dụ "Canon XM-105 Mark II" => ["xm","105","mark","ii"]
+  const getModelPieces = (p) => {
+    const nameLower = (p.name || "").toLowerCase();
+    const brandLower = (p.brand || "").toLowerCase();
+    const tail = nameLower.startsWith(brandLower)
+      ? nameLower.slice(brandLower.length).trim()
+      : nameLower;
+    return tail.split(/[\s\-_/]+/).filter(Boolean);
+  };
+
+  if (USE_MOCK_API) {
+    await delay(160);
+    const tokens = q.split(/\s+/).filter(Boolean);
+    let list = [];
+
+    if (tokens.length === 1) {
+      const t = tokens[0];
+      list = MOCK_PRODUCTS.filter((p) => {
+        const brandLower = (p.brand || "").toLowerCase();
+        const pieces = getModelPieces(p);
+        const brandMatch = brandLower.startsWith(t);
+        const modelMatch = pieces.some((pc) => pc.startsWith(t));
+        return brandMatch || modelMatch;
+      });
+    } else {
+      const brandPrefix = tokens[0];
+      const rest = tokens.slice(1);
+      list = MOCK_PRODUCTS.filter((p) => {
+        const brandLower = (p.brand || "").toLowerCase();
+        if (!brandLower.startsWith(brandPrefix)) return false;
+        const pieces = getModelPieces(p);
+        return rest.every((tk) => pieces.some((pc) => pc.startsWith(tk)));
+      });
+    }
+
+    return list.slice(0, limit).map((p) => ({
+      id: p.id,
+      name: p.name,
+      brand: p.brand,
+      price_from: p.price_from,
+      primaryImage: p.primaryImage || p.images?.[0] || "",
+    }));
+  }
+
+  // ✅ Backend mode — endpoint /products/quick-search
+  const { data } = await api.get("/products/quick-search", {
+    params: { term: q, limit },
+  });
+
+  const items = (data?.items || data || []).map((p) => ({
+    id: String(p.id),
+    name: p.name ?? p.ten_san_pham ?? "",
+    brand: p.brand ?? p.thuong_hieu?.ten_thuong_hieu ?? "",
+    price_from:
+      p.price_from ?? p.sale_price ?? p.gia_goc ?? p.selling_price ?? 0,
+    primaryImage:
+      p.primaryImage || p.anh_dai_dien || p.image || p.images?.[0] || "",
+  }));
+
+  return items.slice(0, limit);
 }

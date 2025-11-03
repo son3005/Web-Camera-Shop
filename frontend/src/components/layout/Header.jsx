@@ -1,23 +1,60 @@
 // src/components/layout/Header.jsx
+// Header chứa logo, nav, giỏ hàng và ô tìm kiếm.
+// ✅ Bổ sung dropdown gợi ý (autocomplete) cho ô search:
+//   - Gõ => debounce 250ms => gọi quickSearch()
+//   - ↑/↓ để chọn item, Enter:
+//       + nếu đang chọn gợi ý => đi tới trang chi tiết /products/:id
+//       + nếu không => đi tới trang listing /products?q=... (để lọc theo từ khoá)
+//   - Click ngoài => đóng dropdown
+//   - Mobile drawer dùng chung state q và submit.
+// ✅ Không thêm file mới. Không phá vỡ layout hiện có.
+
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, User, Phone, Menu, X, LogIn } from "lucide-react";
-import { useState } from "react";
+import {
+  ShoppingCart,
+  User,
+  Phone,
+  Menu,
+  X,
+  LogIn,
+  Search,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import logo from "../../assets/images/Logo.png";
 
+// ⬇️ Import quickSearch từ publicApi (đã bổ sung ở file API)
+import { quickSearch } from "../../api/publicApi";
+
 export default function Header() {
   const nav = useNavigate();
-  const [q, setQ] = useState("");
+
+  // --- STATE CHO SEARCH & DROPDOWN GỢI Ý ---
+  const [q, setQ] = useState(""); // giá trị nhập trong ô search
+  const [suggests, setSuggests] = useState([]); // danh sách gợi ý
+  const [showSuggest, setShowSuggest] = useState(false); // hiển thị dropdown hay không
+  const [loadingSuggest, setLoadingSuggest] = useState(false); // trạng thái đang fetch gợi ý
+  const [activeIndex, setActiveIndex] = useState(-1); // index mục gợi ý đang được "focus" bằng phím
+  const boxRef = useRef(null); // ref bao quanh input + dropdown để detect click ngoài
+  const inputRef = useRef(null); // ref input để tiện focus nếu cần
+
+  // --- STATE NAV MOBILE ---
   const [open, setOpen] = useState(false);
 
+  // --- SỐ LƯỢNG GIỎ HÀNG (từ Redux store của bạn) ---
   const cartCount = useSelector((s) => s.gioHang?.tongSoLuong ?? 0);
 
+  // --- SUBMIT FORM: đi tới trang listing với query q ---
   const submit = (e) => {
-    e.preventDefault();
-    setOpen(false);
-    nav(`/products?q=${encodeURIComponent(q)}`);
+    e?.preventDefault?.();
+    if (!q.trim()) return; // không tìm nếu rỗng
+    setOpen(false); // đóng mobile drawer
+    setShowSuggest(false); // đóng dropdown
+    setActiveIndex(-1);
+    nav(`/products?q=${encodeURIComponent(q.trim())}`); // điều hướng sang trang sản phẩm kèm query
   };
 
+  // --- SCROLL tới các section trong footer (đã có sẵn) ---
   const scrollToFooterSection = (sectionId) => {
     const el = document.getElementById(sectionId);
     if (el) {
@@ -25,6 +62,87 @@ export default function Header() {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+
+  // --- DEBOUNCE GỌI GỢI Ý: mỗi khi q thay đổi, chờ 250ms rồi gọi quickSearch ---
+  useEffect(() => {
+    let t;
+    // Nếu rỗng => clear gợi ý & đóng dropdown
+    if (!q.trim()) {
+      setSuggests([]);
+      setShowSuggest(false);
+      setActiveIndex(-1);
+      return;
+    }
+    setLoadingSuggest(true);
+    t = setTimeout(async () => {
+      try {
+        // Gọi API gợi ý. Khi USE_MOCK_API=true => lấy từ MOCK_PRODUCTS.
+        const res = await quickSearch(q.trim(), 6);
+        setSuggests(res);
+        setShowSuggest(res.length > 0); // có kết quả thì mở dropdown
+      } catch {
+        setSuggests([]);
+        setShowSuggest(false);
+      } finally {
+        setLoadingSuggest(false);
+      }
+    }, 250);
+    // Cleanup timeout nếu q thay đổi sớm hơn 250ms
+    return () => clearTimeout(t);
+  }, [q]);
+
+  // --- ĐÓNG DROPDOWN KHI CLICK NGOÀI ---
+  useEffect(() => {
+    const onClick = (e) => {
+      if (!boxRef.current) return;
+      // Nếu click nằm ngoài vùng boxRef => đóng dropdown
+      if (!boxRef.current.contains(e.target)) {
+        setShowSuggest(false);
+        setActiveIndex(-1);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  // --- ĐIỀU HƯỚNG BẰNG PHÍM TRONG DROPDOWN ---
+  const onKeyDown = (e) => {
+    if (!showSuggest || suggests.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % suggests.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i - 1 + suggests.length) % suggests.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIndex >= 0 && suggests[activeIndex]) {
+        // Enter khi đang chọn 1 gợi ý => sang trang chi tiết
+        const item = suggests[activeIndex];
+        setShowSuggest(false);
+        setActiveIndex(-1);
+        setOpen(false);
+        nav(`/products/${item.id}`);
+      } else {
+        // Enter khi không chọn item nào => tìm toàn cục
+        submit();
+      }
+    } else if (e.key === "Escape") {
+      setShowSuggest(false);
+      setActiveIndex(-1);
+    }
+  };
+
+  // --- CLICK CHỌN 1 GỢI Ý ---
+  const onPick = (item) => {
+    setShowSuggest(false);
+    setActiveIndex(-1);
+    setOpen(false);
+    nav(`/products/${item.id}`);
+  };
+
+  // Helper hiển thị giá VND trong dropdown
+  const vnd = (n) => Number(n || 0).toLocaleString("vi-VN") + "đ";
 
   return (
     <header className="site-header">
@@ -80,15 +198,91 @@ export default function Header() {
           </button>
         </nav>
 
-        {/* Search */}
-        <form onSubmit={submit} className="flex-1 max-w-xl">
-          <input
-            className="ui-input rounded-full"
-            placeholder="Tìm kiếm máy ảnh"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </form>
+        {/* Search + Suggest */}
+        {/* bọc input + dropdown để detect click ngoài */}
+        <div ref={boxRef} className="relative flex-1 max-w-xl">
+          <form onSubmit={submit}>
+            <div className="relative">
+              {/* icon kính lúp */}
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              {/* input tìm kiếm */}
+              <input
+                ref={inputRef}
+                className="ui-input rounded-full pl-9"
+                placeholder="Tìm kiếm máy ảnh"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onFocus={() => setShowSuggest(suggests.length > 0)} // đặt show nếu đã có dữ liệu sẵn
+                onKeyDown={onKeyDown} // điều hướng bằng phím
+              />
+            </div>
+          </form>
+
+          {/* Dropdown gợi ý: render khi showSuggest = true */}
+          {showSuggest && (
+            <div
+              className="absolute z-50 mt-2 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden"
+              role="listbox"
+            >
+              {/* dòng trạng thái */}
+              {loadingSuggest && (
+                <div className="px-4 py-3 text-sm text-slate-500">
+                  Đang tìm…
+                </div>
+              )}
+              {!loadingSuggest && suggests.length === 0 && (
+                <div className="px-4 py-3 text-sm text-slate-500">
+                  Không có kết quả
+                </div>
+              )}
+
+              {/* danh sách gợi ý */}
+              {!loadingSuggest &&
+                suggests.map((it, idx) => (
+                  <button
+                    key={it.id}
+                    onMouseDown={(e) => e.preventDefault()} // tránh blur input trước onClick
+                    onClick={() => onPick(it)} // chọn => đi tới trang chi tiết
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition ${
+                      idx === activeIndex
+                        ? "bg-slate-100 dark:bg-slate-800"
+                        : ""
+                    }`}
+                    role="option"
+                    aria-selected={idx === activeIndex}
+                  >
+                    {/* ảnh nhỏ của sản phẩm */}
+                    <img
+                      src={it.primaryImage}
+                      alt={it.name}
+                      className="w-10 h-10 rounded-md object-cover flex-shrink-0"
+                      loading="lazy"
+                    />
+                    {/* tên + brand + giá */}
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                        {it.name}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {it.brand} · {vnd(it.price_from)}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+
+              {/* Footer của dropdown: hành động "xem tất cả kết quả" */}
+              <div className="px-3 py-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60">
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={submit}
+                  className="w-full text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                >
+                  Xem tất cả kết quả cho “{q}”
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
@@ -124,18 +318,20 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Drawer Mobile */}
+      {/* Drawer Mobile (menu trái) */}
       <div
         className={`md:hidden fixed inset-0 z-[60] transition ${
           open ? "" : "pointer-events-none"
         }`}
       >
+        {/* backdrop */}
         <div
           className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity ${
             open ? "opacity-100" : "opacity-0"
           }`}
           onClick={() => setOpen(false)}
         />
+        {/* panel */}
         <aside
           className={`absolute left-0 top-0 h-full w-80 max-w-[85%] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shadow-2xl p-4 flex flex-col gap-4 transition-transform ${
             open ? "translate-x-0" : "-translate-x-full"
@@ -155,6 +351,7 @@ export default function Header() {
             </button>
           </div>
 
+          {/* Ô tìm kiếm trong drawer: dùng chung q + submit */}
           <form onSubmit={submit}>
             <input
               className="ui-input"
