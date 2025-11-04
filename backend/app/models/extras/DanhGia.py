@@ -3,6 +3,33 @@ from ...extensions import db
 from sqlalchemy import CheckConstraint
 from ..enums import TrangThaiDanhGiaEnum
 class DanhGia(db.Model):
+    """
+    Lớp DanhGia đại diện cho bảng 'danh_gia' trong cơ sở dữ liệu, lưu trữ thông tin đánh giá của người dùng cho sản phẩm.
+
+    Thuộc tính:
+        id (int): Khóa chính, định danh duy nhất cho mỗi đánh giá.
+        chi_tiet_don_hang_id (int): Khóa ngoại liên kết đến chi tiết đơn hàng, đảm bảo mỗi chi tiết đơn hàng chỉ có một đánh giá.
+        san_pham_id (int): Khóa ngoại liên kết đến sản phẩm được đánh giá.
+        nguoi_dung_id (int): Khóa ngoại liên kết đến người dùng thực hiện đánh giá.
+        diem_danh_gia (int): Điểm đánh giá (từ 1 đến 5), có ràng buộc kiểm tra giá trị hợp lệ.
+        binh_luan (str): Nội dung bình luận của người dùng (có thể để trống).
+        trang_thai (TrangThaiDanhGiaEnum): Trạng thái của đánh giá (ví dụ: đã duyệt, chờ duyệt).
+        ngay_tao (datetime): Thời điểm tạo đánh giá.
+        ngay_cap_nhat (datetime): Thời điểm cập nhật đánh giá gần nhất.
+
+    Ràng buộc:
+        - Điểm đánh giá phải nằm trong khoảng từ 1 đến 5.
+        - Mỗi người dùng chỉ được đánh giá một lần cho mỗi sản phẩm.
+        - Mỗi chi tiết đơn hàng chỉ có một đánh giá.
+
+    Quan hệ:
+        - nguoi_dung: Tham chiếu đến đối tượng Người Dùng đã thực hiện đánh giá.
+        - san_pham: Tham chiếu đến đối tượng Sản Phẩm được đánh giá.
+        - chi_tiet_don_hang: Tham chiếu đến đối tượng Chi Tiết Đơn Hàng liên quan đến đánh giá.
+        
+    Phương thức:
+        __repr__: Trả về chuỗi biểu diễn đối tượng đánh giá, hiển thị ID đánh giá và ID sản phẩm liên quan.
+    """
     __tablename__ = 'danh_gia'
 
     # -- Các thuộc tính ---

@@ -4,6 +4,32 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from ..enums import VaiTroNguoiDungEnum, TrangThaiNguoiDungEnum
 
 class NguoiDung(db.Model):
+    """
+    Lớp NguoiDung đại diện cho người dùng trong hệ thống.
+    
+    Thuộc tính:
+        id (int): Khóa chính, định danh duy nhất cho mỗi người dùng.
+        ma_nguoi_dung (str): Mã người dùng duy nhất, không được trùng lặp.
+        ho_ten (str): Họ và tên của người dùng.
+        so_dien_thoai (str, optional): Số điện thoại của người dùng, duy nhất, có thể để trống.
+        email (str): Địa chỉ email của người dùng, duy nhất.
+        mat_khau_hash (str): Mật khẩu đã được mã hóa.
+        lan_cuoi_dang_nhap (datetime, optional): Thời điểm người dùng đăng nhập lần cuối.
+        vai_tro (VaiTroNguoiDungEnum): Vai trò của người dùng (ví dụ: khách hàng, quản trị viên).
+        trang_thai (TrangThaiNguoiDungEnum): Trạng thái hoạt động của người dùng (ví dụ: kích hoạt, bị khóa).
+        ngay_tao (datetime): Thời điểm tạo tài khoản.
+        ngay_cap_nhat (datetime): Thời điểm cập nhật thông tin gần nhất.
+
+    Quan hệ:
+        gio_hang (GioHang): Giỏ hàng của người dùng (một-một).
+        don_hangs (DonHang): Danh sách đơn hàng của người dùng (một-nhiều).
+        phieu_thus (PhieuThu): Danh sách phiếu thu của người dùng (một-nhiều).
+        danh_gias (DanhGia): Danh sách đánh giá của người dùng (một-nhiều).
+        dia_chis (DiaChi): Danh sách địa chỉ của người dùng (một-nhiều).
+
+    Phương thức:
+        __repr__(): Trả về chuỗi biểu diễn đối tượng người dùng, bao gồm email và vai trò.
+    """
     __tablename__ = 'nguoi_dung'
     
     id = db.Column(db.Integer, primary_key=True)

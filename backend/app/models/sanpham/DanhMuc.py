@@ -3,14 +3,18 @@ from ...extensions import db
 
 class DanhMuc(db.Model):
     """
-    DanhMuc là một lớp đại diện cho bảng "danh_muc" trong cơ sở dữ liệu.
-    Attributes:
-        id (int): Khóa chính của bảng.
-        ma_danh_muc (str): Mã danh mục, là chuỗi ký tự duy nhất, không được để trống, và có chỉ mục.
-        ten_danh_muc (str): Tên danh mục, là chuỗi ký tự duy nhất, không được để trống.
-        san_phams (relationship): Mối quan hệ một-nhiều với bảng "SanPham", cho phép truy cập danh sách sản phẩm thuộc danh mục này.
-    Methods:
-        __repr__(): Trả về chuỗi đại diện cho đối tượng DanhMuc, bao gồm tên danh mục.
+    Lớp DanhMuc đại diện cho bảng 'danh_muc' trong cơ sở dữ liệu.
+
+    Thuộc tính:
+        id (int): Khóa chính, tự động tăng.
+        ma_danh_muc (str): Mã danh mục, duy nhất, không được để trống, tối đa 5 ký tự.
+        ten_danh_muc (str): Tên danh mục, duy nhất, không được để trống, tối đa 100 ký tự.
+
+    Quan hệ:
+        san_phams (relationship): Danh sách các sản phẩm thuộc danh mục này.
+        
+    Phương thức:
+        __repr__(): Trả về chuỗi đại diện cho đối tượng DanhMuc.
     """
     
     __tablename__ = 'danh_muc'

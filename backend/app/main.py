@@ -87,6 +87,7 @@ def create_app(config_class=None):
         logger.warning("Missing Cloudinary config")
 
     # --- CELERY CONFIG ---
+    
     celery.conf.broker_url = app.config['CELERY_BROKER_URL']
     celery.conf.result_backend = app.config['CELERY_RESULT_BACKEND']
     celery.conf.update(app.config)

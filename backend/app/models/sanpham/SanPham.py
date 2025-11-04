@@ -6,28 +6,29 @@ from ...models.sanpham.ThuongHieu import ThuongHieu
 from ..enums import TrangThaiSanPhamEnum
 class SanPham(db.Model):
     """
-    SanPham là một lớp đại diện cho sản phẩm trong hệ thống.
-    Attributes:
-        id (int): ID duy nhất của sản phẩm.
-        ma_san_pham (str): Mã sản phẩm duy nhất, tối đa 24 ký tự.
-        danh_muc_id (int): ID của danh mục mà sản phẩm thuộc về.
-        thuong_hieu_id (int): ID của thương hiệu mà sản phẩm thuộc về.
-        ten_san_pham (str): Tên của sản phẩm, tối đa 200 ký tự.
-        mo_ta (str): Mô tả chi tiết về sản phẩm.
-        thong_so_ky_thuat (dict): Thông số kỹ thuật của sản phẩm dưới dạng JSON.
-        trang_thai (TrangThaiSanPhamEnum): Trạng thái của sản phẩm (ví dụ: Đang bán, Hết hàng, ...).
-        ngay_tao (datetime): Thời điểm sản phẩm được tạo.
-        ngay_cap_nhat (datetime): Thời điểm sản phẩm được cập nhật lần cuối.
-    Relationships:
-        danh_muc (DanhMuc): Mối quan hệ với danh mục chứa sản phẩm.
-        thuong_hieu (ThuongHieu): Mối quan hệ với thương hiệu của sản phẩm.
+    Lớp SanPham đại diện cho sản phẩm trong hệ thống.
+
+    Thuộc tính:
+        id (int): Khóa chính, định danh duy nhất cho mỗi sản phẩm.
+        ma_san_pham (str): Mã sản phẩm, duy nhất và không được để trống.
+        danh_muc_id (int): Khóa ngoại liên kết đến bảng DanhMuc.
+        thuong_hieu_id (int): Khóa ngoại liên kết đến bảng ThuongHieu.
+        cap_do_id (int): Khóa ngoại liên kết đến bảng CapDo.
+        ten_san_pham (str): Tên sản phẩm, không được để trống.
+        mo_ta (str): Mô tả chi tiết về sản phẩm (có thể để trống).
+        thong_so_ky_thuat (dict): Thông số kỹ thuật của sản phẩm (có thể để trống).
+        ngay_tao (datetime): Ngày tạo sản phẩm.
+        ngay_cap_nhat (datetime): Ngày cập nhật sản phẩm gần nhất.
+
+    Mối quan hệ:
+        danh_muc (DanhMuc): Đối tượng danh mục liên kết.
+        cap_do (CapDo): Đối tượng cấp độ liên kết.
+        thuong_hieu (ThuongHieu): Đối tượng thương hiệu liên kết.
         cac_bien_the (list[BienTheSanPham]): Danh sách các biến thể của sản phẩm.
-        danh_gias (list[DanhGia]): Danh sách các đánh giá liên quan đến sản phẩm.
-    Table Indexes:
-        idx_sanpham_fts: Chỉ mục FULLTEXT trên các cột 'ten_san_pham' và 'mo_ta' để hỗ trợ tìm kiếm văn bản.
-    Methods:
-        __repr__: Trả về chuỗi đại diện của sản phẩm.
-    __tablename__ = 'san_pham'
+        danh_gias (DanhGia): Danh sách đánh giá liên quan đến sản phẩm.
+        
+    Chỉ mục:
+        idx_sanpham_fts: Chỉ mục FULLTEXT cho các trường 'ten_san_pham' và 'mo_ta' sử dụng parser 'ngram' (MySQL).
     """
     # --- Các thuộc tính ---
     id = db.Column(db.Integer, primary_key=True)
@@ -36,7 +37,6 @@ class SanPham(db.Model):
     thuong_hieu_id = db.Column(db.Integer, db.ForeignKey('thuong_hieu.id'), nullable=False, index=True)
     cap_do_id = db.Column(db.Integer,db.ForeignKey("cap_do.id"),nullable=False,index=True)
     ten_san_pham = db.Column(db.String(200), nullable=False, index=True)
-    mau_sac = db.Column(db.String(50), nullable=True)
     mo_ta = db.Column(db.Text, nullable=True)
     thong_so_ky_thuat = db.Column(db.JSON, nullable=True)
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)

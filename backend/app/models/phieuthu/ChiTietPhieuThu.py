@@ -1,6 +1,23 @@
 from ...extensions import db
 
 class ChiTietPhieuThu(db.Model):
+    """
+    Mô hình ChiTietPhieuThu đại diện cho chi tiết của một phiếu thu trong hệ thống.
+
+    Thuộc tính:
+        id (int): Khóa chính, định danh duy nhất cho mỗi chi tiết phiếu thu.
+        phieu_thu_id (int): Khóa ngoại tham chiếu đến bảng phieu_thu, cho biết chi tiết này thuộc phiếu thu nào.
+        bien_the_san_pham_id (int): Khóa ngoại tham chiếu đến bảng bien_the_san_pham, xác định biến thể sản phẩm liên quan.
+        so_luong (int): Số lượng sản phẩm trong chi tiết phiếu thu, mặc định là 1.
+        gia_nhap_tung_vat (Decimal): Giá nhập của từng vật phẩm trong chi tiết phiếu thu.
+
+    Quan hệ:
+        phieu_thu: Quan hệ nhiều-một với mô hình PhieuThu, sử dụng back_populates 'chi_tiet_phieu_thus'.
+        bien_the_san_pham: Quan hệ nhiều-một với mô hình BienTheSanPham.
+
+    Phương thức:
+        __repr__(): Trả về chuỗi đại diện cho đối tượng ChiTietPhieuThu.
+    """
     __tablename__ = 'phieu_thu_chi_tiet'
 
     id = db.Column(db.Integer, primary_key=True)

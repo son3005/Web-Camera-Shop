@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, ConfigDict, validator
 from typing import List, Optional
 from datetime import datetime
 from decimal import Decimal
-from .HinhAnhSanPham import HinhAnhResponse, HinhAnhCreate
+from .HinhAnhSanPham import HinhAnhResponse, HinhAnhCreate, HinhAnhUpdate
 from ..Shared import TrangThaiSanPhamEnum
 
 
@@ -24,14 +24,14 @@ class BienTheSanPhamCreate(BienTheSanPhamBase):
 
 
 class BienTheSanPhamUpdate(BaseModel):
+    id: Optional[int] = Field(None)
     ten_bien_the: Optional[str] = Field(None, max_length=100)
     trang_thai_kich_hoat: Optional[TrangThaiSanPhamEnum] = None
     gia_ban: Optional[Decimal] = Field(None, gt=0)
-    mau: Optional[str] = Field(None,max_length=20)
-    new_hinh_anhs: Optional[List[HinhAnhCreate]] = Field([], description="Ảnh mới")
-    deleted_hinh_anh_ids: Optional[List[int]] = Field([], description="ID ảnh xóa")
+    mau: Optional[str] = Field(None, max_length=20)
+    hinh_anhs: Optional[List[HinhAnhUpdate]] = Field([], description="Danh sách ảnh cập nhật")
 
-    model_config = ConfigDict(from_attributes=True, use_enum_values=True)  # Sửa: thêm use_enum_values
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)  
 
 
 class BienTheSanPhamDelete(BaseModel):

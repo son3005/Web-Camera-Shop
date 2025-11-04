@@ -37,14 +37,14 @@ class SanPhamCreate(SanPhamBase):
 class SanPhamUpdate(BaseModel):
     danh_muc_id: Optional[int] = Field(None)
     thuong_hieu_id: Optional[int] = Field(None)
-    cap_do_id:Optional[int] = Field(None)
+    cap_do_id: Optional[int] = Field(None)
     ten_san_pham: Optional[str] = Field(None, max_length=200)
     mo_ta: Optional[str] = Field(None)
     thong_so_ky_thuat: Optional[Dict[str, Any]] = Field(None)
     trang_thai: Optional[TrangThaiSanPhamEnum] = None
-    cac_bien_the: Optional[List[BienTheSanPhamUpdate]] = None
+    cac_bien_the: Optional[List[BienTheSanPhamUpdate]] = Field(None, description="Danh sách biến thể cập nhật")
+    bien_the_xoa_ids: Optional[List[int]] = Field([], description="IDs biến thể cần xóa")
 
-    # Validator cho ngày (nếu có trong cac_bien_the, nhưng đẩy xuống BienTheUpdate)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -62,7 +62,6 @@ class SanPhamResponse(SanPhamBase):
         default_factory=list,
         description="Danh sách biến thể (đã có ảnh, giá, tồn kho)"
     )
-
     model_config = ConfigDict(from_attributes=True)
 
 

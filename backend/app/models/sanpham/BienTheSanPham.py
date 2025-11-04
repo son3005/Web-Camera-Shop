@@ -5,31 +5,32 @@ from ..enums import TrangThaiSanPhamEnum
 
 class BienTheSanPham(db.Model):
     """
-    BienTheSanPham (Variant of Product) là một class đại diện cho các biến thể của sản phẩm trong hệ thống.
-    Attributes:
-        id (int): ID duy nhất của biến thể sản phẩm.
-        san_pham_id (int): ID của sản phẩm cha mà biến thể này thuộc về.
-        ten_bien_the (str): Tên của biến thể sản phẩm (có thể là màu sắc, kích thước, v.v.).
-        trang_thai_kich_hoat (TrangThaiSanPhamEnum): Trạng thái kích hoạt của biến thể (mặc định là "Đang bán").
-        gia_ban (decimal): Giá bán của biến thể sản phẩm.
-        gia_khuyen_mai (decimal, optional): Giá khuyến mãi của biến thể sản phẩm (nếu có).
-        ngay_bat_dau_khuyen_mai (datetime, optional): Ngày bắt đầu áp dụng giá khuyến mãi.
-        ngay_ket_thuc_khuyen_mai (datetime, optional): Ngày kết thúc áp dụng giá khuyến mãi.
-        so_luong_ton (int): Số lượng tồn kho của biến thể sản phẩm (mặc định là 0).
-    Relationships:
-        san_pham (SanPham): Mối quan hệ với sản phẩm cha (SanPham).
-        hinh_anhs (list[HinhAnhSanPham]): Danh sách hình ảnh liên kết với biến thể sản phẩm.
-        chi_tiet_gio_hangs (list[ChiTietGioHang]): Danh sách chi tiết giỏ hàng liên kết với biến thể sản phẩm.
-        chi_tiet_don_hangs (list[ChiTietDonHang]): Danh sách chi tiết đơn hàng liên kết với biến thể sản phẩm.
-    Constraints:
-        - Giá bán (gia_ban) phải lớn hơn 0.
-        - Số lượng tồn kho (so_luong_ton) phải lớn hơn hoặc bằng 0.
-        - Giá khuyến mãi (gia_khuyen_mai) phải lớn hơn 0 và nhỏ hơn giá bán (gia_ban), nếu được cung cấp.
-        - Nếu ngày bắt đầu và ngày kết thúc khuyến mãi được cung cấp, ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.
-    Methods:
-        __repr__(): Trả về chuỗi đại diện cho biến thể sản phẩm, bao gồm ID sản phẩm và tên biến thể.
+    Lớp BienTheSanPham đại diện cho một biến thể cụ thể của sản phẩm trong hệ thống quản lý cửa hàng camera.
+
+    Thuộc tính:
+        id (int): Khóa chính, định danh duy nhất cho mỗi biến thể sản phẩm.
+        san_pham_id (int): Khóa ngoại liên kết đến bảng 'san_pham', xác định sản phẩm gốc của biến thể.
+        ten_bien_the (str): Tên của biến thể sản phẩm (ví dụ: màu sắc, phiên bản...).
+        trang_thai_kich_hoat (TrangThaiSanPhamEnum): Trạng thái hoạt động của biến thể (đang bán, ngừng bán...).
+        gia_ban (Decimal): Giá bán của biến thể sản phẩm, phải lớn hơn 0.
+        mau (str, tùy chọn): Màu sắc của biến thể sản phẩm.
+        so_luong (int): Số lượng tồn kho của biến thể, không được âm.
+
+    Quan hệ:
+        san_pham: Tham chiếu đến đối tượng SanPham mà biến thể này thuộc về.
+        hinh_anhs: Danh sách các hình ảnh liên quan đến biến thể sản phẩm.
+        chi_tiet_gio_hangs: Danh sách các chi tiết giỏ hàng liên quan đến biến thể sản phẩm.
+        chi_tiet_don_hangs: Danh sách các chi tiết đơn hàng liên quan đến biến thể sản phẩm.
+        chi_tiet_phieu_thus: Danh sách các chi tiết phiếu thu liên quan đến biến thể sản phẩm.
+
+    Ràng buộc:
+        - Giá bán phải lớn hơn 0.
+        - Số lượng phải lớn hơn hoặc bằng 0.
+        - Có chỉ mục cho trường trạng thái kích hoạt để tối ưu truy vấn.
+        
+    Phương thức:
+        __repr__: Trả về chuỗi biểu diễn đối tượng, hiển thị ID sản phẩm và tên biến thể.
     """
-    
     __tablename__ = 'bien_the_san_pham'
 
     # --- Các thuộc tính ---

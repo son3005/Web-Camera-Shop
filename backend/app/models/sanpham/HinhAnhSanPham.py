@@ -2,24 +2,26 @@
 
 from  ...extensions import db
 from sqlalchemy import event 
-from ...services.cloudinary_service import CloudinaryService 
+
 
 
 class HinhAnhSanPham(db.Model):
     """
-    HinhAnhSanPham là một mô hình cơ sở dữ liệu đại diện cho hình ảnh của sản phẩm trong ứng dụng.
-    Attributes:
-        id (int): ID duy nhất của hình ảnh.
-        bien_the_id (int): ID của biến thể sản phẩm mà hình ảnh này thuộc về. Liên kết với bảng 'bien_the_san_pham'.
-        url (str): URL của hình ảnh.
-        public_id (str): ID công khai của hình ảnh, thường được sử dụng để quản lý hình ảnh trên các dịch vụ lưu trữ.
-        alt_text (str, optional): Văn bản thay thế cho hình ảnh, dùng để mô tả nội dung hình ảnh.
-        la_anh_dai_dien (bool): Cờ xác định xem hình ảnh này có phải là ảnh đại diện của sản phẩm hay không. Mặc định là False.
-        bien_the (BienTheSanPham): Quan hệ với mô hình 'BienTheSanPham', cho phép truy cập thông tin biến thể sản phẩm liên quan.
-    Methods:
-        __repr__(): Trả về chuỗi biểu diễn của đối tượng HinhAnhSanPham, bao gồm ID và public_id.
-    """
+    Mô hình HinhAnhSanPham đại diện cho hình ảnh của biến thể sản phẩm trong cơ sở dữ liệu.
 
+    Thuộc tính:
+        id (int): Khóa chính, định danh duy nhất cho mỗi hình ảnh.
+        bien_the_id (int): Khóa ngoại liên kết đến bảng 'bien_the_san_pham', xác định biến thể sản phẩm mà hình ảnh thuộc về.
+        url (str): Đường dẫn URL của hình ảnh.
+        public_id (str): Định danh công khai duy nhất của hình ảnh (thường dùng cho các dịch vụ lưu trữ như Cloudinary).
+        alt_text (str, optional): Văn bản thay thế cho hình ảnh, hỗ trợ SEO và truy cập.
+        thu_tu (int): Thứ tự hiển thị của hình ảnh trong danh sách.
+        la_anh_dai_dien (bool): Đánh dấu hình ảnh này có phải là ảnh đại diện cho biến thể sản phẩm hay không.
+        bien_the (BienTheSanPham): Quan hệ ORM đến mô hình BienTheSanPham, cho phép truy cập thông tin biến thể sản phẩm liên quan.
+        
+    Phương thức:
+        __repr__(): Trả về chuỗi biểu diễn đối tượng hình ảnh sản phẩm, bao gồm id và public_id.
+    """
     __tablename__ = 'hinh_anh_san_pham'
 
     # --- Các thuộc tính ---
@@ -35,16 +37,3 @@ class HinhAnhSanPham(db.Model):
  
     def __repr__(self):
         return f'<Hình ảnh {self.id} - public_id: {self.public_id}>'
-
-
-@event.listens_for(HinhAnhSanPham, 'after_delete')
-def after_hinh_anh_delete_listener(mapper, connection, target: HinhAnhSanPham):
-    """
-    Lắng nghe sự kiện "sau khi xóa" một record HinhAnhSanPham.
-    
-    Mỗi khi một ảnh bị xóa khỏi DB (kể cả do cascade), hàm này
-    sẽ được gọi và kích hoạt Celery task để xóa file trên Cloudinary.
-    """
-    if target.public_id:
-        print(f"EVENT: Đã bắt sự kiện xóa HinhAnhSanPham. Kích hoạt task Celery xóa public_id: {target.public_id}")
-        CloudinaryService.delete_image_task.delay(target.public_id)

@@ -1,6 +1,6 @@
 # /backend/app/schemas/HinhAnhSanPham.py
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional
+from typing import Any, Optional
 import re
 
 
@@ -27,11 +27,13 @@ class HinhAnhCreate(HinhAnhBase):
 
 
 class HinhAnhUpdate(BaseModel):
+    id: Optional[int] = Field(None)
     url: Optional[str] = Field(None)
     public_id: Optional[str] = Field(None, max_length=255)
     thu_tu: Optional[int] = Field(None)
     alt_text: Optional[str] = Field(None, max_length=200)
     la_anh_dai_dien: Optional[bool] = None
+    file: Any = Field(None, description="File ảnh mới (chỉ dùng cho frontend)")
 
     @field_validator('url')
     @classmethod

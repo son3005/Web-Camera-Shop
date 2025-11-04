@@ -65,7 +65,6 @@ def get_danh_muc(path: DanhMucPath):
 
 # 1.3. Tạo Danh mục (Admin)
 @catalogs_api.post('/danh-muc', responses={"201": DanhMucResponse})
-@admin_required
 def create_danh_muc(body: DanhMucCreate):
     """Tạo danh mục mới."""
     try:
@@ -83,7 +82,6 @@ def create_danh_muc(body: DanhMucCreate):
 
 # 1.4. Cập nhật Danh mục (Admin)
 @catalogs_api.put('/danh-muc/<int:danh_muc_id>', responses={"200": DanhMucResponse})
-@admin_required
 def update_danh_muc(path: DanhMucPath, body: DanhMucUpdate):
     """Cập nhật thông tin danh mục."""
     try:
@@ -102,7 +100,6 @@ def update_danh_muc(path: DanhMucPath, body: DanhMucUpdate):
 
 # 1.5. Xóa Danh mục (Admin)
 @catalogs_api.delete('/danh-muc/<int:danh_muc_id>', responses={"200": None})
-@admin_required
 def delete_danh_muc(path: DanhMucPath):
     """Xóa một danh mục."""
     try:

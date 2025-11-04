@@ -74,10 +74,10 @@ class ResetPasswordPath(BaseModel):
 # 1) LOGIN
 # -------------------------------------------------------
 @auth_api.post("/login", responses={"200": LoginResponse})
-def login(body: LoginRequest):  # ← Giữ param 'body: Model'
+def login(body: LoginRequest):
     try:
         result = AuthService.login(body.email, body.mat_khau)
-        user = result["user"]  # AuthService.login trả về dict
+        user = result["user"] 
         token = result["token"]
 
         response = LoginResponse(user=user, token=token)

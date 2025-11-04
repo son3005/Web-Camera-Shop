@@ -1,20 +1,24 @@
 from sqlalchemy import event
 from ...extensions import db
-from ...services.cloudinary_service import CloudinaryService 
+from ...services.cloudinary_service import delete_image_task
 
 class ThuongHieu(db.Model):
     """
-    Class ThuongHieu đại diện cho bảng 'thuong_hieu' trong cơ sở dữ liệu.
-    Attributes:
-        id (int): Khóa chính của bảng, tự động tăng.
-        ma_thuong_hieu (str): Mã thương hiệu, chuỗi tối đa 5 ký tự, duy nhất, không được để trống, có chỉ mục.
-        ten_thuong_hieu (str): Tên thương hiệu, chuỗi tối đa 100 ký tự, duy nhất, không được để trống.
-        logo_url (str, optional): URL của logo thương hiệu, chuỗi tối đa 512 ký tự, có thể để trống.
-        public_id (str): Dùng để lưu id của ảnh trên Cloudinary
-        san_phams (dynamic relationship): Mối quan hệ một-nhiều với bảng 'SanPham', sử dụng back_populates để liên kết với thuộc tính 'thuong_hieu' trong model SanPham.
-    Methods:
-        __repr__(): Trả về chuỗi đại diện cho đối tượng ThuongHieu, hiển thị tên thương hiệu.
-    """   
+    Lớp ThuongHieu đại diện cho bảng 'thuong_hieu' trong cơ sở dữ liệu, lưu trữ thông tin về các thương hiệu sản phẩm.
+
+    Thuộc tính:
+        id (int): Khóa chính, tự động tăng.
+        ma_thuong_hieu (str): Mã thương hiệu, duy nhất, không được để trống, tối đa 5 ký tự.
+        ten_thuong_hieu (str): Tên thương hiệu, duy nhất, không được để trống, tối đa 100 ký tự.
+        logo_url (str, optional): Đường dẫn tới logo của thương hiệu, có thể để trống, tối đa 512 ký tự.
+        public_id (str, optional): Mã định danh công khai, duy nhất, có thể để trống, tối đa 255 ký tự.
+
+    Quan hệ:
+        san_phams (relationship): Danh sách các sản phẩm thuộc thương hiệu này (liên kết với lớp SanPham).
+
+    Phương thức:
+        __repr__(): Trả về chuỗi đại diện cho đối tượng thương hiệu.
+    """
     __tablename__ = 'thuong_hieu'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -28,7 +32,3 @@ class ThuongHieu(db.Model):
     def __repr__(self):
         return f'<Thương hiệu {self.ten_thuong_hieu}>'
     
-@event.listens_for(ThuongHieu, 'after_delete')
-def after_thuong_hieu_delete_listener(mapper, connection, target):
-    if target.public_id: 
-        CloudinaryService.delete_image_task.delay(target.public_id)

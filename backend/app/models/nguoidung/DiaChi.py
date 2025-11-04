@@ -6,25 +6,32 @@ from sqlalchemy import Index
 
 class DiaChi(db.Model):
     """
-    DiaChi là một lớp đại diện cho bảng 'dia_chi' trong cơ sở dữ liệu, lưu trữ thông tin về địa chỉ của người dùng.
-    Attributes:
-        id (int): ID duy nhất của địa chỉ.
-        nguoi_dung_id (int): ID của người dùng liên kết với địa chỉ này.
-        ten_nguoi_nhan (str): Tên người nhận tại địa chỉ.
-        so_dien_thoai (str): Số điện thoại liên lạc tại địa chỉ.
-        phuong_xa (str): Phường/xã nơi địa chỉ nằm.
-        tinh_thanh (str): Tỉnh/thành phố nơi địa chỉ nằm.
-        dia_chi_cu_the (str): Địa chỉ cụ thể (chi tiết).
-        ma_buu_dien (str, optional): Mã bưu điện của địa chỉ.
-        la_mac_dinh (bool): Đánh dấu địa chỉ có phải là địa chỉ mặc định hay không.
-        ngay_tao (datetime): Thời gian tạo địa chỉ.
-        ngay_cap_nhat (datetime): Thời gian cập nhật địa chỉ gần nhất.
-    Relationships:
-        nguoi_dung (NguoiDung): Mối quan hệ với lớp NguoiDung, đại diện cho người dùng sở hữu địa chỉ này.
-        don_hangs (list[DonHang]): Danh sách các đơn hàng liên kết với địa chỉ này.
-    Methods:
-        __repr__: Trả về chuỗi biểu diễn của đối tượng DiaChi, bao gồm ID và ID người dùng liên kết.
+    Lớp DiaChi đại diện cho bảng 'dia_chi' trong cơ sở dữ liệu, lưu trữ thông tin địa chỉ giao hàng của người dùng.
+
+    Thuộc tính:
+        id (int): Khóa chính, định danh duy nhất cho mỗi địa chỉ.
+        nguoi_dung_id (int): Khóa ngoại liên kết đến người dùng sở hữu địa chỉ này.
+        ten_nguoi_nhan (str): Tên người nhận hàng tại địa chỉ này.
+        so_dien_thoai (str): Số điện thoại liên hệ của người nhận.
+        phuong_xa (str): Phường/xã của địa chỉ.
+        tinh_thanh (str): Tỉnh/thành phố của địa chỉ.
+        dia_chi_cu_the (str): Địa chỉ cụ thể (số nhà, tên đường, v.v.).
+        ma_buu_dien (str, tùy chọn): Mã bưu điện của địa chỉ.
+        la_mac_dinh (bool): Đánh dấu đây có phải là địa chỉ mặc định của người dùng hay không.
+        ngay_tao (datetime): Thời điểm tạo địa chỉ.
+        ngay_cap_nhat (datetime): Thời điểm cập nhật địa chỉ gần nhất.
+
+    Quan hệ:
+        nguoi_dung: Tham chiếu đến đối tượng Người Dùng sở hữu địa chỉ này.
+        don_hangs: Danh sách các đơn hàng liên quan đến địa chỉ này.
+        
+    Chỉ mục:
+        idx_diachi_macdinh: Chỉ mục kết hợp trên 'nguoi_dung_id' và 'la_mac_dinh' để tối ưu truy vấn địa chỉ mặc định của người dùng.
+        
+    Phương thức:
+        __repr__: Trả về chuỗi biểu diễn đối tượng địa chỉ, hiển thị ID địa chỉ và ID người dùng sở hữu.
     """
+   
 
     __tablename__ = 'dia_chi'
 

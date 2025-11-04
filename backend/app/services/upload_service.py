@@ -74,41 +74,42 @@ class UploadService:
 
         logger.info(f"Bắt đầu upload file qua server | filename: '{file.filename}', folder: '{folder}'")
 
-        # Lấy kích thước file (log để debug)
         try:
-            file.seek(0, 2)  # Di chuyển đến cuối
-            file_size = file.tell()
-            file.seek(0)     # Reset về đầu
-            logger.debug(f"Kích thước file: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
-        except Exception as e:
-            logger.warning(f"Không thể đọc kích thước file: {e}")
-            file_size = "unknown"
+            # Tạo public_id unique với datetime + uuid 4 ký tự
+            import uuid
+            from datetime import datetime
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            unique_id = str(uuid.uuid4())[:4]  # 4 ký tự đầu của UUID
+            original_filename = file.filename
+            name_without_ext = original_filename.rsplit('.', 1)[0]
+            
+            # Tạo public_id unique: timestamp_uuid4_original_name
+            unique_public_id = f"{timestamp}_{unique_id}_{name_without_ext}"
+            
+            # Nếu có folder, thêm vào public_id
+            if folder:
+                unique_public_id = f"{folder}/{unique_public_id}"
 
-        try:
             # Upload lên Cloudinary
             logger.debug("Gửi request upload tới Cloudinary...")
             upload_result = cloudinary.uploader.upload(
                 file,
-                folder=folder,
-                use_filename=True,
-                unique_filename=False
+                public_id=unique_public_id,
+                use_filename=False,  # Sử dụng public_id của chúng ta
+                unique_filename=False,
+                overwrite=False,  # Không ghi đè
+                resource_type="image"
             )
 
             secure_url = upload_result.get('secure_url')
             public_id = upload_result.get('public_id')
-            resource_type = upload_result.get('resource_type', 'image')
-            format_type = upload_result.get('format', 'unknown')
 
             if not secure_url or not public_id:
                 logger.error("Upload thất bại: Không nhận được URL hoặc public_id từ Cloudinary")
                 raise Exception("Upload lên Cloudinary thất bại, không có URL hoặc Public ID.")
 
             logger.info(f"Upload thành công | public_id: {public_id}")
-            logger.debug(
-                f"Upload details → URL: {secure_url}, "
-                f"Type: {resource_type}, Format: {format_type}, Size: {file_size} bytes"
-            )
-
             return {
                 "url": secure_url,
                 "public_id": public_id
