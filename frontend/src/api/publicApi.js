@@ -1,14 +1,18 @@
 // frontend/src/api/publicApi.js
 // ===================================================================
-// API giao diện khách hàng — đồng bộ cấu trúc với phần Admin (productApi.js)
+// API giao diện khách hàng
+// - Giữ nguyên mock như bạn đã có
+// - Khi USE_MOCK_API = false → gọi backend thật của bạn:
+//     GET /api/san-pham
+//     GET /api/san-pham/:id
 // ===================================================================
 
 import axios from "axios";
 
 // --- CHẾ ĐỘ DEV / PROD ---
-export const USE_MOCK_API = true; // ← bật mock (false = gọi backend thật)
+export const USE_MOCK_API = true; // ← chuyển false để dùng backend thật
 
-// --- Tạo axios instance chung ---
+// --- axios chung ---
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || "http://localhost:5000/api",
 });
@@ -104,18 +108,19 @@ const normalizeProduct = (p) => ({
   id: String(p.id),
   name: p.name ?? p.ten_san_pham ?? "",
   brand: p.brand ?? p.thuong_hieu?.ten_thuong_hieu ?? "",
-  price_from: p.price_from ?? p.sale_price ?? p.gia_goc ?? p.selling_price ?? 0,
+  // giá: ưu tiên price_from, rồi sale_price, rồi giá trong backend (gia_ban/gia_goc)
+  price_from: p.price_from ?? p.sale_price ?? p.gia_ban ?? p.gia_goc ?? 0,
   compareAt: p.compareAt ?? p.original_price ?? null,
   rating: p.rating ?? p.avg_rating ?? 0,
   reviewCount: p.reviewCount ?? p.review_count ?? 0,
   total_stock: p.total_stock ?? p.tong_ton_kho ?? 0,
   promoText: p.promoText || p.promotion || "",
-  description: p.description || "",
+  description: p.description || p.mo_ta || "",
   primaryImage:
     p.primaryImage || p.anh_dai_dien || p.image || p.images?.[0] || "",
   images: p.images || p.hinh_anh?.map((x) => x.url) || [],
-  variants: p.variants || p.bien_the || [],
-  specs: p.specs || p.thong_so || {},
+  variants: p.variants || p.cac_bien_the || p.bien_the || [],
+  specs: p.specs || p.thong_so || p.thong_so_ky_thuat || {},
   level: p.level || p.cap_do || p.segment || null,
 });
 
@@ -135,27 +140,43 @@ export async function getProducts({
     levels = [],
   } = filters;
 
+  // ---------------- MOCK MODE ----------------
   if (USE_MOCK_API) {
     await delay(400);
     let data = [...MOCK_PRODUCTS];
 
+    // search
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       data = data.filter((p) => p.name.toLowerCase().includes(q));
     }
 
+    // filter brand
     if (brands?.length) {
       const set = new Set(brands.map((b) => b.toLowerCase()));
       data = data.filter((p) => set.has(p.brand.toLowerCase()));
     }
 
+    // filter price
     const min = Number(priceRange.min) || 0;
     const max = Number(priceRange.max) || Infinity;
     data = data.filter((p) => p.price_from >= min && p.price_from <= max);
 
+    // filter level
     if (levels?.length) {
       const set = new Set(levels.map((x) => x.toLowerCase()));
       data = data.filter((p) => set.has((p.level || "").toLowerCase()));
+    }
+
+    // sort (nếu FE gửi)
+    if (sort === "price_asc") {
+      data.sort((a, b) => a.price_from - b.price_from);
+    } else if (sort === "price_desc") {
+      data.sort((a, b) => b.price_from - a.price_from);
+    } else if (sort === "name_asc") {
+      data.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === "name_desc") {
+      data.sort((a, b) => b.name.localeCompare(a.name));
     }
 
     const total = data.length;
@@ -164,22 +185,40 @@ export async function getProducts({
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  const res = await api.get("/products", {
-    params: {
-      page,
-      limit,
-      search: searchTerm,
-      sort,
-      brands,
-      minPrice: priceRange.min,
-      maxPrice: priceRange.max,
-      levels,
-    },
-  });
+  // ---------------- BACKEND THẬT ----------------
+  // Gọi đúng route backend bạn có: /api/san-pham
+  const params = {
+    page,
+    per_page: limit,
+  };
+
+  if (searchTerm) params.search = searchTerm;
+  if (sort) params.sort_by = sort; // price_asc, price_desc, name_asc, name_desc
+
+  // giá
+  if (priceRange?.min != null) params.min_price = priceRange.min;
+  if (priceRange?.max != null) params.max_price = priceRange.max;
+
+  // thương hiệu → backend nhận thuong_hieu_ids
+  if (Array.isArray(brands) && brands.length > 0) {
+    params.thuong_hieu_ids = brands;
+  }
+
+  // mình chưa thấy bạn lọc theo level ở backend, nên tạm chưa gửi
+
+  const res = await api.get("/san-pham", { params });
+  const raw = res.data;
+
+  const arr = raw.items || raw.data || [];
+  const pagination = raw.pagination || {};
+  const total = raw.total || pagination.total || arr.length;
+  const pages = pagination.pages || Math.ceil(total / limit);
 
   return {
-    ...res.data,
-    items: (res.data.items || res.data.data || []).map(normalizeProduct),
+    items: arr.map(normalizeProduct),
+    total,
+    page: pagination.page || page,
+    totalPages: pages,
   };
 }
 
@@ -191,7 +230,8 @@ export async function getProduct(id) {
     if (!found) throw new Error("Không tìm thấy sản phẩm");
     return found;
   }
-  const res = await api.get(`/products/${id}`);
+  // backend thật
+  const res = await api.get(`/san-pham/${id}`);
   return normalizeProduct(res.data);
 }
 
@@ -214,7 +254,7 @@ export async function quickSearch(term, limit = 6) {
     .toLowerCase();
   if (!q) return [];
 
-  // Tách model thành từng mảnh: ví dụ "Canon XM-105 Mark II" => ["xm","105","mark","ii"]
+  // tách model
   const getModelPieces = (p) => {
     const nameLower = (p.name || "").toLowerCase();
     const brandLower = (p.brand || "").toLowerCase();
@@ -258,7 +298,7 @@ export async function quickSearch(term, limit = 6) {
     }));
   }
 
-  // ✅ Backend mode — endpoint /products/quick-search
+  // backend
   const { data } = await api.get("/products/quick-search", {
     params: { term: q, limit },
   });

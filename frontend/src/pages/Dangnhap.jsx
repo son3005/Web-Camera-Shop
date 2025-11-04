@@ -1,10 +1,14 @@
-// src/pages/DangNhap.jsx
-// — Đồng bộ màu emerald, bỏ blur gây mờ chữ, form nền rõ ràng (light/dark)
-// — Giữ nguyên gọi authApi.login + redux, fallback khi backend trả token/user khác nhau
+// D:\Web-Camera-Shop\frontend\src\pages\Dangnhap.jsx
+// ---------------------------------------------------
+// Trang đăng nhập:
+//  - gọi /api/auth/login
+//  - lưu {user, token} vào redux + localStorage (qua authSlice)
+//  - điều hướng theo vai_tro hoặc về trang trước đó (nếu bị chặn)
+// ---------------------------------------------------
 
 import React from "react";
 import { FaEnvelope, FaLock, FaArrowRight } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { login } from "../api/authApi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -19,38 +23,57 @@ import { datThongTinDangNhap } from "../redux/slices/authSlice";
 
 export default function DangNhap() {
   const navigate = useNavigate();
+  const location = useLocation(); // 👈 để biết user bị chuyển hướng từ đâu
   const dispatch = useDispatch();
 
+  // setup form + yup
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: yupResolver(loginSchema) });
 
-  // ⬇️ submit: tương thích 2 kiểu backend (JWT có payload hoặc trả kèm user)
+  // submit form
   const onSubmit = async (values) => {
     try {
+      // gọi BE
       const data = await login(values); // { token, user? }
       if (!data?.token) throw new Error("Token không hợp lệ");
 
+      // thử decode token
       let decoded = {};
       try {
         decoded = jwtDecode(data.token);
       } catch {
+        // nếu token không chứa info thì dùng user BE trả
         decoded = data.user || {};
       }
+
+      // chuẩn hóa user để lưu redux
       const userToStore = {
         id: decoded.sub || decoded.id || data.user?.id,
         email: decoded.email || data.user?.email,
+        ho_ten: decoded.ho_ten || data.user?.ho_ten, // 👈 lưu luôn họ tên nếu có
         vai_tro: decoded.vai_tro || data.user?.vai_tro,
       };
+
+      // lưu redux + localStorage
       dispatch(datThongTinDangNhap({ user: userToStore, token: data.token }));
+
       toast.success("🎉 Đăng nhập thành công!", { position: "top-center" });
 
+      // xác định đi đâu tiếp
       const role = (userToStore.vai_tro || "").toLowerCase();
-      navigate(role === "quan_tri_vien" || role === "admin" ? "/admin" : "/", {
-        replace: true,
-      });
+      const from = location.state?.from?.pathname; // nếu bị chặn từ /admin thì sẽ có cái này
+
+      if (from) {
+        // ưu tiên quay lại trang trước đó
+        navigate(from, { replace: true });
+      } else if (role === "quan_tri_vien" || role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       console.error("Đăng nhập lỗi:", err);
       toast.error(
@@ -77,7 +100,7 @@ export default function DangNhap() {
         aria-hidden
       />
 
-      {/* Card: 2 cột, form nền rõ ràng để chữ không mờ */}
+      {/* Card: 2 cột */}
       <div
         className="
           relative z-10 flex w-full max-w-6xl h-[620px] md:h-[640px]
@@ -85,7 +108,7 @@ export default function DangNhap() {
           bg-white/5
         "
       >
-        {/* Cột trái (hero): ảnh + gradient emerald, chỉ trang trí */}
+        {/* Cột trái trang trí */}
         <div className="hidden md:flex w-1/2 relative items-center justify-center text-white">
           <div
             className="absolute inset-0 bg-cover bg-center opacity-30"
@@ -107,7 +130,7 @@ export default function DangNhap() {
           </div>
         </div>
 
-        {/* Cột phải (form): nền rõ ràng light/dark */}
+        {/* Cột phải: form */}
         <div className="w-full md:w-1/2 h-full bg-white/95 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-6 md:p-10">
           <h2 className="text-2xl font-extrabold text-center mb-6">
             Đăng nhập

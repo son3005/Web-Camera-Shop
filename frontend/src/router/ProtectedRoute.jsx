@@ -1,29 +1,34 @@
-// src/router/ProtectedRoute.jsx
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { Navigate, useLocation } from 'react-router-dom';
+// D:\Web-Camera-Shop\frontend\src\router\ProtectedRoute.jsx
+// ---------------------------------------------------
+// Bọc quanh các route cần đăng nhập / cần quyền admin
+// ---------------------------------------------------
+import React from "react";
+import { useSelector } from "react-redux";
+import { Navigate, useLocation } from "react-router-dom";
 
 // Component này nhận `children` (là layout/trang cần bảo vệ)
 // và `adminOnly` (prop để chỉ định có yêu cầu quyền admin hay không)
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, token } = useSelector((state) => state.auth);
-  const location = useLocation(); // Lấy vị trí hiện tại
+  const location = useLocation(); // Lấy vị trí hiện tại để quay lại sau login
 
   // 1. Kiểm tra xem có token không (đã đăng nhập chưa)
   if (!token) {
-    // Nếu chưa đăng nhập, chuyển hướng về trang đăng nhập
-    // `replace: true` để không lưu lại trang admin trong history
-    // `state: { from: location }` để sau khi đăng nhập có thể quay lại trang admin
-    return <Navigate to="/dangnhap" replace state={{ from: location }} />;
+    return (
+      <Navigate
+        to="/dangnhap"
+        replace
+        // lưu lại trang mà user định vào → login xong quay lại
+        state={{ from: location }}
+      />
+    );
   }
 
   // 2. Nếu route yêu cầu quyền admin (adminOnly=true)
   if (adminOnly) {
-    // Kiểm tra xem user có tồn tại và có vai trò 'quan_tri_vien' không
-    // Giả sử backend trả về trường `vai_tro`
-    if (!user || user.vai_tro !== 'quan_tri_vien') {
-      // Nếu không phải admin, chuyển hướng về trang chủ hoặc trang báo lỗi 403
-      // Ở đây tạm chuyển về trang chủ '/'
+    // backend trả về 'quan_tri_vien' → mình convert sang lowercase để chắc chắn
+    const role = (user?.vai_tro || "").toLowerCase();
+    if (role !== "quan_tri_vien") {
       alert("Bạn không có quyền truy cập trang này!");
       return <Navigate to="/" replace />;
     }
