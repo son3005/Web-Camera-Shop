@@ -1,8 +1,14 @@
-// frontend/src/api/authApi.js
-import { apiPublic } from "../lib/axios"; // đảm bảo file trên tồn tại
+// D:\Web-Camera-Shop\frontend\src\api\authApi.js
+// ---------------------------------------------------
+// Tập các hàm gọi API xác thực.
+// Dựa trên backend: /api/auth/login, /api/auth/register, ...
+// ---------------------------------------------------
+import { apiPublic } from "../lib/axios"; // dùng instance public, không cần token
 
 // --- ĐĂNG NHẬP ---
+// credentials = { email, mat_khau }
 export const login = async (credentials) => {
+  // BE phải trả { token, user }
   const res = await apiPublic.post("/auth/login", credentials);
   return res.data;
 };
@@ -13,6 +19,7 @@ export const register = async (userData) => {
   return res.data;
 };
 
+// alias để code cũ vẫn chạy
 export const registerUser = register;
 
 // --- QUÊN MẬT KHẨU ---
@@ -22,6 +29,7 @@ export const forgotPassword = async (emailData) => {
 };
 
 // --- ĐẶT LẠI MẬT KHẨU ---
+// FE sẽ gọi /auth/reset-password/:token
 export const resetPassword = async (token, passwordData) => {
   const res = await apiPublic.post(
     `/auth/reset-password/${token}`,

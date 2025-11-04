@@ -1,4 +1,3 @@
-
 // src/router/index.jsx
 import React, { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
@@ -16,18 +15,12 @@ const DangKy = lazy(() => import("../pages/Dangky")); // Giả sử có trang Da
 const QuenMatKhau = lazy(() => import("../pages/Quenmatkhau"));
 const DoiMatKhau = lazy(() => import("../pages/Doimatkhau"));
 
-
 const router = createBrowserRouter([
   {
     // Route gốc sử dụng App layout
     path: "/",
     element: <App />, // App chứa <Outlet/>
-    children: [
-  
-      MainRoutes,
-
-      AdminRoutes,
-    ],
+    children: [MainRoutes, AdminRoutes],
   },
 
   // --- Các route không dùng layout chung (App layout) ---
@@ -48,7 +41,7 @@ const router = createBrowserRouter([
       </Suspense>
     ),
   },
-   {
+  {
     path: "/quenmatkhau",
     element: (
       <Suspense fallback={<div>Đang tải...</div>}>

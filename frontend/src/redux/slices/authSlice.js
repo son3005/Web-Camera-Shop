@@ -1,57 +1,55 @@
 // src/redux/slices/authSlice.js
+// Slice quản lý trạng thái đăng nhập (user + token)
+// Mình chỉ lưu và xóa đúng 2 thứ: user, token
+// KHÔNG xóa các key dạng cart_user_<id> để giỏ hàng còn đó cho lần login sau.
+
 import { createSlice } from "@reduxjs/toolkit";
 
 // Lấy thông tin user/token từ localStorage (nếu có)
-// Điều này RẤT QUAN TRỌNG, giúp user không bị logout khi F5
-const user = JSON.parse(localStorage.getItem("user"));
-const token = localStorage.getItem("token");
+// → giúp user không bị logout khi F5
+const savedUser = localStorage.getItem("user");
+const savedToken = localStorage.getItem("token");
 
-// 1. Định nghĩa trạng thái ban đầu
-const trangThaiBanDau = {
-  user: user || null,
-  token: token || null,
+const initialState = {
+  // Nếu đã từng lưu thì parse ra, không thì để null
+  user: savedUser ? JSON.parse(savedUser) : null,
+  token: savedToken || null,
 };
 
-// 2. Tạo Slice
 const authSlice = createSlice({
-  name: "auth", // Tên của slice
-  initialState: trangThaiBanDau,
-
-  // 3. Định nghĩa các "reducers" (hàm cập nhật state)
+  name: "auth",
+  initialState,
   reducers: {
     /**
-     * Hàm này được gọi khi user đăng nhập thành công
-     * payload sẽ là { user: {...}, token: "..." }
+     * Gọi khi đăng nhập thành công
+     * payload mong đợi: { user: {...}, token: "..." }
      */
     datThongTinDangNhap: (state, action) => {
       const { user, token } = action.payload;
 
-      // Cập nhật state của Redux
+      // cập nhật redux
       state.user = user;
       state.token = token;
 
-      // Lưu vào localStorage để giữ đăng nhập
+      // lưu vào localStorage để F5 không mất
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("token", token);
     },
 
     /**
-     * Hàm này được gọi khi user đăng xuất
+     * Gọi khi đăng xuất
+     * Ở đây chỉ xóa thông tin đăng nhập
+     * KHÔNG đụng vào các key giỏ hàng theo user (cart_user_<id>)
      */
     dangXuat: (state) => {
-      // Xóa state của Redux
       state.user = null;
       state.token = null;
 
-      // Xóa khỏi localStorage
       localStorage.removeItem("user");
       localStorage.removeItem("token");
     },
   },
 });
 
-// 4. Export các actions để component có thể gọi (ví dụ: dispatch(datThongTinDangNhap(...)))
 export const { datThongTinDangNhap, dangXuat } = authSlice.actions;
-
-// 5. Export reducer để đưa vào store
 export default authSlice.reducer;

@@ -5,8 +5,10 @@ const ProductListPage = lazy(() => import("../pages/ProductListPage"));
 const ProductDetailPage = lazy(() => import("../pages/ProductDetailPage"));
 const CartPage = lazy(() => import("../pages/CartPage"));
 const CheckoutPage = lazy(() => import("../pages/CheckoutPage"));
+const AccountPage = lazy(() => import("../pages/AccountPage")); // 👈 thêm
 
 import MainLayout from "../layouts/MainLayout";
+import ProtectedRoute from "./ProtectedRoute"; // 👈 dùng để chặn khách vãng lai
 
 // fallback đơn giản
 const Fallback = <div>Loading...</div>;
@@ -53,6 +55,17 @@ const MainRoutes = {
         <Suspense fallback={Fallback}>
           <CheckoutPage />
         </Suspense>
+      ),
+    },
+    // 👇 mới: trang quản lý thông tin cá nhân
+    {
+      path: "tai-khoan",
+      element: (
+        <ProtectedRoute>
+          <Suspense fallback={Fallback}>
+            <AccountPage />
+          </Suspense>
+        </ProtectedRoute>
       ),
     },
   ],
