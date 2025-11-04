@@ -6,13 +6,12 @@ from decimal import Decimal
 
 from ..Shared import TrangThaiSanPhamEnum
 from .DanhMuc import DanhMucResponse
+from .CapDo import CapDoRespone
 from .ThuongHieu import ThuongHieuResponse
 from .BienTheSanPham import BienTheSanPhamCreate, BienTheSanPhamResponse, BienTheSanPhamUpdate
 
 
 class SanPhamBase(BaseModel):
-    danh_muc_id: int = Field(..., description="ID của danh mục sản phẩm")
-    thuong_hieu_id: int = Field(..., description="ID của thương hiệu sản phẩm")
     ten_san_pham: str = Field(..., max_length=200, description="Tên sản phẩm")
     mo_ta: Optional[str] = Field(None, description="Mô tả sản phẩm")
     thong_so_ky_thuat: Optional[Dict[str, Any]] = Field(None, description="Thông số kỹ thuật")
@@ -27,6 +26,9 @@ class SanPhamBase(BaseModel):
 
 
 class SanPhamCreate(SanPhamBase):
+    danh_muc_id: int = Field(..., description="ID của danh mục sản phẩm")
+    thuong_hieu_id: int = Field(..., description="ID của thương hiệu sản phẩm")
+    cap_do_id: int = Field(..., description="ID của cấp độ sản phẩm")
     bien_the_san_phams: Optional[List[BienTheSanPhamCreate]] = Field(
         [], description="Danh sách biến thể sản phẩm"
     )
@@ -35,6 +37,7 @@ class SanPhamCreate(SanPhamBase):
 class SanPhamUpdate(BaseModel):
     danh_muc_id: Optional[int] = Field(None)
     thuong_hieu_id: Optional[int] = Field(None)
+    cap_do_id:Optional[int] = Field(None)
     ten_san_pham: Optional[str] = Field(None, max_length=200)
     mo_ta: Optional[str] = Field(None)
     thong_so_ky_thuat: Optional[Dict[str, Any]] = Field(None)
@@ -53,6 +56,7 @@ class SanPhamResponse(SanPhamBase):
     id: int
     ma_san_pham: str = Field(..., max_length=24, description="Mã sản phẩm")
     danh_muc: DanhMucResponse
+    cap_do: CapDoRespone
     thuong_hieu: ThuongHieuResponse
     cac_bien_the: List[BienTheSanPhamResponse] = Field(
         default_factory=list,

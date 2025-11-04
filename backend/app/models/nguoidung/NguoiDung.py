@@ -1,16 +1,11 @@
 from datetime import datetime
 from ...extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
-import enum
-import uuid
-from  ..enums import VaiTroNguoiDungEnum, TrangThaiNguoiDungEnum
+from ..enums import VaiTroNguoiDungEnum, TrangThaiNguoiDungEnum
 
-# --- MODEL CHÍNH ---
 class NguoiDung(db.Model):
-
     __tablename__ = 'nguoi_dung'
     
-    # --- Các thuộc tính ---
     id = db.Column(db.Integer, primary_key=True)
     ma_nguoi_dung = db.Column(db.String(20), unique=True, nullable=False, index=True)
     ho_ten = db.Column(db.String(100), nullable=False)
@@ -38,24 +33,21 @@ class NguoiDung(db.Model):
         'polymorphic_on': vai_tro
     }
 
-    # --- QUAN HỆ ---
+    # --- QUAN HỆ - Sử dụng string reference ---
     gio_hang = db.relationship('GioHang', back_populates='nguoi_dung', uselist=False, cascade="all, delete-orphan")
     don_hangs = db.relationship('DonHang', back_populates='nguoi_dung', lazy='dynamic')
+    phieu_thus = db.relationship('PhieuThu', back_populates='nguoi_dung', lazy='dynamic')  # String reference
     danh_gias = db.relationship('DanhGia', back_populates='nguoi_dung', lazy='dynamic')
     dia_chis = db.relationship('DiaChi', back_populates='nguoi_dung', lazy='dynamic', cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<NguoiDung {self.email} ({self.vai_tro.value})>'
 
-
-# --- LỚP CON KHÁCH HÀNG ---
 class KhachHang(NguoiDung):
     __mapper_args__ = {
         'polymorphic_identity': VaiTroNguoiDungEnum.KHACH_HANG
     }
 
-
-# --- LỚP CON QUẢN TRỊ VIÊN ---
 class QuanTriVien(NguoiDung):
     __mapper_args__ = {
         'polymorphic_identity': VaiTroNguoiDungEnum.QUAN_TRI_VIEN

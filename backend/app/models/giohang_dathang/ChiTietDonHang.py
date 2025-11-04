@@ -1,7 +1,7 @@
 # app/models/chi_tiet_don_hang.py
 
 from ...extensions import db
-
+ 
 class ChiTietDonHang(db.Model):
     __tablename__ = 'chi_tiet_don_hang'
 

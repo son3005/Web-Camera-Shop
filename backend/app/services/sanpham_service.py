@@ -2,7 +2,7 @@
 from http.client import HTTPException
 from sqlalchemy.orm import joinedload, selectinload
 from ..extensions import db
-from ..models.sanpham import SanPham, BienTheSanPham, HinhAnhSanPham, DanhMuc, ThuongHieu
+from ..models.sanpham import SanPham, BienTheSanPham, HinhAnhSanPham, DanhMuc, ThuongHieu, CapDo
 from ..models.giohang_dathang import ChiTietDonHang, ChiTietGioHang
 from ..schemas.sanpham import (
     SanPhamCreate, SanPhamUpdate, SanPhamResponse,
@@ -38,14 +38,9 @@ class SanPhamService:
         sort_by_price=None,
         sort_by_name=None,
         thuong_hieu_ids=None,
-        danh_muc_ids=None
+        danh_muc_ids=None,
+        cap_do_ids=None
     ):
-        logger.info(
-            f"GET /san-pham | page={page}, per_page={per_page}, search='{search}', "
-            f"min_price={min_price}, max_price={max_price}, sort_by='{sort_by_price} & {sort_by_name}', "
-            f"thuong_hieu_ids={thuong_hieu_ids}, danh_muc_ids={danh_muc_ids}"
-        )
-
         query = SanPham.query.options(
             joinedload(SanPham.danh_muc),
             joinedload(SanPham.thuong_hieu),
@@ -53,12 +48,13 @@ class SanPhamService:
         )
 
         if danh_muc_ids:
-            logger.debug(f"Lọc theo danh mục: {danh_muc_ids}")
             query = query.filter(SanPham.danh_muc_id.in_(danh_muc_ids))
 
         if thuong_hieu_ids:
-            logger.debug(f"Lọc theo thương hiệu: {thuong_hieu_ids}")
             query = query.filter(SanPham.thuong_hieu_id.in_(thuong_hieu_ids))
+
+        if cap_do_ids:
+            query = query.filter(SanPham.cap_do_id.in_(cap_do_ids))
 
         if search:
             logger.debug(f"Tìm kiếm FULLTEXT: '{search}'")
@@ -66,15 +62,7 @@ class SanPhamService:
                 text("MATCH(ten_san_pham, mo_ta) AGAINST (:search IN BOOLEAN MODE)")
             ).params(search=search)
 
-        effective_price = case(
-            (
-                (BienTheSanPham.gia_khuyen_mai.is_not(null())) &
-                (BienTheSanPham.ngay_bat_dau_khuyen_mai <= func.now()) &
-                (BienTheSanPham.ngay_ket_thuc_khuyen_mai >= func.now()),
-                BienTheSanPham.gia_khuyen_mai
-            ),
-            else_=BienTheSanPham.gia_ban
-        )
+        effective_price =BienTheSanPham.gia_ban
 
         price_subquery = (
             db.session.query(
@@ -132,6 +120,7 @@ class SanPhamService:
         san_pham = SanPham.query.options(
             joinedload(SanPham.danh_muc),
             joinedload(SanPham.thuong_hieu),
+            joinedload(SanPham.cap_do),
             selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
         ).get(san_pham_id)
         if not san_pham:
@@ -139,6 +128,7 @@ class SanPhamService:
             raise ProductNotFound()
         return san_pham
 
+    @staticmethod
     @staticmethod
     def create_san_pham(data: SanPhamCreate):
         """
@@ -158,6 +148,9 @@ class SanPhamService:
             thuong_hieu = db.session.query(ThuongHieu).get(data.thuong_hieu_id)
             if not thuong_hieu:
                 raise NotFound("Thương hiệu không tồn tại")
+            cap_do = db.session.query(CapDo).get(data.cap_do_id)
+            if not thuong_hieu:
+                raise NotFound("Thương hiệu không tồn tại")
             
             # Bước 2: Generate mã
             ma_san_pham = generate_ma_san_pham(danh_muc.ma_danh_muc[:5], thuong_hieu.ma_thuong_hieu[:5])
@@ -167,10 +160,10 @@ class SanPhamService:
                 ma_san_pham=ma_san_pham,
                 danh_muc_id=data.danh_muc_id,
                 thuong_hieu_id=data.thuong_hieu_id,
+                cap_do_id = data.cap_do_id,
                 ten_san_pham=data.ten_san_pham,
                 mo_ta=data.mo_ta,
                 thong_so_ky_thuat=data.thong_so_ky_thuat,
-                trang_thai=data.trang_thai,
                 ngay_tao=datetime.utcnow(),
                 ngay_cap_nhat=datetime.utcnow()
             )
@@ -184,11 +177,8 @@ class SanPhamService:
                         san_pham_id=new_san_pham.id,
                         ten_bien_the=bt_data.ten_bien_the,
                         trang_thai_kich_hoat=bt_data.trang_thai_kich_hoat,
+                        mau = bt_data.mau,
                         gia_ban=bt_data.gia_ban,
-                        gia_khuyen_mai=bt_data.gia_khuyen_mai,
-                        ngay_bat_dau_khuyen_mai=bt_data.ngay_bat_dau_khuyen_mai,
-                        ngay_ket_thuc_khuyen_mai=bt_data.ngay_ket_thuc_khuyen_mai,
-                        so_luong_ton=bt_data.so_luong_ton
                     )
                     db.session.add(new_variant)
                     db.session.flush()  # Lấy ID biến thể
@@ -198,10 +188,11 @@ class SanPhamService:
                         for img_data in bt_data.hinh_anhs:
                             new_image = HinhAnhSanPham(
                                 bien_the_id=new_variant.id,
-                                url=img_data.url,
-                                public_id=img_data.public_id,
+                                url=img_data.url,  
+                                public_id=img_data.public_id,  
                                 alt_text=img_data.alt_text,
-                                la_anh_dai_dien=img_data.la_anh_dai_dien
+                                la_anh_dai_dien=img_data.la_anh_dai_dien,
+                                thu_tu=img_data.thu_tu
                             )
                             db.session.add(new_image)
             
@@ -235,6 +226,8 @@ class SanPhamService:
                 san_pham.danh_muc_id = update_data['danh_muc_id']
             if 'thuong_hieu_id' in update_data:
                 san_pham.thuong_hieu_id = update_data['thuong_hieu_id']
+            if 'cap_do_id' in update_data:
+                san_pham.cap_do_id = update_data['cap_do_id']
             if 'ten_san_pham' in update_data:
                 san_pham.ten_san_pham = update_data['ten_san_pham']
             if 'mo_ta' in update_data:
@@ -311,7 +304,8 @@ class SanPhamService:
             url=hinh_anh_data.url,
             public_id=hinh_anh_data.public_id,
             alt_text=hinh_anh_data.alt_text,
-            la_anh_dai_dien=hinh_anh_data.la_anh_dai_dien
+            la_anh_dai_dien=hinh_anh_data.la_anh_dai_dien,
+            thu_tu = hinh_anh_data.thu_tu
         )
         db.session.add(new_hinh_anh)
         
@@ -412,10 +406,7 @@ class SanPhamService:
             ten_bien_the=data.ten_bien_the,
             trang_thai_kich_hoat=data.trang_thai_kich_hoat,
             gia_ban=data.gia_ban,
-            gia_khuyen_mai=data.gia_khuyen_mai,
-            ngay_bat_dau_khuyen_mai=data.ngay_bat_dau_khuyen_mai,
-            ngay_ket_thuc_khuyen_mai=data.ngay_ket_thuc_khuyen_mai,
-            so_luong_ton=data.so_luong_ton
+            mau=data.mau
         )
         db.session.add(new_variant)
         db.session.flush()  # Flush để lấy ID

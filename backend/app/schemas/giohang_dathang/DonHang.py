@@ -10,7 +10,6 @@ from .ChiTietDonHang import ChiTietDonHangResponse  # Đã sửa tên file
 
 
 class DonHangBase(BaseModel):
-    ma_don_hang: str = Field(..., max_length=25, description="Mã đơn hàng")
     nguoi_dung_id: Optional[int] = Field(None, description="ID người dùng")
     dia_chi_id: Optional[int] = Field(None, description="ID địa chỉ giao")
     ten_nguoi_nhan: str = Field(..., max_length=50, description="Tên người nhận")
@@ -44,6 +43,7 @@ class DonHangUpdate(BaseModel):
 
 class DonHangResponse(DonHangBase):
     id: int = Field(..., description="ID đơn hàng")
+    ma_don_hang: str = Field(..., max_length=25, description="Mã đơn hàng")
     ngay_tao: datetime = Field(..., description="Ngày tạo")
     ngay_cap_nhat: datetime = Field(..., description="Ngày cập nhật")
     items: List[ChiTietDonHangResponse] = Field(

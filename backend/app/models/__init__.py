@@ -11,3 +11,6 @@ from .giohang_dathang import *
 # ===== COUPON, REVIEW, WISHLIST =====
 from .extras import *
 from .enums import *
+
+
+from .phieuthu import *

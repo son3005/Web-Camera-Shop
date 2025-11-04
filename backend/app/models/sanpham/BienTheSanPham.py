@@ -38,24 +38,22 @@ class BienTheSanPham(db.Model):
     ten_bien_the = db.Column(db.String(100), nullable=False)
     trang_thai_kich_hoat = db.Column(db.Enum(TrangThaiSanPhamEnum), default=TrangThaiSanPhamEnum.DANG_BAN, nullable=False)
     gia_ban = db.Column(db.Numeric(12, 2), nullable=False)
-    gia_khuyen_mai = db.Column(db.Numeric(12, 2), nullable=True)
-    ngay_bat_dau_khuyen_mai = db.Column(db.DateTime, nullable=True)
-    ngay_ket_thuc_khuyen_mai = db.Column(db.DateTime, nullable=True)
-    so_luong_ton = db.Column(db.Integer, nullable=False, default=0)
+    mau = db.Column(db.String(20),nullable=True)
+    so_luong = db.Column(db.Integer, nullable=False, default=0)
     
     # --- Mối quan hệ ---
     san_pham = db.relationship('SanPham', back_populates='cac_bien_the')
     hinh_anhs = db.relationship('HinhAnhSanPham', back_populates='bien_the', cascade="all, delete-orphan")
     chi_tiet_gio_hangs = db.relationship('ChiTietGioHang', back_populates='bien_the_san_pham')
     chi_tiet_don_hangs = db.relationship('ChiTietDonHang', back_populates='bien_the_san_pham')
+    chi_tiet_phieu_thus = db.relationship('ChiTietPhieuThu', back_populates='bien_the_san_pham')
+
 
     #-- Ràng buộc kiểm tra ---
     __table_args__ = (
         db.Index('idx_trang_thai', 'trang_thai_kich_hoat'),
         db.CheckConstraint('gia_ban > 0', name='check_gia_positive'),
-        db.CheckConstraint('so_luong_ton >= 0', name='check_so_luong_ton_non_negative'),
-        db.CheckConstraint('gia_khuyen_mai IS NULL OR (gia_khuyen_mai > 0 AND gia_khuyen_mai < gia_ban)', name='check_gia_khuyen_mai_valid'),
-        db.CheckConstraint('(ngay_bat_dau_khuyen_mai IS NULL AND ngay_ket_thuc_khuyen_mai IS NULL) OR (ngay_bat_dau_khuyen_mai IS NOT NULL AND ngay_ket_thuc_khuyen_mai IS NOT NULL AND ngay_bat_dau_khuyen_mai <= ngay_ket_thuc_khuyen_mai)', name='check_ngay_khuyen_mai_valid'),
+        db.CheckConstraint('so_luong >= 0', name='check_so_luong_positive')
     )
 
     def __repr__(self):

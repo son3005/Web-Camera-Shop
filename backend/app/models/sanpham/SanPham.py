@@ -34,15 +34,17 @@ class SanPham(db.Model):
     ma_san_pham = db.Column(db.String(24), unique=True, nullable=False, index=True)
     danh_muc_id = db.Column(db.Integer, db.ForeignKey('danh_muc.id'), nullable=False, index=True)
     thuong_hieu_id = db.Column(db.Integer, db.ForeignKey('thuong_hieu.id'), nullable=False, index=True)
+    cap_do_id = db.Column(db.Integer,db.ForeignKey("cap_do.id"),nullable=False,index=True)
     ten_san_pham = db.Column(db.String(200), nullable=False, index=True)
+    mau_sac = db.Column(db.String(50), nullable=True)
     mo_ta = db.Column(db.Text, nullable=True)
     thong_so_ky_thuat = db.Column(db.JSON, nullable=True)
-    trang_thai = db.Column(db.Enum(TrangThaiSanPhamEnum), nullable=False, default=TrangThaiSanPhamEnum.DANG_BAN)
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
     ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # --- Mối quan hệ ---
     danh_muc = db.relationship('DanhMuc', back_populates='san_phams')
+    cap_do = db.relationship('CapDo', back_populates='san_phams')
     thuong_hieu = db.relationship('ThuongHieu', back_populates='san_phams')
     cac_bien_the = db.relationship('BienTheSanPham', back_populates='san_pham', cascade="all, delete-orphan")
     danh_gias = db.relationship('DanhGia', back_populates='san_pham', lazy='dynamic')

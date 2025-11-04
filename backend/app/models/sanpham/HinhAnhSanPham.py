@@ -27,21 +27,12 @@ class HinhAnhSanPham(db.Model):
     bien_the_id = db.Column(db.Integer, db.ForeignKey('bien_the_san_pham.id'), nullable=False, index=True)
     url = db.Column(db.String(512), nullable=False)
     public_id = db.Column(db.String(255), nullable=False, unique=True, index=True) 
-    alt_text = db.Column(db.String(200), nullable=True) 
+    alt_text = db.Column(db.String(200), nullable=True)
+    thu_tu = db.Column(db.Integer, nullable=False)
     la_anh_dai_dien = db.Column(db.Boolean, default=False, nullable=False)
-    
     bien_the = db.relationship('BienTheSanPham', back_populates='hinh_anhs')
-    rep_key = db.Column(
-        db.Integer,
-        db.Computed('CASE WHEN la_anh_dai_dien = 1 THEN bien_the_id ELSE NULL END'),
-        nullable=True
-    )
     #--- Ràng buộc ---
-    __table_args__ = (
-        db.Index('uq_bienthe_anhdaidien', 'rep_key', unique=True),
-        db.CheckConstraint('la_anh_dai_dien IN (0, 1)', name='ck_la_anh_dai_dien_bool'),
-    )
-
+ 
     def __repr__(self):
         return f'<Hình ảnh {self.id} - public_id: {self.public_id}>'
 

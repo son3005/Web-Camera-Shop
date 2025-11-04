@@ -30,6 +30,7 @@ class ThuongHieuUpdate(BaseModel):
     ma_thuong_hieu: Optional[str] = Field(None, max_length=5)
     ten_thuong_hieu: Optional[str] = Field(None, max_length=100)
     logo_url: Optional[str] = Field(None, max_length=512)
+    public_id: Optional[str] = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
 

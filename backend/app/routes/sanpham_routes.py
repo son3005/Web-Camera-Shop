@@ -1,6 +1,6 @@
 # /backend/app/routes/sanpham_routes.py
 import traceback
-from flask import jsonify, current_app, request
+from flask import json, jsonify, current_app, request
 from pydantic import BaseModel, Field
 from flask_openapi3 import APIBlueprint
 from werkzeug.exceptions import BadRequest, NotFound
@@ -12,6 +12,7 @@ from ..schemas.sanpham import (
     BienTheSanPhamCreate, BienTheSanPhamResponse, BienTheSanPhamUpdate, SanPhamListResponse,
     HinhAnhCreate, HinhAnhUpdate, HinhAnhResponse
 )
+from ..services.upload_service import UploadService
 from ..schemas.path_models import *  # Giả sử đã có
 from ..utils.decorators import admin_required
 
@@ -44,6 +45,7 @@ def get_all_san_pham():
         sort_by_name = request.args.get('sort_by', None, type=str)
         thuong_hieu_ids = request.args.getlist('thuong_hieu_ids', type=int)
         danh_muc_ids = request.args.getlist('danh_muc_ids', type=int)
+        cap_do_ids = request.args.getlist('cap_do_ids', type=int)
 
         valid_sorts_price = ['price_asc', 'price_desc', 'name_asc', 'name_desc']
         valid_sorts_name = ['price_asc', 'price_desc', 'name_asc', 'name_desc']
@@ -55,7 +57,7 @@ def get_all_san_pham():
         result = SanPhamService.get_all_san_pham(
             page=page, per_page=per_page, search=search,
             min_price=min_price, max_price=max_price, sort_by_price=sort_by_price, sort_by_name=sort_by_name,
-            thuong_hieu_ids=thuong_hieu_ids, danh_muc_ids=danh_muc_ids
+            thuong_hieu_ids=thuong_hieu_ids, danh_muc_ids=danh_muc_ids, cap_do_ids=cap_do_ids
         )
         response = SanPhamListResponse.model_validate(result)
         return jsonify(response.model_dump()), 200
@@ -82,25 +84,6 @@ def get_san_pham(path: SanPhamPath):
         current_app.logger.error(f"Lỗi lấy sản phẩm {path.san_pham_id}: {traceback.format_exc()}")
         return jsonify({"error": "Lỗi máy chủ khi lấy sản phẩm."}), 500
 
-# ==============================================================
-# 3️⃣ TẠO SẢN PHẨM (ADMIN)
-# ==============================================================
-@product_api.post('', responses={"201": SanPhamResponse})
-@admin_required
-def create_san_pham(body: SanPhamCreate):
-    """Tạo sản phẩm mới."""
-    try:
-        new_san_pham = SanPhamService.create_san_pham(body)
-        db.session.commit()
-        response = SanPhamResponse.model_validate(new_san_pham)
-        return jsonify(response.model_dump()), 201
-    except (BadRequest, NotFound) as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
-    except Exception:
-        db.session.rollback()
-        current_app.logger.error(f"Lỗi tạo sản phẩm: {traceback.format_exc()}")
-        return jsonify({"error": "Không thể tạo sản phẩm."}), 500
 
 # ==============================================================
 # 4️⃣ CẬP NHẬT SẢN PHẨM (ADMIN)
@@ -278,3 +261,58 @@ def delete_hinh_anh(path: HinhAnhPath):  # Sử dụng HinhAnhPath mới
         db.session.rollback()
         current_app.logger.error(f"Lỗi xóa ảnh {path.hinh_anh_id}: {traceback.format_exc()}")
         return jsonify({"error": "Không thể xóa ảnh."}), 500
+
+
+
+
+
+# ==============================================================
+# 12️⃣ TẠO SẢN PHẨM VỚI UPLOAD ẢNH (FormData)
+# ==============================================================
+@product_api.post('/with-images', responses={"201": SanPhamResponse})
+@admin_required
+def create_san_pham_with_images():
+    """Tạo sản phẩm mới với upload ảnh qua FormData."""
+    try:
+        # Lấy dữ liệu sản phẩm từ form
+        product_json = request.form.get('product')
+        if not product_json:
+            return jsonify({"error": "Thiếu dữ liệu sản phẩm"}), 400
+        
+        # Parse JSON thành dict
+        try:
+            product_data = json.loads(product_json)
+        except json.JSONDecodeError as e:
+            return jsonify({"error": f"Dữ liệu sản phẩm không hợp lệ: {str(e)}"}), 400
+        
+        # Xử lý upload ảnh và gán URL vào product_data
+        for i, bien_the in enumerate(product_data.get('bien_the_san_phams', [])):
+            for j, hinh_anh in enumerate(bien_the.get('hinh_anhs', [])):
+                # Lấy file ảnh từ form data
+                file_key = f'images[{i}][{j}]'
+                if file_key in request.files:
+                    file = request.files[file_key]
+                    if file and file.filename:
+                        # Upload ảnh lên Cloudinary
+                        upload_result = UploadService.upload_direct_to_server(file, folder="san_pham")
+                        # Cập nhật URL và public_id vào dữ liệu ảnh
+                        hinh_anh['url'] = upload_result['url']
+                        hinh_anh['public_id'] = upload_result['public_id']
+        
+        # Chuyển đổi dict thành SanPhamCreate
+        san_pham_create = SanPhamCreate.model_validate(product_data)
+        
+        # Gọi service tạo sản phẩm
+        new_san_pham = SanPhamService.create_san_pham(san_pham_create)
+        db.session.commit()
+        
+        response = SanPhamResponse.model_validate(new_san_pham)
+        return jsonify(response.model_dump()), 201
+        
+    except (BadRequest, NotFound) as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Lỗi tạo sản phẩm với ảnh: {traceback.format_exc()}")
+        return jsonify({"error": "Không thể tạo sản phẩm."}), 500

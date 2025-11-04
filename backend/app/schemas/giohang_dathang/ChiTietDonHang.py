@@ -29,6 +29,5 @@ class ChiTietDonHangUpdate(BaseModel):
 
 class ChiTietDonHangResponse(ChiTietDonHangBase):
     id: int = Field(..., description="ID chi tiết đơn hàng")
-    ngay_them: datetime = Field(..., description="Ngày thêm vào đơn")
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,0 +1,118 @@
+2025-11-04 05:31:51,795 - app.app.main - ERROR - [auth.register] Traceback (most recent call last):
+  File "/app/app/routes/auth_routes.py", line 98, in register
+    new_user = AuthService.register(body)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/services/auth_service.py", line 83, in register
+    existing_user = NguoiDung.query.filter(NguoiDung.email.ilike(data.email)).first()
+                    ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/flask_sqlalchemy/model.py", line 22, in __get__
+    return cls.query_class(
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 276, in __init__
+    self._set_entities(entities)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 288, in _set_entities
+    self._raw_columns = [
+                        ^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 289, in <listcomp>
+    coercions.expect(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 388, in expect
+    insp._post_inspect
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1338, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 2724, in _post_inspect
+    self._check_configure()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 2401, in _check_configure
+    _configure_registries({self.registry}, cascade=True)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 4218, in _configure_registries
+    _do_configure_registries(registries, cascade)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 4259, in _do_configure_registries
+    mapper._post_configure_properties()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 2418, in _post_configure_properties
+    prop.init()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/interfaces.py", line 595, in init
+    self.do_init()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/relationships.py", line 1660, in do_init
+    self._generate_backref()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/relationships.py", line 2144, in _generate_backref
+    self._add_reverse_property(self.back_populates)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/relationships.py", line 1615, in _add_reverse_property
+    raise sa_exc.ArgumentError(
+sqlalchemy.exc.ArgumentError: reverse_property 'cap_do' on relationship CapDo.san_phams references relationship SanPham.cap_do, which does not reference mapper Mapper[CapDo(cap_do)]
+
+2025-11-04 05:36:01,465 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-04 05:36:01,530 - app.app.main - INFO - Cloudinary initialized
+2025-11-04 05:36:01,534 - app.app.main - DEBUG - Registered APIBlueprint: auth_api at /api/auth
+2025-11-04 05:36:01,540 - app.app.main - DEBUG - Registered APIBlueprint: product_api at /api/san-pham
+2025-11-04 05:36:01,541 - app.app.main - DEBUG - Registered APIBlueprint: upload_api at /api/upload
+2025-11-04 05:36:01,544 - app.app.main - DEBUG - Registered APIBlueprint: review_api at /api
+2025-11-04 05:36:01,548 - app.app.main - DEBUG - Registered APIBlueprint: cart_api at /api/cart
+2025-11-04 05:36:01,552 - app.app.main - DEBUG - Registered APIBlueprint: order_api at /api/orders
+2025-11-04 05:36:01,558 - app.app.main - DEBUG - Registered APIBlueprint: catalogs_api at /api/catalogs
+2025-11-04 05:36:01,560 - app.app.main - DEBUG - Registered APIBlueprint: export_api at /api/san-pham
+2025-11-04 05:36:02,037 - app.main - INFO - === Flask App Started (development) ===
+2025-11-04 05:36:02,063 - app.main - INFO - Cloudinary initialized
+2025-11-04 05:36:02,074 - app.main - DEBUG - Registered APIBlueprint: auth_api at /api/auth
+2025-11-04 05:36:02,091 - app.main - DEBUG - Registered APIBlueprint: product_api at /api/san-pham
+2025-11-04 05:36:02,097 - app.main - DEBUG - Registered APIBlueprint: upload_api at /api/upload
+2025-11-04 05:36:02,102 - app.main - DEBUG - Registered APIBlueprint: review_api at /api
+2025-11-04 05:36:02,112 - app.main - DEBUG - Registered APIBlueprint: cart_api at /api/cart
+2025-11-04 05:36:02,116 - app.main - DEBUG - Registered APIBlueprint: order_api at /api/orders
+2025-11-04 05:36:02,134 - app.main - DEBUG - Registered APIBlueprint: catalogs_api at /api/catalogs
+2025-11-04 05:36:02,141 - app.main - DEBUG - Registered APIBlueprint: export_api at /api/san-pham
+2025-11-04 05:36:04,775 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-04 05:36:04,839 - app.app.main - INFO - Cloudinary initialized
+2025-11-04 05:36:04,843 - app.app.main - DEBUG - Registered APIBlueprint: auth_api at /api/auth
+2025-11-04 05:36:04,852 - app.app.main - DEBUG - Registered APIBlueprint: product_api at /api/san-pham
+2025-11-04 05:36:04,854 - app.app.main - DEBUG - Registered APIBlueprint: upload_api at /api/upload
+2025-11-04 05:36:04,857 - app.app.main - DEBUG - Registered APIBlueprint: review_api at /api
+2025-11-04 05:36:04,860 - app.app.main - DEBUG - Registered APIBlueprint: cart_api at /api/cart
+2025-11-04 05:36:04,862 - app.app.main - DEBUG - Registered APIBlueprint: order_api at /api/orders
+2025-11-04 05:36:04,867 - app.app.main - DEBUG - Registered APIBlueprint: catalogs_api at /api/catalogs
+2025-11-04 05:36:04,869 - app.app.main - DEBUG - Registered APIBlueprint: export_api at /api/san-pham
+2025-11-04 05:36:11,434 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-04 05:36:11,540 - app.app.main - INFO - Cloudinary initialized
+2025-11-04 05:36:11,544 - app.app.main - DEBUG - Registered APIBlueprint: auth_api at /api/auth
+2025-11-04 05:36:11,551 - app.app.main - DEBUG - Registered APIBlueprint: product_api at /api/san-pham
+2025-11-04 05:36:11,553 - app.app.main - DEBUG - Registered APIBlueprint: upload_api at /api/upload
+2025-11-04 05:36:11,557 - app.app.main - DEBUG - Registered APIBlueprint: review_api at /api
+2025-11-04 05:36:11,560 - app.app.main - DEBUG - Registered APIBlueprint: cart_api at /api/cart
+2025-11-04 05:36:11,563 - app.app.main - DEBUG - Registered APIBlueprint: order_api at /api/orders
+2025-11-04 05:36:11,568 - app.app.main - DEBUG - Registered APIBlueprint: catalogs_api at /api/catalogs
+2025-11-04 05:36:11,571 - app.app.main - DEBUG - Registered APIBlueprint: export_api at /api/san-pham
+2025-11-04 05:36:22,844 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-04 05:36:22,900 - app.app.main - INFO - Cloudinary initialized
+2025-11-04 05:36:22,904 - app.app.main - DEBUG - Registered APIBlueprint: auth_api at /api/auth
+2025-11-04 05:36:22,909 - app.app.main - DEBUG - Registered APIBlueprint: product_api at /api/san-pham
+2025-11-04 05:36:22,911 - app.app.main - DEBUG - Registered APIBlueprint: upload_api at /api/upload
+2025-11-04 05:36:22,913 - app.app.main - DEBUG - Registered APIBlueprint: review_api at /api
+2025-11-04 05:36:22,917 - app.app.main - DEBUG - Registered APIBlueprint: cart_api at /api/cart
+2025-11-04 05:36:22,920 - app.app.main - DEBUG - Registered APIBlueprint: order_api at /api/orders
+2025-11-04 05:36:22,928 - app.app.main - DEBUG - Registered APIBlueprint: catalogs_api at /api/catalogs
+2025-11-04 05:36:22,929 - app.app.main - DEBUG - Registered APIBlueprint: export_api at /api/san-pham
+2025-11-04 05:36:26,753 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-04 05:36:26,805 - app.app.main - INFO - Cloudinary initialized
+2025-11-04 05:36:26,809 - app.app.main - DEBUG - Registered APIBlueprint: auth_api at /api/auth
+2025-11-04 05:36:26,816 - app.app.main - DEBUG - Registered APIBlueprint: product_api at /api/san-pham
+2025-11-04 05:36:26,818 - app.app.main - DEBUG - Registered APIBlueprint: upload_api at /api/upload
+2025-11-04 05:36:26,822 - app.app.main - DEBUG - Registered APIBlueprint: review_api at /api
+2025-11-04 05:36:26,825 - app.app.main - DEBUG - Registered APIBlueprint: cart_api at /api/cart
+2025-11-04 05:36:26,827 - app.app.main - DEBUG - Registered APIBlueprint: order_api at /api/orders
+2025-11-04 05:36:26,831 - app.app.main - DEBUG - Registered APIBlueprint: catalogs_api at /api/catalogs
+2025-11-04 05:36:26,833 - app.app.main - DEBUG - Registered APIBlueprint: export_api at /api/san-pham
+2025-11-04 05:36:28,155 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-04 05:36:28,210 - app.app.main - INFO - Cloudinary initialized
+2025-11-04 05:36:28,216 - app.app.main - DEBUG - Registered APIBlueprint: auth_api at /api/auth
+2025-11-04 05:36:28,223 - app.app.main - DEBUG - Registered APIBlueprint: product_api at /api/san-pham
+2025-11-04 05:36:28,225 - app.app.main - DEBUG - Registered APIBlueprint: upload_api at /api/upload
+2025-11-04 05:36:28,233 - app.app.main - DEBUG - Registered APIBlueprint: review_api at /api
+2025-11-04 05:36:28,240 - app.app.main - DEBUG - Registered APIBlueprint: cart_api at /api/cart
+2025-11-04 05:36:28,245 - app.app.main - DEBUG - Registered APIBlueprint: order_api at /api/orders
+2025-11-04 05:36:28,252 - app.app.main - DEBUG - Registered APIBlueprint: catalogs_api at /api/catalogs
+2025-11-04 05:36:28,256 - app.app.main - DEBUG - Registered APIBlueprint: export_api at /api/san-pham
+2025-11-04 05:36:35,217 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-04 05:36:35,272 - app.app.main - INFO - Cloudinary initialized
+2025-11-04 05:36:35,276 - app.app.main - DEBUG - Registered APIBlueprint: auth_api at /api/auth
+2025-11-04 05:36:35,281 - app.app.main - DEBUG - Registered APIBlueprint: product_api at /api/san-pham
+2025-11-04 05:36:35,283 - app.app.main - DEBUG - Registered APIBlueprint: upload_api at /api/upload
+2025-11-04 05:36:35,285 - app.app.main - DEBUG - Registered APIBlueprint: review_api at /api
