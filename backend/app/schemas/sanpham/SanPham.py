@@ -12,13 +12,9 @@ from .BienTheSanPham import BienTheSanPhamCreate, BienTheSanPhamResponse, BienTh
 
 
 class SanPhamBase(BaseModel):
-    ten_san_pham: str = Field(..., max_length=200, description="Tên sản phẩm")
+    ten_san_pham: str = Field(..., max_length=100, description="Tên sản phẩm")
     mo_ta: Optional[str] = Field(None, description="Mô tả sản phẩm")
     thong_so_ky_thuat: Optional[Dict[str, Any]] = Field(None, description="Thông số kỹ thuật")
-    trang_thai: Optional[TrangThaiSanPhamEnum] = Field(
-        TrangThaiSanPhamEnum.DANG_BAN,
-        description="Trạng thái của sản phẩm"
-    )
     ngay_tao: Optional[datetime] = Field(None, description="Ngày tạo sản phẩm")
     ngay_cap_nhat: Optional[datetime] = Field(None, description="Ngày cập nhật sản phẩm")
 
@@ -38,10 +34,9 @@ class SanPhamUpdate(BaseModel):
     danh_muc_id: Optional[int] = Field(None)
     thuong_hieu_id: Optional[int] = Field(None)
     cap_do_id: Optional[int] = Field(None)
-    ten_san_pham: Optional[str] = Field(None, max_length=200)
+    ten_san_pham: Optional[str] = Field(None, max_length=100)
     mo_ta: Optional[str] = Field(None)
     thong_so_ky_thuat: Optional[Dict[str, Any]] = Field(None)
-    trang_thai: Optional[TrangThaiSanPhamEnum] = None
     cac_bien_the: Optional[List[BienTheSanPhamUpdate]] = Field(None, description="Danh sách biến thể cập nhật")
     bien_the_xoa_ids: Optional[List[int]] = Field([], description="IDs biến thể cần xóa")
 

@@ -36,7 +36,7 @@ class SanPham(db.Model):
     danh_muc_id = db.Column(db.Integer, db.ForeignKey('danh_muc.id'), nullable=False, index=True)
     thuong_hieu_id = db.Column(db.Integer, db.ForeignKey('thuong_hieu.id'), nullable=False, index=True)
     cap_do_id = db.Column(db.Integer,db.ForeignKey("cap_do.id"),nullable=False,index=True)
-    ten_san_pham = db.Column(db.String(200), nullable=False, index=True)
+    ten_san_pham = db.Column(db.String(100), nullable=False, index=True)
     mo_ta = db.Column(db.Text, nullable=True)
     thong_so_ky_thuat = db.Column(db.JSON, nullable=True)
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)

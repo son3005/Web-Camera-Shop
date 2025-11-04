@@ -8,15 +8,9 @@ from ..services.upload_service import UploadService
 
 logger = logging.getLogger(__name__)
 
-# ==============================================================
-# Khởi tạo APIBlueprint (flask-openapi3)
-# ==============================================================
 upload_api = APIBlueprint('upload_api', __name__, url_prefix='/api/upload')
 
 
-# ==============================================================
-# SCHEMAS
-# ==============================================================
 class SignatureRequest(BaseModel):
     folder: str = Field("san_pham", description="Thư mục trên Cloudinary")
 
@@ -38,29 +32,21 @@ class ErrorResponse(BaseModel):
     error: str
 
 
-# ==============================================================
-# 1️⃣ LẤY CHỮ KÝ UPLOAD (React → Cloudinary)
-# ==============================================================
-@upload_api.post('/signature', responses={"200": SignatureResponse, "500": ErrorResponse})
-@admin_required
-def get_upload_signature(body: SignatureRequest):  # ← Giữ param 'body: Model'
-    """Sinh chữ ký upload Cloudinary (client dùng chữ ký này để upload trực tiếp)."""
-    try:
-        signature_data = UploadService.generate_signature(folder=body.folder)
-        response = SignatureResponse.model_validate(signature_data)
-        return jsonify(response.model_dump()), 200
-    except Exception:
-        logger.error(f"Lỗi tạo chữ ký: {traceback.format_exc()}")
-        return jsonify(ErrorResponse(error="Không thể tạo chữ ký upload.").model_dump()), 500
-
-
-# ==============================================================
-# 2️⃣ UPLOAD TRỰC TIẾP QUA SERVER (Fallback)
-# ==============================================================
 @upload_api.post('/image', responses={"201": UploadResponse, "400": ErrorResponse, "500": ErrorResponse})
 @admin_required
 def upload_product_image_direct():
-    """Upload file trực tiếp qua server (fallback khi Cloudinary client fail)."""
+    """
+    upload_routes.py
+
+    Định nghĩa các route liên quan đến việc upload ảnh sản phẩm cho hệ thống web camera shop.
+
+    Các chức năng chính:
+    - Cung cấp endpoint POST '/image' cho phép admin upload ảnh sản phẩm trực tiếp lên server.
+    - Kiểm tra sự tồn tại và hợp lệ của file ảnh được gửi lên (chỉ chấp nhận các định dạng: png, jpg, jpeg, webp).
+    - Xử lý upload file thông qua UploadService, trả về đường dẫn ảnh và public_id nếu thành công.
+    - Xử lý các trường hợp lỗi như: không tìm thấy file, file không hợp lệ, lỗi trong quá trình upload hoặc lỗi máy chủ.
+    - Đảm bảo chỉ admin mới có quyền sử dụng endpoint này thông qua decorator @admin_required.
+    """
     if 'file' not in request.files:
         return jsonify(ErrorResponse(error="Không tìm thấy file").model_dump()), 400
 
