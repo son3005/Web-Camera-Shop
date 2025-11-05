@@ -1,6 +1,7 @@
 # /backend/app/routes/sanpham_routes.py
 import traceback
-from flask import json, jsonify, current_app, request
+import json
+from flask import jsonify, current_app, request
 from pydantic import BaseModel, Field
 from flask_openapi3 import APIBlueprint
 from werkzeug.exceptions import BadRequest, NotFound
@@ -29,7 +30,7 @@ product_api = APIBlueprint('product_api', __name__, url_prefix='/api/san-pham')
 @product_api.get('', responses={"200": SanPhamListResponse})
 
 def get_all_san_pham():
-    """
+    """ 
     Định nghĩa các route liên quan đến sản phẩm (sanpham) cho API.
 
     Các chức năng chính:
@@ -113,7 +114,7 @@ def get_san_pham(path: SanPhamPath):
 # 3 TẠO SẢN PHẨM VỚI UPLOAD ẢNH (FormData) - ADMIN 
 # ==============================================================
 @product_api.post('/', responses={"201": SanPhamResponse})
-@admin_required
+# @admin_required
 def create_san_pham_with_images():
     """
     Tạo mới sản phẩm kèm theo upload ảnh cho từng biến thể sản phẩm.
