@@ -1,5 +1,5 @@
-// frontend/src/components/filters/PriceSlider.jsx
-import { useMemo } from "react";
+// src/components/filters/PriceSlider.jsx
+// Thanh chọn khoảng giá đơn giản (2 range + vài preset)
 
 export default function PriceSlider({ value, onChange }) {
   const min = value?.min ?? 0;
@@ -8,13 +8,9 @@ export default function PriceSlider({ value, onChange }) {
   const fmt = (v) =>
     (v || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + "đ";
 
-  // simple range (2 inputs)
   return (
     <div>
-      <div
-        className="flex justify-between text-xs font-medium mb-1
-                      text-slate-700 dark:text-slate-300"
-      >
+      <div className="flex justify-between text-xs font-medium mb-1 text-slate-700 dark:text-slate-300">
         <span>{fmt(min)}</span>
         <span>{fmt(max)}</span>
       </div>
@@ -50,9 +46,7 @@ export default function PriceSlider({ value, onChange }) {
           <button
             key={o.label}
             onClick={() => onChange(o.v)}
-            className="px-3 py-2 rounded-lg border text-sm
-                       border-black/15 hover:bg-black/5
-                       dark:border-white/15 dark:hover:bg-white/10"
+            className="px-3 py-2 rounded-lg border text-sm border-black/15 hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
           >
             {o.label}
           </button>
@@ -61,8 +55,7 @@ export default function PriceSlider({ value, onChange }) {
 
       <button
         onClick={() => onChange({ min: 0, max: 66_000_000 })}
-        className="w-full mt-3 text-sm underline text-emerald-700 hover:text-emerald-600
-                   dark:text-emerald-300 dark:hover:text-emerald-200"
+        className="w-full mt-3 text-sm underline text-emerald-700 hover:text-emerald-600 dark:text-emerald-300 dark:hover:text-emerald-200"
       >
         Đặt lại (Tất cả)
       </button>
