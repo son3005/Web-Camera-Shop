@@ -1,9 +1,11 @@
 # /backend/app/schemas/DiaChi.py
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-
+# ==============================================================
+# Schema cơ bản cho Địa chỉ
+# ==============================================================
 class DiaChiBase(BaseModel):
     ten_nguoi_nhan: str = Field(..., max_length=100, description="Họ tên người nhận hàng")
     so_dien_thoai: str = Field(..., max_length=15, description="Số điện thoại người nhận")
@@ -32,7 +34,74 @@ class DiaChiUpdate(BaseModel):
 
 class DiaChiResponse(DiaChiBase):
     id: int
+    nguoi_dung_id: int
     ngay_tao: datetime
     ngay_cap_nhat: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==============================================================
+# Schema cho Response phân trang và danh sách
+# ==============================================================
+class PaginationInfo(BaseModel):
+    """Schema thông tin phân trang"""
+    page: int = Field(..., description="Trang hiện tại")
+    per_page: int = Field(..., description="Số lượng mỗi trang")
+    total: int = Field(..., description="Tổng số bản ghi")
+    pages: int = Field(..., description="Tổng số trang")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DiaChiListResponse(BaseModel):
+    """Schema response cho danh sách địa chỉ có phân trang"""
+    data: List[DiaChiResponse] = Field(..., description="Danh sách địa chỉ")
+    pagination: PaginationInfo = Field(..., description="Thông tin phân trang")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DeleteResponse(BaseModel):
+    """Schema response cho xóa thành công"""
+    message: str = Field(..., description="Thông báo kết quả")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ErrorResponse(BaseModel):
+    """Schema response cho lỗi"""
+    error: str = Field(..., description="Thông báo lỗi")
+    chi_tiet: Optional[str] = Field(None, description="Chi tiết lỗi (nếu có)")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==============================================================
+# Schema cho Path Parameters
+# ==============================================================
+class DiaChiPath(BaseModel):
+    """Schema cho path parameter địa chỉ ID"""
+    dia_chi_id: int = Field(..., description="ID của địa chỉ")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==============================================================
+# Schema cho các trường hợp đặc biệt
+# ==============================================================
+class DiaChiMacDinhResponse(BaseModel):
+    """Schema response khi đặt địa chỉ làm mặc định"""
+    id: int = Field(..., description="ID địa chỉ")
+    la_mac_dinh: bool = Field(..., description="Trạng thái mặc định")
+    message: str = Field(..., description="Thông báo")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DiaChiCountResponse(BaseModel):
+    """Schema response cho số lượng địa chỉ"""
+    total: int = Field(..., description="Tổng số địa chỉ")
+    mac_dinh: int = Field(..., description="Số địa chỉ mặc định")
 
     model_config = ConfigDict(from_attributes=True)
