@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from ..Shared import TrangThaiSanPhamEnum
 from .DanhMuc import DanhMucResponse
-from .CapDo import CapDoRespone
+from .CapDo import CapDoResponse
 from .ThuongHieu import ThuongHieuResponse
 from .BienTheSanPham import BienTheSanPhamCreate, BienTheSanPhamResponse, BienTheSanPhamUpdate
 
@@ -51,7 +51,7 @@ class SanPhamResponse(SanPhamBase):
     id: int
     ma_san_pham: str = Field(..., max_length=24, description="Mã sản phẩm")
     danh_muc: DanhMucResponse
-    cap_do: CapDoRespone
+    cap_do: CapDoResponse
     thuong_hieu: ThuongHieuResponse
     cac_bien_the: List[BienTheSanPhamResponse] = Field(
         default_factory=list,

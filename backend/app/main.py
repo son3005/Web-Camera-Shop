@@ -13,11 +13,11 @@ import cloudinary
 from .routes.auth_routes import auth_api
 from .routes.sanpham_routes import product_api
 from .routes.upload_routes import upload_api
-from .routes.danhgia_routes import review_api
-from .routes.giohang_routes import cart_api
-from .routes.donhang_routes import order_api
-from .routes.khac_routes import catalogs_api
-from .routes.export_routes import export_api
+from .routes.danhmuc_routes import danhmuc_api
+from .routes.thuonghieu_routes import thuonghieu_api
+from .routes.capdo_routes import capdo_api
+from .routes.diachi_routes import dia_chi_api
+from .routes.phieu_thu_routes import phieu_thu_api
 
 # =====================================================
 # LOGGING CONFIG
@@ -108,11 +108,11 @@ def create_app(config_class=None):
         auth_api,
         product_api,
         upload_api,
-        review_api,
-        cart_api,
-        order_api,
-        catalogs_api,
-        export_api,
+        danhmuc_api,
+        thuonghieu_api,
+        capdo_api,
+        dia_chi_api,
+        phieu_thu_api,
     ]
 
     for api in api_blueprints:
