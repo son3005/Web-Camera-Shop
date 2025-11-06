@@ -18,6 +18,7 @@ from .routes.giohang_routes import cart_api
 from .routes.donhang_routes import order_api
 from .routes.khac_routes import catalogs_api
 from .routes.diachi_routes import dia_chi_api
+from .routes.phieu_thu_routes import phieu_thu_api
 
 # =====================================================
 # LOGGING CONFIG
@@ -113,6 +114,7 @@ def create_app(config_class=None):
         order_api,
         catalogs_api,
         dia_chi_api,
+        phieu_thu_api,
     ]
 
     for api in api_blueprints:

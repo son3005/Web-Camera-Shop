@@ -23,9 +23,8 @@ class PhieuThu(db.Model):
     nguoi_nhap_id = db.Column(db.Integer, db.ForeignKey('nguoi_dung.id'), nullable=True, index=True)
     ma_phieu_thu = db.Column(db.String(25), index=True)
     ten_nha_cung_cap = db.Column(db.String(100), nullable=False)
-    ngay_thu = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Sửa: Đảm bảo tên relationship khớp với ChiTietPhieuThu
+    ngay_thu = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    ngay_cap_nhat = db.Column(db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now())
     chi_tiet_phieu_thus = db.relationship('ChiTietPhieuThu', back_populates='phieu_thu', cascade="all, delete-orphan")
     nguoi_dung = db.relationship('NguoiDung', back_populates='phieu_thus')
 
