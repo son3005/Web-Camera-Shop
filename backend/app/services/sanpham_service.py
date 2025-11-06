@@ -929,7 +929,7 @@ class SanPhamService:
                         db.session.delete(img)
                         # Gửi task xóa Cloudinary
                         if img.public_id:
-                            CloudinaryService.delete_image_task.delay(img.public_id)
+                            delete_image_task.delay(img.public_id)
 
             db.session.add(variant)
             logger.info(f"Cập nhật biến thể với ảnh thành công | ID: {bien_the_id}")
