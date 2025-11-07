@@ -25,7 +25,7 @@ class SanPhamCreate(SanPhamBase):
     danh_muc_id: int = Field(..., description="ID của danh mục sản phẩm")
     thuong_hieu_id: int = Field(..., description="ID của thương hiệu sản phẩm")
     cap_do_id: int = Field(..., description="ID của cấp độ sản phẩm")
-    bien_the_san_phams: Optional[List[BienTheSanPhamCreate]] = Field(
+    cac_bien_the: Optional[List[BienTheSanPhamCreate]] = Field(  # ĐỔI TÊN: từ bien_the_san_phams
         [], description="Danh sách biến thể sản phẩm"
     )
 
@@ -69,4 +69,23 @@ class SanPhamListResponse(BaseModel):
     data: List[SanPhamResponse] = Field(..., description="Danh sách sản phẩm")
     pagination: Dict[str, int] = Field(..., description="page, per_page, total, pages")
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SanPhamBasicResponse(BaseModel):
+    """
+    Schema trả về thông tin cơ bản của sản phẩm (chỉ id và tên)
+    """
+    id: int
+    ten_san_pham: str = Field(..., description="Tên sản phẩm")
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SanPhamBasicListResponse(BaseModel):
+    """
+    Schema trả về danh sách sản phẩm cơ bản
+    """
+    data: List[SanPhamBasicResponse] = Field(..., description="Danh sách sản phẩm cơ bản")
+    
     model_config = ConfigDict(from_attributes=True)

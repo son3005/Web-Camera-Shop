@@ -1,8 +1,8 @@
 """init full tables - fixed nullable
 
-Revision ID: eb79edf435f5
+Revision ID: ba4aac00ab3e
 Revises: 
-Create Date: 2025-11-06 15:03:41.558387
+Create Date: 2025-11-06 17:23:38.798321
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'eb79edf435f5'
+revision = 'ba4aac00ab3e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -128,6 +128,7 @@ def upgrade():
     )
     with op.batch_alter_table('san_pham', schema=None) as batch_op:
         batch_op.create_index('idx_sanpham_fts', ['ten_san_pham', 'mo_ta'], unique=False, mysql_prefix='FULLTEXT', mysql_with_parser='ngram')
+        batch_op.create_index('idx_ten_san_pham_like', ['ten_san_pham'], unique=False)
         batch_op.create_index(batch_op.f('ix_san_pham_cap_do_id'), ['cap_do_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_san_pham_danh_muc_id'), ['danh_muc_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_san_pham_ma_san_pham'), ['ma_san_pham'], unique=True)
@@ -330,6 +331,7 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_san_pham_ma_san_pham'))
         batch_op.drop_index(batch_op.f('ix_san_pham_danh_muc_id'))
         batch_op.drop_index(batch_op.f('ix_san_pham_cap_do_id'))
+        batch_op.drop_index('idx_ten_san_pham_like')
         batch_op.drop_index('idx_sanpham_fts', mysql_prefix='FULLTEXT', mysql_with_parser='ngram')
 
     op.drop_table('san_pham')

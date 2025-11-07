@@ -5,8 +5,7 @@ import re
 
 
 class HinhAnhBase(BaseModel):
-    url: str = Field(..., description="URL của hình ảnh")
-    
+    url: str = Field(..., description="URL của hình ảnh")  # ĐỔI: từ Optional thành bắt buộc
     alt_text: Optional[str] = Field(None, max_length=200)
     thu_tu: Optional[int] = Field(None)
     la_anh_dai_dien: bool = Field(False, description="Có phải là ảnh đại diện không")
@@ -14,17 +13,25 @@ class HinhAnhBase(BaseModel):
 
     @field_validator('url')
     @classmethod
-    def validate_url(cls, v: str) -> str:
+    def validate_url(cls, v: str) -> str:  # ĐỔI: từ Optional[str] thành str
+        if v is None:
+            raise ValueError('URL không được để trống')
         pattern = r'^https?://[^\s/$.?#].[^\s]*$'
         if not re.match(pattern, v):
             raise ValueError('Invalid URL format')
         return v
 
-   
 
 class HinhAnhCreate(HinhAnhBase):
-    public_id: str = Field(..., max_length=255)
-    pass
+    url: str = Field(..., description="URL của hình ảnh")  # ĐỔI: thành bắt buộc
+    public_id: str = Field(..., max_length=255)  # ĐỔI: từ Optional thành bắt buộc
+
+    @field_validator('url', 'public_id')
+    @classmethod
+    def validate_url_or_public_id(cls, v, info):
+        if not v:
+            raise ValueError('URL và public_id là bắt buộc')
+        return v
 
 
 class HinhAnhUpdate(BaseModel):
@@ -45,7 +52,6 @@ class HinhAnhUpdate(BaseModel):
         if not re.match(pattern, v):
             raise ValueError('Invalid URL format')
         return v
-
 
 
 class HinhAnhDelete(BaseModel):
