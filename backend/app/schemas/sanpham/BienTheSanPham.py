@@ -21,6 +21,7 @@ class BienTheSanPhamCreate(BienTheSanPhamBase):
     hinh_anhs: Optional[List[HinhAnhCreate]] = Field(
         [], description="Danh sách ảnh của biến thể"
     )
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class BienTheSanPhamUpdate(BaseModel):
@@ -46,4 +47,23 @@ class BienTheSanPhamResponse(BienTheSanPhamBase):
         description="Danh sách ảnh của biến thể"
     )
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BienTheBasicResponse(BaseModel):
+    """
+    Schema trả về thông tin cơ bản của biến thể (chỉ id và tên)
+    """
+    id: int
+    ten_bien_the: str = Field(..., description="Tên biến thể sản phẩm")
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BienTheBasicListResponse(BaseModel):
+    """
+    Schema trả về danh sách biến thể cơ bản
+    """
+    data: List[BienTheBasicResponse] = Field(..., description="Danh sách biến thể cơ bản")
+    
     model_config = ConfigDict(from_attributes=True)

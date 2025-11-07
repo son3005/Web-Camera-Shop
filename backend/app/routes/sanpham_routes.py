@@ -12,12 +12,11 @@ from ..models.sanpham import SanPham, BienTheSanPham
 from ..schemas.sanpham import (
     SanPhamCreate, SanPhamUpdate, SanPhamResponse,
     BienTheSanPhamCreate, BienTheSanPhamResponse, BienTheSanPhamUpdate, SanPhamListResponse,
-    HinhAnhCreate, HinhAnhUpdate, HinhAnhResponse
+    HinhAnhCreate, HinhAnhUpdate, HinhAnhResponse, SanPhamBasicListResponse, BienTheBasicListResponse
 )
 from ..services.upload_service import UploadService
-from ..schemas.path_models import *  # Giả sử đã có
+from ..schemas.path_models import *  
 from ..utils.decorators import admin_required
-
 
 # ==============================================================
 # Khởi tạo APIBlueprint
@@ -28,41 +27,31 @@ product_api = APIBlueprint('product_api', __name__, url_prefix='/api/san-pham')
 # 1️ LẤY DANH SÁCH SẢN PHẨM
 # ==============================================================
 @product_api.get('', responses={"200": SanPhamListResponse})
-
 def get_all_san_pham():
-    """ 
-    Định nghĩa các route liên quan đến sản phẩm (sanpham) cho API.
-
-    Các chức năng chính:
-    - Lấy danh sách tất cả sản phẩm với các tùy chọn lọc, tìm kiếm, phân trang và sắp xếp.
-    - Hỗ trợ lọc theo giá, tên, thương hiệu, danh mục, cấp độ.
-    - Cho phép tìm kiếm sản phẩm theo tên hoặc thông tin liên quan.
-    - Hỗ trợ phân trang với các tham số page và per_page.
-    - Cho phép sắp xếp danh sách sản phẩm theo giá hoặc tên (tăng dần/giảm dần).
-    - Xử lý các trường hợp lỗi và trả về thông báo lỗi phù hợp.
-    """
+    """Lấy danh sách sản phẩm với tìm kiếm cải tiến"""
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
         search = request.args.get('search', None, type=str)
         min_price = request.args.get('min_price', None, type=float)
         max_price = request.args.get('max_price', None, type=float)
-        sort_by_price = request.args.get('sort_by', None, type=str)
-        sort_by_name = request.args.get('sort_by', None, type=str)
+        sort_by_price = request.args.get('sort_by_price', None, type=str)
+        sort_by_name = request.args.get('sort_by_name', None, type=str)
         thuong_hieu_ids = request.args.getlist('thuong_hieu_ids', type=int)
         danh_muc_ids = request.args.getlist('danh_muc_ids', type=int)
         cap_do_ids = request.args.getlist('cap_do_ids', type=int)
-
-        valid_sorts_price = ['price_asc', 'price_desc', 'name_asc', 'name_desc']
-        valid_sorts_name = ['price_asc', 'price_desc', 'name_asc', 'name_desc']
+        valid_sorts_price = ['price_asc', 'price_desc']
+        valid_sorts_name = ['name_asc', 'name_desc']
+        
         if sort_by_price and sort_by_price not in valid_sorts_price:
-            return jsonify({"error": "sort_by phải là: price_asc, price_desc"}), 400
+            return jsonify({"error": "sort_by_price phải là: price_asc, price_desc"}), 400
         if sort_by_name and sort_by_name not in valid_sorts_name:
-            return jsonify({"error": "sort_by phải là: name_asc, name_desc"}), 400
+            return jsonify({"error": "sort_by_name phải là: name_asc, name_desc"}), 400
 
         result = SanPhamService.get_all_san_pham(
             page=page, per_page=per_page, search=search,
-            min_price=min_price, max_price=max_price, sort_by_price=sort_by_price, sort_by_name=sort_by_name,
+            min_price=min_price, max_price=max_price, 
+            sort_by_price=sort_by_price, sort_by_name=sort_by_name,
             thuong_hieu_ids=thuong_hieu_ids, danh_muc_ids=danh_muc_ids, cap_do_ids=cap_do_ids
         )
         response = SanPhamListResponse.model_validate(result)
@@ -80,18 +69,7 @@ def get_all_san_pham():
 )
 def get_san_pham(path: SanPhamPath):
     """
-    Định nghĩa các route liên quan đến sản phẩm (san pham) cho API.
-
-    Các chức năng chính:
-    - Lấy thông tin chi tiết của một sản phẩm dựa trên ID sản phẩm.
-    - Xử lý các trường hợp không tìm thấy sản phẩm hoặc lỗi máy chủ.
-    - Trả về dữ liệu sản phẩm dưới dạng JSON nếu thành công, hoặc thông báo lỗi phù hợp nếu thất bại.
-
-    Chi tiết hoạt động:
-    - Khi nhận yêu cầu GET với đường dẫn chứa ID sản phẩm, hàm sẽ gọi service để lấy thông tin sản phẩm từ cơ sở dữ liệu.
-    - Nếu tìm thấy sản phẩm, dữ liệu sẽ được kiểm tra và trả về cho client.
-    - Nếu không tìm thấy sản phẩm, trả về mã lỗi 404 cùng thông báo lỗi.
-    - Nếu có lỗi hệ thống, ghi log lỗi và trả về mã lỗi 500 cùng thông báo lỗi chung.
+    Lấy thông tin chi tiết sản phẩm theo ID
     """
     try:
         san_pham = SanPhamService.get_san_pham_by_id(path.san_pham_id)
@@ -103,39 +81,15 @@ def get_san_pham(path: SanPhamPath):
         current_app.logger.error(f"Lỗi lấy sản phẩm {path.san_pham_id}: {traceback.format_exc()}")
         return jsonify({"error": "Lỗi máy chủ khi lấy sản phẩm."}), 500
 
-
-
-# ======================================================
-# ======================================================
-#                     Admin Routes
-# ======================================================
-
 # ==============================================================
 # 3 TẠO SẢN PHẨM VỚI UPLOAD ẢNH (FormData) - ADMIN 
 # ==============================================================
 @product_api.post('/', responses={"201": SanPhamResponse})
-# @admin_required
+@admin_required
 def create_san_pham_with_images():
     """
     Tạo mới sản phẩm kèm theo upload ảnh cho từng biến thể sản phẩm.
-    
-    Quy trình thực hiện:
-    1. Nhận dữ liệu sản phẩm từ form-data (trường 'product' chứa JSON).
-    2. Kiểm tra và chuyển đổi dữ liệu JSON thành dict Python.
-    3. Duyệt qua từng biến thể sản phẩm và từng hình ảnh:
-        - Lấy file ảnh từ form-data theo key 'images[i][j]'.
-        - Nếu có file ảnh, thực hiện upload lên Cloudinary thông qua UploadService.
-        - Cập nhật URL và public_id trả về từ Cloudinary vào dữ liệu hình ảnh.
-    4. Chuyển đổi dict dữ liệu sản phẩm thành đối tượng SanPhamCreate để kiểm tra tính hợp lệ.
-    5. Gọi service để tạo mới sản phẩm trong cơ sở dữ liệu.
-    6. Commit thay đổi vào database và trả về thông tin sản phẩm vừa tạo.
-    7. Xử lý các trường hợp lỗi:
-        - Thiếu dữ liệu, dữ liệu không hợp lệ, lỗi upload ảnh, lỗi validate, lỗi hệ thống.
-        - Ghi log chi tiết lỗi và rollback database nếu có lỗi phát sinh.
-    Trả về:
-        - 201: Khi tạo sản phẩm thành công, trả về dữ liệu sản phẩm mới.
-        - 400: Khi có lỗi dữ liệu đầu vào hoặc upload ảnh.
-        - 500: Khi có lỗi hệ thống không xác định.
+    FIXED: Xử lý linh hoạt khi có ảnh bị thiếu
     """
     
     try:
@@ -150,35 +104,81 @@ def create_san_pham_with_images():
         except json.JSONDecodeError as e:
             return jsonify({"error": f"Dữ liệu sản phẩm không hợp lệ: {str(e)}"}), 400
         
-        # Xử lý upload ảnh và gán URL vào product_data
-        for i, bien_the in enumerate(product_data.get('bien_the_san_phams', [])):
+        # FIX: Kiểm tra xem có biến thể và hình ảnh không
+        if 'cac_bien_the' not in product_data:
+            return jsonify({"error": "Thiếu thông tin biến thể sản phẩm"}), 400
+        
+        # DEBUG: Log để kiểm tra
+        current_app.logger.info(f"Files nhận được: {list(request.files.keys())}")
+        
+        # FIX: Xử lý upload ảnh - CHẤP NHẬN THIẾU ẢNH VÀ BỎ QUA ẢNH ĐÓ
+        for i, bien_the in enumerate(product_data.get('cac_bien_the', [])):
+            if 'hinh_anhs' not in bien_the:
+                continue
+                
+            # FIX: Tạo danh sách hình ảnh mới, chỉ giữ lại những ảnh có file
+            hinh_anhs_valid = []
+            
             for j, hinh_anh in enumerate(bien_the.get('hinh_anhs', [])):
                 # Lấy file ảnh từ form data
                 file_key = f'images[{i}][{j}]'
+                current_app.logger.info(f"Kiểm tra file key: {file_key}")
+                
                 if file_key in request.files:
                     file = request.files[file_key]
                     if file and file.filename:
+                        current_app.logger.info(f"Tìm thấy file: {file.filename}")
                         # Upload ảnh lên Cloudinary
                         try:
                             upload_result = UploadService.upload_direct_to_server(file, folder="san_pham")
                             # Cập nhật URL và public_id vào dữ liệu ảnh
                             hinh_anh['url'] = upload_result['url']
                             hinh_anh['public_id'] = upload_result['public_id']
+                            hinh_anhs_valid.append(hinh_anh)
+                            current_app.logger.info(f"Upload thành công: {upload_result['url']}")
                         except Exception as e:
-                            # Ghi log lỗi upload ảnh
-                            current_app.logger.error(f"Lỗi upload ảnh {file_key}: {str(e)}")
-                            return jsonify({"error": f"Lỗi upload ảnh {file.filename}: {str(e)}"}), 400
+                            # FIX: Không dừng lại, mà ghi log và bỏ qua ảnh này
+                            current_app.logger.warning(f"Lỗi upload ảnh {file_key}, bỏ qua ảnh này: {str(e)}")
+                            continue
+                    else:
+                        current_app.logger.warning(f"File rỗng cho key: {file_key}, bỏ qua ảnh này")
+                        continue
+                else:
+                    current_app.logger.warning(f"Không tìm thấy file cho key: {file_key}, bỏ qua ảnh này")
+                    continue
+            
+            # FIX: Cập nhật lại danh sách hình ảnh chỉ với những ảnh upload thành công
+            bien_the['hinh_anhs'] = hinh_anhs_valid
+            
+            # FIX: Nếu không còn ảnh nào, báo lỗi
+            if not bien_the['hinh_anhs']:
+                return jsonify({"error": f"Biến thể {i+1} không có ảnh nào được upload thành công"}), 400
+            
+            # FIX: Đảm bảo có ít nhất 1 ảnh đại diện
+            has_main_image = any(img.get('la_anh_dai_dien', False) for img in bien_the['hinh_anhs'])
+            if not has_main_image:
+                bien_the['hinh_anhs'][0]['la_anh_dai_dien'] = True
+                current_app.logger.info(f"Tự động set ảnh đầu tiên làm ảnh đại diện cho biến thể {i}")
+        
+        # FIX: Kiểm tra xem còn biến thể nào có ảnh không
+        bien_the_co_anh = [bt for bt in product_data.get('cac_bien_the', []) if bt.get('hinh_anhs')]
+        if not bien_the_co_anh:
+            return jsonify({"error": "Không có biến thể nào có ảnh được upload thành công"}), 400
         
         # Chuyển đổi dict thành SanPhamCreate
         try:
+            current_app.logger.info("Bắt đầu validate dữ liệu sản phẩm...")
             san_pham_create = SanPhamCreate.model_validate(product_data)
+            current_app.logger.info("Validate dữ liệu sản phẩm thành công")
         except Exception as e:
             current_app.logger.error(f"Lỗi validate dữ liệu sản phẩm: {str(e)}")
             return jsonify({"error": f"Dữ liệu sản phẩm không hợp lệ: {str(e)}"}), 400
         
         # Gọi service tạo sản phẩm
+        current_app.logger.info("Gọi service tạo sản phẩm...")
         new_san_pham = SanPhamService.create_san_pham(san_pham_create)
         db.session.commit()
+        current_app.logger.info("Tạo sản phẩm thành công")
         
         response = SanPhamResponse.model_validate(new_san_pham)
         return jsonify(response.model_dump()), 201
@@ -200,96 +200,120 @@ def create_san_pham_with_images():
 def update_san_pham_with_images(path: SanPhamPath):
     """
     Cập nhật thông tin sản phẩm cùng với các hình ảnh biến thể.
-
-    Quy trình thực hiện:
-    1. Nhận dữ liệu sản phẩm từ form-data, trường 'product' chứa JSON mô tả sản phẩm và các biến thể.
-    2. Parse dữ liệu JSON thành dict, kiểm tra hợp lệ.
-    3. Duyệt qua từng biến thể và từng hình ảnh trong biến thể:
-        - Nếu hình ảnh là mới (không có trường 'url'), kiểm tra file upload tương ứng trong request.files.
-        - Nếu có file, tiến hành upload ảnh lên server thông qua UploadService, cập nhật lại trường 'url' và 'public_id' cho hình ảnh.
-        - Nếu upload thất bại, trả về lỗi.
-    4. Validate dữ liệu sản phẩm đã cập nhật bằng model SanPhamUpdate.
-    5. Gọi service cập nhật sản phẩm cùng các biến thể trong database.
-    6. Commit thay đổi vào database, trả về dữ liệu sản phẩm đã cập nhật dưới dạng JSON.
-    7. Xử lý các trường hợp lỗi như: thiếu dữ liệu, lỗi parse JSON, lỗi validate, lỗi upload ảnh, lỗi cập nhật database.
-
-    Tham số:
-
-        path (SanPhamPath): Đối tượng chứa thông tin định danh sản phẩm cần cập nhật.
-    Trả về:
-        - 200: Dữ liệu sản phẩm đã cập nhật thành công.
-        - 400: Lỗi dữ liệu đầu vào hoặc upload ảnh.
-        - 500: Lỗi hệ thống khi cập nhật sản phẩm.
+    FIXED: Sửa lỗi key mapping với Postman
     """
     
     try:
-        current_app.logger.info(f"Bắt đầu update sản phẩm ID: {path.san_pham_id}")
+        current_app.logger.info("🎬 BẮT ĐẦU UPDATE SẢN PHẨM")
         
         # Lấy dữ liệu sản phẩm từ form
         product_json = request.form.get('product')
         if not product_json:
             return jsonify({"error": "Thiếu dữ liệu sản phẩm"}), 400
         
-        current_app.logger.info(f"Dữ liệu product nhận được: {product_json}")
-        
         # Parse JSON thành dict
         try:
             product_data = json.loads(product_json)
-            current_app.logger.info(f"Parse JSON thành công: {product_data.keys()}")
         except json.JSONDecodeError as e:
-            current_app.logger.error(f"Lỗi parse JSON: {str(e)}")
             return jsonify({"error": f"Dữ liệu sản phẩm không hợp lệ: {str(e)}"}), 400
+
+        # DEBUG: Log structure của product_data
+        current_app.logger.info(f"📦 PRODUCT DATA STRUCTURE:")
+        for i, bt in enumerate(product_data.get('cac_bien_the', [])):
+            current_app.logger.info(f"  Biến thể {i}: ID={bt.get('id', 'NEW')}, Ảnh={len(bt.get('hinh_anhs', []))}")
+
+        # Xử lý upload ảnh - SỬA LỖI KEY MAPPING
+        current_app.logger.info("🖼️ XỬ LÝ UPLOAD ẢNH...")
         
-        # Xử lý upload ảnh mới
-        current_app.logger.info("Bắt đầu xử lý upload ảnh...")
-        for i, bien_the in enumerate(product_data.get('cac_bien_the', [])):
-            current_app.logger.info(f"Xử lý biến thể {i}: {bien_the.get('ten_bien_the', '')}")
-            for j, hinh_anh in enumerate(bien_the.get('hinh_anhs', [])):
-                # Nếu là ảnh mới (không có url) thì phải có file
-                if not hinh_anh.get('url'):
-                    file_key = f'images[{i}][{j}]'
-                    current_app.logger.info(f"Kiểm tra file key: {file_key}")
-                    if file_key in request.files:
-                        file = request.files[file_key]
-                        if file and file.filename:
-                            current_app.logger.info(f"Upload ảnh mới: {file.filename}")
-                            try:
-                                upload_result = UploadService.upload_direct_to_server(file, folder="san_pham")
-                                hinh_anh['url'] = upload_result['url']
-                                hinh_anh['public_id'] = upload_result['public_id']
-                                current_app.logger.info(f"Upload thành công: {upload_result['public_id']}")
-                            except Exception as e:
-                                current_app.logger.error(f"Lỗi upload ảnh {file_key}: {str(e)}")
-                                return jsonify({"error": f"Lỗi upload ảnh {file.filename}: {str(e)}"}), 400
-        
-        # Chuyển đổi dict thành SanPhamUpdate
-        current_app.logger.info("Bắt đầu validate dữ liệu với SanPhamUpdate...")
+        # Tạo mapping cho files - SỬA: Dùng cả 'image' và 'images'
+        files_mapping = {}
+        for key, file in request.files.items():
+            current_app.logger.info(f"📎 File key: {key}")
+            files_mapping[key] = file
+
+        # Xử lý từng biến thể
+        for variant_index, variant in enumerate(product_data.get('cac_bien_the', [])):
+            variant_id = variant.get('id', 'NEW')
+            current_app.logger.info(f"🔧 Xử lý biến thể {variant_index} (ID: {variant_id})")
+            
+            if 'hinh_anhs' not in variant:
+                continue
+                
+            valid_images = []
+            
+            for image_index, image_data in enumerate(variant.get('hinh_anhs', [])):
+                # Ảnh đã có ID -> ảnh cũ, giữ nguyên
+                if image_data.get('id'):
+                    valid_images.append(image_data)
+                    current_app.logger.info(f"  ✅ Giữ ảnh cũ: ID={image_data['id']}")
+                else:
+                    # Ảnh mới -> cần upload
+                    current_app.logger.info(f"  🆕 Ảnh mới: index={image_index}, alt={image_data.get('alt_text', '')}")
+                    
+                    # THỬ CÁC FORMAT KEY KHÁC NHAU - SỬA QUAN TRỌNG
+                    possible_keys = [
+                        f"image[{variant_index}][{image_index}]",  # Postman format
+                        f"images[{variant_index}][{image_index}]", # Code format
+                        f"image[{variant_index}][{image_index}]",
+                        f"images[{variant_index}][{image_index}]"
+                    ]
+                    
+                    file_found = None
+                    for key in possible_keys:
+                        if key in files_mapping:
+                            file_found = files_mapping[key]
+                            current_app.logger.info(f"  📁 Tìm thấy file với key: {key}")
+                            break
+                    
+                    if file_found and file_found.filename:
+                        try:
+                            current_app.logger.info(f"  ⬆️ Uploading file: {file_found.filename}")
+                            upload_result = UploadService.upload_direct_to_server(file_found, folder="san_pham")
+                            
+                            # Cập nhật thông tin ảnh
+                            image_data['url'] = upload_result['url']
+                            image_data['public_id'] = upload_result['public_id']
+                            valid_images.append(image_data)
+                            
+                            current_app.logger.info(f"  ✅ Upload thành công: {upload_result['url']}")
+                        except Exception as e:
+                            current_app.logger.error(f"  ❌ Lỗi upload: {str(e)}")
+                    else:
+                        current_app.logger.warning(f"  ⚠️ Không tìm thấy file cho ảnh mới")
+            
+            # Cập nhật danh sách ảnh hợp lệ
+            variant['hinh_anhs'] = valid_images
+            
+            # Đảm bảo có ảnh đại diện
+            if valid_images and not any(img.get('la_anh_dai_dien') for img in valid_images):
+                valid_images[0]['la_anh_dai_dien'] = True
+                current_app.logger.info(f"  🏷️ Đặt ảnh đầu tiên làm đại diện")
+
+        # Log kết quả cuối cùng
+        current_app.logger.info("📊 KẾT QUẢ XỬ LÝ ẢNH:")
+        for i, bt in enumerate(product_data.get('cac_bien_the', [])):
+            current_app.logger.info(f"  Biến thể {i}: {len(bt.get('hinh_anhs', []))} ảnh")
+            for img in bt.get('hinh_anhs', []):
+                current_app.logger.info(f"    - ID: {img.get('id', 'NEW')}, URL: {img.get('url', 'NO_URL')}")
+
+        # Validate và cập nhật
         try:
             san_pham_update = SanPhamUpdate.model_validate(product_data)
-            current_app.logger.info("Validate SanPhamUpdate thành công")
         except Exception as e:
-            current_app.logger.error(f"Lỗi validate SanPhamUpdate: {str(e)}")
-            current_app.logger.error(f"Chi tiết lỗi: {traceback.format_exc()}")
-            return jsonify({"error": f"Dữ liệu sản phẩm không hợp lệ: {str(e)}"}), 400
-        
-        # Gọi service cập nhật sản phẩm
-        current_app.logger.info("Gọi service update_san_pham_with_variants...")
+            current_app.logger.error(f"❌ Lỗi validate: {str(e)}")
+            return jsonify({"error": f"Dữ liệu không hợp lệ: {str(e)}"}), 400
+
         updated_san_pham = SanPhamService.update_san_pham_with_variants(path.san_pham_id, san_pham_update)
         db.session.commit()
-        current_app.logger.info("Cập nhật sản phẩm thành công")
         
+        current_app.logger.info("🎉 CẬP NHẬT THÀNH CÔNG")
         response = SanPhamResponse.model_validate(updated_san_pham)
         return jsonify(response.model_dump()), 200
         
-    except (BadRequest, NotFound) as e:
-        db.session.rollback()
-        current_app.logger.error(f"Lỗi BadRequest/NotFound: {str(e)}")
-        return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Lỗi cập nhật sản phẩm với ảnh: {traceback.format_exc()}")
-        return jsonify({"error": f"Không thể cập nhật sản phẩm: {str(e)}"}), 500
-    
+        current_app.logger.error(f"💥 Lỗi: {traceback.format_exc()}")
+        return jsonify({"error": f"Lỗi server: {str(e)}"}), 500
 
 # ==============================================================
 # 5️ XÓA SẢN PHẨM (ADMIN)
@@ -322,3 +346,95 @@ def delete_san_pham(path: SanPhamPath):
     except Exception:
         current_app.logger.error(f"Lỗi xóa sản phẩm {path.san_pham_id}: {traceback.format_exc()}")
         return jsonify({"error": "Không thể xóa sản phẩm."}), 500
+    
+
+# ==============================================================
+# ENDPOINT TEST - DEBUG UPLOAD ẢNH
+# ==============================================================
+@product_api.post('/test-upload')
+def test_upload():
+    """Endpoint test upload ảnh"""
+    try:
+        current_app.logger.info("🧪 TEST UPLOAD ENDPOINT")
+        
+        # Log tất cả form data và files
+        current_app.logger.info(f"📋 FORM DATA KEYS: {list(request.form.keys())}")
+        current_app.logger.info(f"📁 FILES KEYS: {list(request.files.keys())}")
+        
+        # Log chi tiết từng file
+        for key, file in request.files.items():
+            current_app.logger.info(f"📎 FILE DETAIL: {key} -> {file.filename} (size: {len(file.read())} bytes)")
+            file.seek(0)  # Reset file pointer
+        
+        # Log product data nếu có
+        if 'product' in request.form:
+            try:
+                product_data = json.loads(request.form['product'])
+                current_app.logger.info(f"📦 PRODUCT DATA: {json.dumps(product_data, indent=2, ensure_ascii=False)}")
+            except Exception as e:
+                current_app.logger.error(f"❌ Lỗi parse product: {e}")
+        
+        return jsonify({
+            "message": "Test completed",
+            "form_keys": list(request.form.keys()),
+            "file_keys": list(request.files.keys())
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"💥 Test error: {traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ==============================================================
+# 6️ LẤY DANH SÁCH SẢN PHẨM CƠ BẢN (ID + TÊN)
+# ==============================================================
+@product_api.get(
+    '/danh-sach-co-ban',
+    responses={"200": SanPhamBasicListResponse}
+)
+def get_all_san_pham_basic():
+    """
+    Lấy danh sách tất cả sản phẩm chỉ bao gồm ID và tên
+    Sử dụng cho dropdown, autocomplete, etc.
+    """
+    try:
+        current_app.logger.info("Lấy danh sách sản phẩm cơ bản")
+        
+        result = SanPhamService.get_all_san_pham_basic()
+        response = SanPhamBasicListResponse.model_validate(result)
+        
+        return jsonify(response.model_dump()), 200
+        
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"Lỗi lấy danh sách sản phẩm cơ bản: {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ khi lấy danh sách sản phẩm cơ bản."}), 500
+
+# ==============================================================
+# 7️ LẤY DANH SÁCH BIẾN THỂ CƠ BẢN THEO SẢN PHẨM
+# ==============================================================
+@product_api.get(
+    '/<int:san_pham_id>/bien-the/danh-sach-co-ban',
+    responses={"200": BienTheBasicListResponse}
+)
+def get_bien_the_basic_by_san_pham(path: SanPhamPath):
+    """
+    Lấy danh sách biến thể cơ bản (ID + tên) theo ID sản phẩm
+    Sử dụng để hiển thị các biến thể của sản phẩm trong dropdown
+    """
+    try:
+        current_app.logger.info(f"Lấy danh sách biến thể cơ bản cho sản phẩm: {path.san_pham_id}")
+        
+        result = SanPhamService.get_bien_the_basic_by_san_pham(path.san_pham_id)
+        response = BienTheBasicListResponse.model_validate(result)
+        
+        return jsonify(response.model_dump()), 200
+        
+    except NotFound as e:
+        return jsonify({"error": str(e)}), 404
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"Lỗi lấy danh sách biến thể cơ bản: {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ khi lấy danh sách biến thể."}), 500
