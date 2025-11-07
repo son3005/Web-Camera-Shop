@@ -1,52 +1,66 @@
 // src/router/AdminRoutes.jsx
+import React, { lazy, Suspense } from "react";
+import { Outlet } from "react-router-dom";
+import AdminLayout from "../layouts/AdminLayout";
+import ProtectedRoute from "./ProtectedRoute";
+import Inventory from "../pages/Admin/Inventory";
 
-import React, { lazy, Suspense } from 'react'; // Thêm Suspense
-import { Outlet } from 'react-router-dom'; // Thêm Outlet
-import AdminLayout from '../layouts/AdminLayout'; // Import Layout
-import ProtectedRoute from './ProtectedRoute'; // --- (1) Import ProtectedRoute ---
-import Inventory from '../pages/Admin/Inventory';
+// --- Lazy load các trang con ---
+const Dashboard = lazy(() => import("../pages/Admin/Dashboard"));
+const Orders = lazy(() => import("../pages/Admin/Orders"));
+const PhieuThuList = lazy(() => import("../pages/Admin/PhieuThuList"));
+const PhieuThuForm = lazy(() => import("../pages/Admin/PhieuThuForm"));
+// ✅ Gợi ý sau: thêm chi tiết nếu cần
+// const PhieuThuDetail = lazy(() => import("../pages/Admin/PhieuThuDetail"));
+const Transactions = lazy(() => import("../pages/Admin/Transactions")); // ← nếu bạn có trang này
 
-// Lazy load các trang con
-const Dashboard = lazy(() => import('../pages/Admin/Dashboard'));
-const ProductManagement = lazy(() => import('../components/common/admin/ProductManagement'));
-const Orders = lazy(() => import('../pages/Admin/Orders'));
-// Thêm các trang admin khác nếu có
-
-// --- (2) Bọc AdminLayout bằng ProtectedRoute ---
-// AdminLayout bây giờ sẽ chứa <Outlet /> để render các trang con
+// --- (1) Layout wrapper bảo vệ quyền Admin ---
 const AdminLayoutWrapper = () => (
-  <ProtectedRoute adminOnly={true}> {/* Yêu cầu đăng nhập và là admin */}
+  <ProtectedRoute adminOnly={true}>
     <AdminLayout>
-       {/* Thêm Suspense để hiển thị loading khi trang con đang tải */}
-       <Suspense fallback={<div>Đang tải trang...</div>}>
-         <Outlet /> {/* Các trang con sẽ được render ở đây */}
-       </Suspense>
+      <Suspense fallback={<div className="p-6 text-center">Đang tải trang...</div>}>
+        <Outlet />
+      </Suspense>
     </AdminLayout>
   </ProtectedRoute>
 );
 
-
-// Định nghĩa route cho Admin
+// --- (2) Cấu hình các route admin ---
 const AdminRoutes = {
-  path: '/admin',
-  // --- (3) Sử dụng Wrapper thay vì AdminLayout trực tiếp ---
+  path: "/admin",
   element: <AdminLayoutWrapper />,
   children: [
     {
-      index: true, // Trang /admin
+      index: true,
       element: <Dashboard />,
     },
     {
-      path: 'inventory', // Trang /admin/inventory
+      path: "inventory",
       element: <Inventory />,
     },
     {
-      path: 'orders', // Trang /admin/orders
+      path: "orders",
       element: <Orders />,
     },
-    // Thêm các route admin con khác ở đây
-    // { path: 'users', element: <UsersPage /> },
-    // { path: 'settings', element: <SettingsPage /> },
+
+    // ✅ Phiếu thu riêng biệt (từ Sidebar /admin/phieu-thu)
+    {
+      path: "phieu-thu",
+      children: [
+        { index: true, element: <PhieuThuList /> }, // /admin/phieu-thu
+        { path: "new", element: <PhieuThuForm  /> }, // /admin/phieu-thu/new
+        // { path: ":id", element: <PhieuThuDetail /> }, // nếu cần chi tiết
+      ],
+    },
+
+    // ✅ Giao dịch riêng biệt (từ Sidebar /admin/transactions)
+    {
+      path: "transactions",
+      element: <Transactions />, // hoặc tạm thời 1 trang placeholder
+    },
+
+    // Cài đặt
+    // { path: "settings", element: <SettingsPage /> },
   ],
 };
 

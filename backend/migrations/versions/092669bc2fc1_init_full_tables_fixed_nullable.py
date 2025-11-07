@@ -1,8 +1,8 @@
 """init full tables - fixed nullable
 
-Revision ID: c7b755a68beb
+Revision ID: 092669bc2fc1
 Revises: 
-Create Date: 2025-11-04 06:13:58.375161
+Create Date: 2025-11-06 16:17:22.564269
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c7b755a68beb'
+revision = '092669bc2fc1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -101,7 +101,8 @@ def upgrade():
     sa.Column('nguoi_nhap_id', sa.Integer(), nullable=True),
     sa.Column('ma_phieu_thu', sa.String(length=25), nullable=True),
     sa.Column('ten_nha_cung_cap', sa.String(length=100), nullable=False),
-    sa.Column('ngay_thu', sa.DateTime(), nullable=True),
+    sa.Column('ngay_thu', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('ngay_cap_nhat', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['nguoi_nhap_id'], ['nguoi_dung.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -115,8 +116,7 @@ def upgrade():
     sa.Column('danh_muc_id', sa.Integer(), nullable=False),
     sa.Column('thuong_hieu_id', sa.Integer(), nullable=False),
     sa.Column('cap_do_id', sa.Integer(), nullable=False),
-    sa.Column('ten_san_pham', sa.String(length=200), nullable=False),
-    sa.Column('mau_sac', sa.String(length=50), nullable=True),
+    sa.Column('ten_san_pham', sa.String(length=100), nullable=False),
     sa.Column('mo_ta', sa.Text(), nullable=True),
     sa.Column('thong_so_ky_thuat', sa.JSON(), nullable=True),
     sa.Column('ngay_tao', sa.DateTime(), nullable=True),
@@ -208,6 +208,21 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_chi_tiet_gio_hang_gio_hang_id'), ['gio_hang_id'], unique=False)
         batch_op.create_index('ix_giohang_bienthe', ['gio_hang_id', 'bien_the_san_pham_id'], unique=False)
 
+    op.create_table('chi_tiet_phieu_thu',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('phieu_thu_id', sa.Integer(), nullable=True),
+    sa.Column('bien_the_san_pham_id', sa.Integer(), nullable=True),
+    sa.Column('so_luong', sa.Integer(), server_default='1', nullable=False),
+    sa.Column('gia_nhap_tung_vat', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('ngay_cap_nhat', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['bien_the_san_pham_id'], ['bien_the_san_pham.id'], ),
+    sa.ForeignKeyConstraint(['phieu_thu_id'], ['phieu_thu.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('chi_tiet_phieu_thu', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_chi_tiet_phieu_thu_bien_the_san_pham_id'), ['bien_the_san_pham_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_chi_tiet_phieu_thu_phieu_thu_id'), ['phieu_thu_id'], unique=False)
+
     op.create_table('hinh_anh_san_pham',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bien_the_id', sa.Integer(), nullable=False),
@@ -222,20 +237,6 @@ def upgrade():
     with op.batch_alter_table('hinh_anh_san_pham', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_hinh_anh_san_pham_bien_the_id'), ['bien_the_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_hinh_anh_san_pham_public_id'), ['public_id'], unique=True)
-
-    op.create_table('phieu_thu_chi_tiet',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('phieu_thu_id', sa.Integer(), nullable=True),
-    sa.Column('bien_the_san_pham_id', sa.Integer(), nullable=True),
-    sa.Column('so_luong', sa.Integer(), server_default='1', nullable=False),
-    sa.Column('gia_nhap_tung_vat', sa.Numeric(precision=12, scale=2), nullable=False),
-    sa.ForeignKeyConstraint(['bien_the_san_pham_id'], ['bien_the_san_pham.id'], ),
-    sa.ForeignKeyConstraint(['phieu_thu_id'], ['phieu_thu.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    with op.batch_alter_table('phieu_thu_chi_tiet', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_phieu_thu_chi_tiet_bien_the_san_pham_id'), ['bien_the_san_pham_id'], unique=False)
-        batch_op.create_index(batch_op.f('ix_phieu_thu_chi_tiet_phieu_thu_id'), ['phieu_thu_id'], unique=False)
 
     op.create_table('thanh_toan',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -292,16 +293,16 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_thanh_toan_ma_giao_dich_ben_thu_3'))
 
     op.drop_table('thanh_toan')
-    with op.batch_alter_table('phieu_thu_chi_tiet', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_phieu_thu_chi_tiet_phieu_thu_id'))
-        batch_op.drop_index(batch_op.f('ix_phieu_thu_chi_tiet_bien_the_san_pham_id'))
-
-    op.drop_table('phieu_thu_chi_tiet')
     with op.batch_alter_table('hinh_anh_san_pham', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_hinh_anh_san_pham_public_id'))
         batch_op.drop_index(batch_op.f('ix_hinh_anh_san_pham_bien_the_id'))
 
     op.drop_table('hinh_anh_san_pham')
+    with op.batch_alter_table('chi_tiet_phieu_thu', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_chi_tiet_phieu_thu_phieu_thu_id'))
+        batch_op.drop_index(batch_op.f('ix_chi_tiet_phieu_thu_bien_the_san_pham_id'))
+
+    op.drop_table('chi_tiet_phieu_thu')
     with op.batch_alter_table('chi_tiet_gio_hang', schema=None) as batch_op:
         batch_op.drop_index('ix_giohang_bienthe')
         batch_op.drop_index(batch_op.f('ix_chi_tiet_gio_hang_gio_hang_id'))

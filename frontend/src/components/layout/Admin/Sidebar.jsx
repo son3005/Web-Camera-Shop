@@ -5,7 +5,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import logo from "../../../assets/images/Logo.png";
 import {
   Settings, LayoutDashboard, Users, ShoppingBag, Box,
-  CreditCard, Zap, MessagesSquare, ChevronDown,
+  CreditCard, Zap, MessagesSquare, ChevronDown,ClipboardList,
 } from "lucide-react";
 
 
@@ -21,6 +21,8 @@ const menuItems = [
       { id: "customers", path: "/admin/customers", label: "Khách hàng" },
     ],
   },
+   // --- Phiếu thu (RIÊNG BIỆT) ---
+  { id: "phieu-thu", path: "/admin/phieu-thu", icon: ClipboardList, label: "Phiếu thu" },
   { id: "transactions", path: "/admin/transactions", icon: CreditCard, label: "Giao dịch" },
   // {
   //   id: "users", icon: Users, label: "Users", count: "2.4k",
