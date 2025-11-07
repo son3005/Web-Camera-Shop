@@ -1,38 +1,26 @@
+// frontend/src/api/apiClient.js
+// Instance axios dùng chung cho toàn bộ app
+
 import axios from "axios";
 
-// Sửa baseURL để tránh trùng lặp /api/api/
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: "http://localhost:5000/api",
+  withCredentials: false,
 });
 
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Gắn token tự động cho mọi request
+apiClient.interceptors.request.use((config) => {
+  // đọc lần lượt, cái nào có thì dùng
+  const token =
+    localStorage.getItem("admin_token") ||
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("token");
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/dangnhap";
-    }
-    return Promise.reject(error);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+
+  return config;
+});
 
 export default apiClient;

@@ -2,8 +2,8 @@
 // ---------------------------------------------------
 // Trang đăng nhập:
 //  - gọi /api/auth/login
-//  - lưu {user, token} vào redux + localStorage (qua authSlice)
-//  - điều hướng theo vai_tro hoặc về trang trước đó (nếu bị chặn)
+//  - lưu {user, token} vào redux + localStorage (3 key) để admin API dùng
+//  - điều hướng theo vai_tro hoặc về trang trước đó
 // ---------------------------------------------------
 
 import React from "react";
@@ -23,62 +23,64 @@ import { datThongTinDangNhap } from "../redux/slices/authSlice";
 
 export default function DangNhap() {
   const navigate = useNavigate();
-  const location = useLocation(); // 👈 để biết user bị chuyển hướng từ đâu
+  const location = useLocation();
   const dispatch = useDispatch();
 
-  // setup form + yup
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: yupResolver(loginSchema) });
 
-  // submit form
   const onSubmit = async (values) => {
     try {
-      // gọi BE
-      const data = await login(values); // { token, user? }
+      // 1. Gọi backend /api/auth/login
+      const data = await login(values); // BE trả { user, token }
       if (!data?.token) throw new Error("Token không hợp lệ");
 
-      // thử decode token
+      // 2. Decode để lấy thêm info (role, id)
       let decoded = {};
       try {
         decoded = jwtDecode(data.token);
       } catch {
-        // nếu token không chứa info thì dùng user BE trả
         decoded = data.user || {};
       }
 
-      // chuẩn hóa user để lưu redux
+      // 3. Chuẩn hoá user để lưu redux
       const userToStore = {
         id: decoded.sub || decoded.id || data.user?.id,
         email: decoded.email || data.user?.email,
-        ho_ten: decoded.ho_ten || data.user?.ho_ten, // 👈 lưu luôn họ tên nếu có
+        ho_ten: decoded.ho_ten || data.user?.ho_ten,
         vai_tro: decoded.vai_tro || data.user?.vai_tro,
       };
 
-      // lưu redux + localStorage
+      // 4. Lưu redux
       dispatch(datThongTinDangNhap({ user: userToStore, token: data.token }));
+
+      // 5. ❗ Lưu token vào localStorage dưới cả 3 tên để mọi chỗ đều đọc được
+      localStorage.setItem("admin_token", data.token);
+      localStorage.setItem("access_token", data.token);
+      localStorage.setItem("token", data.token);
 
       toast.success("🎉 Đăng nhập thành công!", { position: "top-center" });
 
-      // xác định đi đâu tiếp
+      // 6. Điều hướng
       const role = (userToStore.vai_tro || "").toLowerCase();
-      const from = location.state?.from?.pathname; // nếu bị chặn từ /admin thì sẽ có cái này
+      const from = location.state?.from?.pathname;
 
       if (from) {
-        // ưu tiên quay lại trang trước đó
         navigate(from, { replace: true });
       } else if (role === "quan_tri_vien" || role === "admin") {
-        navigate("/admin", { replace: true });
+        // đi thẳng vào admin cho tiện test CRUD
+        navigate("/admin/inventory", { replace: true });
       } else {
         navigate("/", { replace: true });
       }
     } catch (err) {
       console.error("Đăng nhập lỗi:", err);
       toast.error(
-        err.response?.data?.error ||
-          err.message ||
+        err?.response?.data?.error ||
+          err?.message ||
           "❌ Email hoặc mật khẩu không đúng!",
         { position: "top-center" }
       );
@@ -89,7 +91,6 @@ export default function DangNhap() {
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       <ToastContainer />
 
-      {/* BG tổng: ảnh + overlay emerald, KHÔNG blur chữ */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${BG})` }}
@@ -100,7 +101,6 @@ export default function DangNhap() {
         aria-hidden
       />
 
-      {/* Card: 2 cột */}
       <div
         className="
           relative z-10 flex w-full max-w-6xl h-[620px] md:h-[640px]
@@ -108,7 +108,6 @@ export default function DangNhap() {
           bg-white/5
         "
       >
-        {/* Cột trái trang trí */}
         <div className="hidden md:flex w-1/2 relative items-center justify-center text-white">
           <div
             className="absolute inset-0 bg-cover bg-center opacity-30"
@@ -124,13 +123,11 @@ export default function DangNhap() {
               Chào mừng trở lại 📷
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-emerald-50/90">
-              Lưu giữ khoảnh khắc, bắt trọn cảm xúc. <br />
-              Đăng nhập để tiếp tục khám phá thế giới nhiếp ảnh.
+              Đăng nhập để tiếp tục quản lý sản phẩm.
             </p>
           </div>
         </div>
 
-        {/* Cột phải: form */}
         <div className="w-full md:w-1/2 h-full bg-white/95 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-6 md:p-10">
           <h2 className="text-2xl font-extrabold text-center mb-6">
             Đăng nhập
@@ -141,7 +138,6 @@ export default function DangNhap() {
             onSubmit={handleSubmit(onSubmit)}
             noValidate
           >
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium mb-1">Email</label>
               <div className="flex items-center ui-input">
@@ -160,7 +156,6 @@ export default function DangNhap() {
               )}
             </div>
 
-            {/* Mật khẩu */}
             <div>
               <label className="block text-sm font-medium mb-1">Mật khẩu</label>
               <div className="flex items-center ui-input">
@@ -179,7 +174,6 @@ export default function DangNhap() {
               )}
             </div>
 
-            {/* Nút */}
             <button
               type="submit"
               disabled={isSubmitting}
@@ -197,7 +191,6 @@ export default function DangNhap() {
             </button>
           </form>
 
-          {/* Link phụ */}
           <div className="mt-4 text-center text-sm text-slate-600 dark:text-slate-300">
             Quên mật khẩu?{" "}
             <a

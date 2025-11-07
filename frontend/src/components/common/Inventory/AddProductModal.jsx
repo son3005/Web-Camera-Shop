@@ -1,409 +1,426 @@
-// src/components/common/Inventory/AddProduct/AddProductModal.jsx
-import React, { useEffect, useState } from "react";
-import { useForm, Controller, FormProvider } from "react-hook-form";
+// frontend/src/components/common/Inventory/AddProductModal.jsx
+// ------------------------------------------------------------
+// Mục đích:
+// 1. Modal thêm / sửa sản phẩm
+// 2. Luồng "sửa" phải fill lại toàn bộ dữ liệu từ backend
+//    (kể cả biến thể và ảnh cũ) để gửi lại đúng format
+// 3. Khi submit sẽ gọi hook useProducts() (đã trỏ tới adminProductApi)
+// 4. Các dropdown (danh mục, thương hiệu, cấp độ) lấy từ useCatalogs()
+//    → sau khi mình fix useCatalogs thì nó sẽ có data
+// ------------------------------------------------------------
+
+import React, { useEffect } from "react";
+import { FormProvider, useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useQuery } from "@tanstack/react-query";
 import { X, Loader2, Save } from "lucide-react";
+
 import VariantManager from "./VariantManager";
 import PropertyForm from "./PropertyForm";
 import DescriptionEditor from "./DescriptionEditor";
-import { useProducts } from '../../../hooks/useProducts';
-import { useCatalogs } from "../../../hooks/useCatalogs";
-import { useUpload } from "../../../hooks/useUpload";
-import { useToast } from "../../../hooks/useToast";
-import { sanPhamCreateSchema, sanPhamUpdateSchema } from '../../../validation/products';
 
+import { useProducts } from "../../../hooks/useProducts";
+import { useCatalogs } from "../../../hooks/useCatalogs";
+import { useToast } from "../../../hooks/useToast";
+
+import {
+  sanPhamCreateSchema,
+  sanPhamUpdateSchema,
+} from "../../../validation/products";
+
+/* =========================================================
+   Component chuyển đổi trạng thái (chỉ để UI đẹp)
+   Backend của bạn đang không bắt buộc phải gửi field này,
+   nên mình giữ ở UI để sau này bạn muốn gửi thì gửi.
+   ========================================================= */
 const StatusToggle = ({ label, enabled, onChange, readOnly }) => (
-    <div>
-        <label className="block text-sm font-medium mb-2 text-slate-800 dark:text-slate-200">{label}</label>
-        <div className="flex items-center gap-4">
-            <button 
-                type="button" 
-                onClick={() => !readOnly && onChange(!enabled)} 
-                disabled={readOnly}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:ring-offset-slate-900 ${
-                    enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
-                } ${readOnly ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-            >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                    enabled ? 'translate-x-5' : 'translate-x-0'
-                }`}/>
-            </button>
-            <span className={`text-sm font-medium ${
-                enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'
-            }`}>
-                {enabled ? 'Đang bán' : 'Ngừng bán'}
-            </span>
-        </div>
+  <div>
+    <label className="block text-sm font-medium mb-2">{label}</label>
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        onClick={() => !readOnly && onChange(!enabled)}
+        disabled={readOnly}
+        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${
+          enabled ? "bg-emerald-500" : "bg-slate-300"
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition ${
+            enabled ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+      <span
+        className={`text-sm font-medium ${
+          enabled ? "text-emerald-600" : "text-slate-500"
+        }`}
+      >
+        {enabled ? "Đang bán" : "Ngừng bán"}
+      </span>
     </div>
+  </div>
 );
 
+/* =========================================================
+   MAIN COMPONENT
+   props:
+   - mode: "add" | "edit"
+   - productId: id sản phẩm cần sửa (mode=edit)
+   - onClose: đóng modal
+   ========================================================= */
 const AddProductModal = ({ mode, productId, onClose }) => {
-    const { useGetSanPhamById, useCreateSanPham, useUpdateSanPham } = useProducts();
-    const { useGetAllDanhMuc, useGetAllThuongHieu } = useCatalogs();
-    const { useGetUploadSignature, useUploadDirect } = useUpload();
-    const { success, error } = useToast();
+  /* ===================== HOOK API ===================== */
+  // hook sản phẩm
+  const { useGetSanPhamById, useCreateSanPham, useUpdateSanPham } =
+    useProducts();
 
-    const getSignatureMutation = useGetUploadSignature();
-    const uploadDirectMutation = useUploadDirect();
+  // hook danh mục / thương hiệu / cấp độ
+  const { useGetAllDanhMuc, useGetAllThuongHieu, useGetAllCapDo } =
+    useCatalogs();
 
-    // Lấy danh sách danh mục và thương hiệu
-    const { data: danhMucData, isLoading: isLoadingDanhMuc } = useGetAllDanhMuc({ page: 1, per_page: 100 });
-    const { data: thuongHieuData, isLoading: isLoadingThuongHieu } = useGetAllThuongHieu({ page: 1, per_page: 100 });
+  // toast
+  const { success, error } = useToast();
 
-    const danhMucList = danhMucData?.data || [];
-    const thuongHieuList = thuongHieuData?.data || [];
+  /* ===================== GỌI DROPDOWN ===================== */
+  // gọi nhiều hơn 1 trang để chắc có dữ liệu
+  const { data: danhMucData } = useGetAllDanhMuc({ page: 1, per_page: 100 });
+  const { data: thuongHieuData } = useGetAllThuongHieu({
+    page: 1,
+    per_page: 100,
+  });
+  const { data: capDoData } = useGetAllCapDo({ page: 1, per_page: 100 });
 
-    // Lấy chi tiết sản phẩm nếu là chỉnh sửa
-    const { data: productToEdit, isLoading: isLoadingProduct } = useGetSanPhamById(productId, {
-        enabled: mode === 'edit' && !!productId,
-    });
+  /* ===================== GỌI DETAIL KHI EDIT ===================== */
+  const { data: productDetail } = useGetSanPhamById(productId, {
+    enabled: mode === "edit" && !!productId,
+  });
 
-    // Mutations
-    const createMutation = useCreateSanPham();
-    const updateMutation = useUpdateSanPham();
+  /* ===================== MUTATION ===================== */
+  const createMutation = useCreateSanPham();
+  const updateMutation = useUpdateSanPham();
 
-    const methods = useForm({
-        resolver: yupResolver(mode === 'add' ? sanPhamCreateSchema : sanPhamUpdateSchema),
-        defaultValues: {
-            ten_san_pham: '',
-            danh_muc_id: '',
-            thuong_hieu_id: '',
-            mo_ta: '',
-            trang_thai: 'dang_ban',
-            thong_so_ky_thuat: {},
-            bien_the_san_phams: []
-        }
-    });
+  /* ===================== FORM ===================== */
+  const methods = useForm({
+    // dùng yup để check
+    resolver: yupResolver(
+      mode === "add" ? sanPhamCreateSchema : sanPhamUpdateSchema
+    ),
+    // giá trị mặc định
+    defaultValues: {
+      ten_san_pham: "",
+      danh_muc_id: "",
+      thuong_hieu_id: "",
+      cap_do_id: "",
+      mo_ta: "",
+      trang_thai: "dang_ban",
+      thong_so_ky_thuat: {},
+      bien_the_san_phams: [],
+    },
+  });
 
-    const { register, handleSubmit, control, reset, formState: { errors, isSubmitting }, watch, setValue } = methods;
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors, isSubmitting },
+  } = methods;
 
-    const [isLoading, setIsLoading] = useState(false);
+  /* =========================================================
+     KHI MODE = EDIT → ĐỔ DỮ LIỆU VÀO FORM
+     - Lưu ý: backend trả "cac_bien_the"
+     - FE đang dùng "bien_the_san_phams"
+     - nên phải map qua
+     ========================================================= */
+  useEffect(() => {
+    if (mode === "edit" && productDetail) {
+      reset({
+        ten_san_pham: productDetail.ten_san_pham,
+        // ưu tiên id, nếu BE chỉ trả object thì lấy object.id
+        danh_muc_id: productDetail.danh_muc_id || productDetail.danh_muc?.id,
+        thuong_hieu_id:
+          productDetail.thuong_hieu_id || productDetail.thuong_hieu?.id,
+        cap_do_id: productDetail.cap_do_id || productDetail.cap_do?.id,
+        mo_ta: productDetail.mo_ta,
+        trang_thai: productDetail.trang_thai || "dang_ban",
+        thong_so_ky_thuat: productDetail.thong_so_ky_thuat || {},
+        // map biến thể
+        bien_the_san_phams:
+          productDetail.cac_bien_the?.map((v, idx) => ({
+            id: v.id,
+            ten_bien_the: v.ten_bien_the,
+            gia_ban: v.gia_ban,
+            gia_khuyen_mai: v.gia_khuyen_mai,
+            ngay_bat_dau_khuyen_mai: v.ngay_bat_dau_khuyen_mai,
+            ngay_ket_thuc_khuyen_mai: v.ngay_ket_thuc_khuyen_mai,
+            so_luong_ton: v.so_luong_ton,
+            trang_thai_kich_hoat: v.trang_thai_kich_hoat,
+            // ảnh cũ → không có file, nhưng cần để hiển thị
+            hinh_anhs:
+              v.hinh_anhs?.map((img, i) => ({
+                id: img.id,
+                url: img.url,
+                public_id: img.public_id,
+                alt_text: img.alt_text || `Ảnh ${i + 1}`,
+                la_anh_dai_dien: img.la_anh_dai_dien,
+                thu_tu: img.thu_tu || i + 1,
+              })) || [],
+          })) || [],
+      });
+    }
+  }, [mode, productDetail, reset]);
 
-    // 🔄 HÀM UPLOAD ẢNH ĐƠN GIẢN - CHỈ LẤY URL VÀ PUBLIC_ID
-    const uploadImageSimple = async (file) => {
-        try {
-            console.log('Uploading image:', file.name);
-            
-            // Lấy signature
-            const signatureData = await getSignatureMutation.mutateAsync("san_pham");
-            
-            // Upload trực tiếp lên Cloudinary
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('api_key', signatureData.api_key);
-            formData.append('timestamp', signatureData.timestamp);
-            formData.append('signature', signatureData.signature);
-            formData.append('folder', signatureData.folder);
+  /* =========================================================
+     SUBMIT FORM
+     - Chuẩn hóa lại dữ liệu
+     - Ép ID về number để backend (SQLAlchemy/Pydantic) không kêu
+     - Chuẩn hóa mảng ảnh trong từng biến thể
+     ========================================================= */
+  const onSubmit = async (data) => {
+    try {
+      // ép 3 id chính sang number (hoặc null)
+      const normalizedBase = {
+        ...data,
+        danh_muc_id: data.danh_muc_id ? Number(data.danh_muc_id) : null,
+        thuong_hieu_id: data.thuong_hieu_id
+          ? Number(data.thuong_hieu_id)
+          : null,
+        cap_do_id: data.cap_do_id ? Number(data.cap_do_id) : null,
+      };
 
-            const response = await fetch(
-                `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
-                { method: 'POST', body: formData }
-            );
+      // chuẩn hóa biến thể + ảnh bên trong
+      const payload = {
+        ...normalizedBase,
+        bien_the_san_phams: Array.isArray(normalizedBase.bien_the_san_phams)
+          ? normalizedBase.bien_the_san_phams.map((v) => ({
+              ...v,
+              // hinh_anhs có thể là ảnh cũ (url, id) hoặc ảnh mới (file)
+              hinh_anhs: Array.isArray(v.hinh_anhs)
+                ? v.hinh_anhs.map((img, idx) => ({
+                    id: img.id,
+                    url: img.url,
+                    public_id: img.public_id,
+                    // nếu không có alt_text thì lấy tên file hoặc "Ảnh x"
+                    alt_text:
+                      img.alt_text || img?.file?.name || `Ảnh ${idx + 1}`,
+                    // nếu BE cần boolean rõ ràng
+                    la_anh_dai_dien:
+                      typeof img.la_anh_dai_dien === "boolean"
+                        ? img.la_anh_dai_dien
+                        : idx === 0,
+                    thu_tu:
+                      typeof img.thu_tu === "number" ? img.thu_tu : idx + 1,
+                    file: img.file, // để adminProductApi.append file
+                  }))
+                : [],
+            }))
+          : [],
+      };
 
-            if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
-            
-            const result = await response.json();
-            console.log('Upload successful:', result.public_id);
-            
-            return {
-                url: result.secure_url,
-                public_id: result.public_id,
-                alt_text: file.name || 'Product image',
-                la_anh_dai_dien: false // Mặc định false, sẽ set sau
-            };
-        } catch (err) {
-            console.error('Upload failed, trying fallback:', err);
-            // Fallback: upload qua server
-            const fallbackResult = await uploadDirectMutation.mutateAsync(file);
-            return {
-                url: fallbackResult.url,
-                public_id: fallbackResult.public_id,
-                alt_text: file.name || 'Product image',
-                la_anh_dai_dien: false
-            };
-        }
-    };
+      if (mode === "add") {
+        await createMutation.mutateAsync(payload);
+        success("Thêm sản phẩm thành công");
+      } else {
+        await updateMutation.mutateAsync({ id: productId, ...payload });
+        success("Cập nhật sản phẩm thành công");
+      }
 
-    // 🔄 XỬ LÝ UPLOAD ẢNH CHO TẤT CẢ BIẾN THỂ
-    const processAllVariantImages = async (bienTheSanPhams) => {
-        const processedVariants = [];
-        
-        for (let i = 0; i < bienTheSanPhams.length; i++) {
-            const variant = bienTheSanPhams[i];
-            const processedImages = [];
-            
-            // Upload từng ảnh trong biến thể
-            if (variant.hinh_anhs && variant.hinh_anhs.length > 0) {
-                for (let j = 0; j < variant.hinh_anhs.length; j++) {
-                    const image = variant.hinh_anhs[j];
-                    
-                    // Nếu là file mới (chưa có URL), thực hiện upload
-                    if (image.file && image.file instanceof File) {
-                        try {
-                            const uploadedImage = await uploadImageSimple(image.file);
-                            processedImages.push({
-                                ...uploadedImage,
-                                la_anh_dai_dien: image.la_anh_dai_dien || (j === 0) // Ảnh đầu tiên là đại diện
-                            });
-                        } catch (uploadError) {
-                            console.error(`Lỗi upload ảnh ${j + 1} cho biến thể ${i + 1}:`, uploadError);
-                            throw uploadError;
-                        }
-                    } else if (image.url) {
-                        // Ảnh đã có URL (trong trường hợp edit), giữ nguyên
-                        processedImages.push(image);
+      onClose();
+    } catch (err) {
+      error(
+        err?.response?.data?.error ||
+          err?.message ||
+          "Có lỗi xảy ra khi lưu sản phẩm"
+      );
+    }
+  };
+
+  /* =========================================================
+     RENDER
+     ========================================================= */
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <FormProvider {...methods}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="relative w-full max-w-7xl max-h-[95vh] flex flex-col rounded-3xl bg-slate-200/60 dark:bg-slate-800/70"
+        >
+          {/* ========== HEADER ========== */}
+          <div className="flex justify-between items-center p-5 border-b border-black/10 dark:border-white/10">
+            <h2 className="text-2xl font-bold">
+              {mode === "add" ? "Thêm Sản Phẩm Mới" : "Cập Nhật Sản Phẩm"}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-black/10"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          {/* ========== BODY ========== */}
+          <div className="flex-grow p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Cột trái: thông tin chính + biến thể */}
+            <div className="lg:col-span-7 space-y-6">
+              {/* dòng inputs cơ bản */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* tên sản phẩm */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Tên sản phẩm *
+                  </label>
+                  <input
+                    type="text"
+                    {...register("ten_san_pham")}
+                    className="w-full rounded-lg px-3 py-2 bg-white/50"
+                  />
+                  <p className="text-red-500 text-xs h-4">
+                    {errors.ten_san_pham?.message}
+                  </p>
+                </div>
+
+                {/* danh mục */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Danh mục *
+                  </label>
+                  <select
+                    {...register("danh_muc_id")}
+                    className="w-full rounded-lg px-3 py-2 bg-white/50"
+                  >
+                    <option value="">Chọn danh mục</option>
+                    {(danhMucData?.data || []).map((dm) => (
+                      <option key={dm.id} value={dm.id}>
+                        {dm.ten_danh_muc}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-red-500 text-xs h-4">
+                    {errors.danh_muc_id?.message}
+                  </p>
+                </div>
+
+                {/* thương hiệu */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Thương hiệu *
+                  </label>
+                  <select
+                    {...register("thuong_hieu_id")}
+                    className="w-full rounded-lg px-3 py-2 bg-white/50"
+                  >
+                    <option value="">Chọn thương hiệu</option>
+                    {(thuongHieuData?.data || []).map((th) => (
+                      <option key={th.id} value={th.id}>
+                        {th.ten_thuong_hieu}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-red-500 text-xs h-4">
+                    {errors.thuong_hieu_id?.message}
+                  </p>
+                </div>
+
+                {/* cấp độ */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Cấp độ
+                  </label>
+                  <select
+                    {...register("cap_do_id")}
+                    className="w-full rounded-lg px-3 py-2 bg-white/50"
+                  >
+                    <option value="">Chọn cấp độ</option>
+                    {(capDoData?.data || []).map((cd) => (
+                      <option key={cd.id} value={cd.id}>
+                        {cd.ten_cap_do}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* toggle trạng thái chỉ để UI */}
+              <Controller
+                name="trang_thai"
+                control={control}
+                render={({ field }) => (
+                  <StatusToggle
+                    label="Tình trạng kinh doanh"
+                    enabled={field.value === "dang_ban"}
+                    onChange={(enabled) =>
+                      field.onChange(enabled ? "dang_ban" : "ngung_ban")
                     }
-                }
-            }
-            
-            // Set ảnh đầu tiên làm đại diện nếu chưa có ảnh nào được set
-            if (processedImages.length > 0 && !processedImages.some(img => img.la_anh_dai_dien)) {
-                processedImages[0].la_anh_dai_dien = true;
-            }
-            
-            processedVariants.push({
-                ...variant,
-                hinh_anhs: processedImages
-            });
-        }
-        
-        return processedVariants;
-    };
+                  />
+                )}
+              />
 
-    // 🚀 HÀM SUBMIT CHÍNH - ĐÃ ĐƯỢC TỐI ƯU
-    const onSubmit = async (data) => {
-        setIsLoading(true);
-        
-        try {
-            console.log('Form data received:', data);
+              {/* quản lý biến thể */}
+              <VariantManager
+                control={control}
+                register={register}
+                errors={errors}
+                readOnly={false}
+              />
+            </div>
 
-            let finalData = { ...data };
+            {/* Cột phải: thuộc tính kỹ thuật */}
+            <div className="lg:col-span-5">
+              <PropertyForm control={control} readOnly={false} />
+            </div>
+          </div>
 
-            // 🔄 Bước 1: Xử lý upload ảnh trước khi gửi lên server
-            if (data.bien_the_san_phams && data.bien_the_san_phams.length > 0) {
-                console.log('Processing variant images...');
-                finalData.bien_the_san_phams = await processAllVariantImages(data.bien_the_san_phams);
-                console.log('Images processed successfully');
-            }
+          {/* Mô tả dài */}
+          <div className="p-6">
+            <Controller
+              name="mo_ta"
+              control={control}
+              render={({ field }) => (
+                <DescriptionEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </div>
 
-            // 🔄 Bước 2: Gửi request tạo/cập nhật sản phẩm
-            if (mode === 'add') {
-                console.log('Creating product with data:', finalData);
-                await createMutation.mutateAsync(finalData);
-                success('Thêm sản phẩm thành công!');
-            } else {
-                console.log('Updating product with data:', finalData);
-                await updateMutation.mutateAsync({ id: productId, ...finalData });
-                success('Cập nhật sản phẩm thành công!');
-            }
-            
-            onClose();
-            
-        } catch (err) {
-            console.error('Error saving product:', err);
-            const errorMessage = err.response?.data?.error || err.message || 'Có lỗi xảy ra khi lưu sản phẩm';
-            error(errorMessage);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Reset form khi có dữ liệu sản phẩm cần chỉnh sửa
-    useEffect(() => {
-        if (mode === 'edit' && productToEdit) {
-            console.log('Editing product data:', productToEdit);
-            
-            const formData = {
-                ten_san_pham: productToEdit.ten_san_pham,
-                danh_muc_id: productToEdit.danh_muc_id,
-                thuong_hieu_id: productToEdit.thuong_hieu_id,
-                mo_ta: productToEdit.mo_ta,
-                trang_thai: productToEdit.trang_thai,
-                thong_so_ky_thuat: productToEdit.thong_so_ky_thuat || {},
-                bien_the_san_phams: productToEdit.cac_bien_the?.map(bienThe => ({
-                    id: bienThe.id,
-                    ten_bien_the: bienThe.ten_bien_the,
-                    gia_ban: bienThe.gia_ban,
-                    gia_khuyen_mai: bienThe.gia_khuyen_mai,
-                    so_luong_ton: bienThe.so_luong_ton,
-                    trang_thai_kich_hoat: bienThe.trang_thai_kich_hoat,
-                    hinh_anhs: bienThe.hinh_anhs?.map(img => ({
-                        url: img.url,
-                        public_id: img.public_id,
-                        alt_text: img.alt_text,
-                        la_anh_dai_dien: img.la_anh_dai_dien
-                    })) || []
-                })) || []
-            };
-            
-            console.log('Form data to reset:', formData);
-            reset(formData);
-        } else if (mode === 'add') {
-            reset({
-                ten_san_pham: '',
-                danh_muc_id: '',
-                thuong_hieu_id: '',
-                mo_ta: '',
-                trang_thai: 'dang_ban',
-                thong_so_ky_thuat: {},
-                bien_the_san_phams: []
-            });
-        }
-    }, [mode, productToEdit, reset]);
-
-    const isLoadingData = isLoadingProduct || isLoadingDanhMuc || isLoadingThuongHieu;
-    const isSaving = isLoading || isSubmitting;
-
-    return (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <FormProvider {...methods}>
-                <form onSubmit={handleSubmit(onSubmit)} className="relative w-full max-w-7xl max-h-[95vh] flex flex-col rounded-3xl shadow-2xl bg-slate-200/60 dark:bg-slate-800/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/50">
-                    {isLoadingData && (
-                        <div className="absolute inset-0 bg-slate-800/50 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-3xl">
-                            <Loader2 className="animate-spin text-emerald-500" size={48} />
-                            <p className="mt-4 text-lg dark:text-slate-300">Đang tải dữ liệu sản phẩm...</p>
-                        </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center p-5 border-b border-black/10 dark:border-white/10">
-                        <h2 className="text-2xl font-bold dark:text-white">
-                            {mode === 'add' ? 'Thêm Sản Phẩm Mới' : 'Cập Nhật Sản Phẩm'}
-                        </h2>
-                        <button 
-                            type="button" 
-                            onClick={onClose}
-                            disabled={isSaving}
-                            className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-50 dark:text-white"
-                        >
-                            <X size={24} />
-                        </button>
-                    </div>
-
-                    <div className="flex-grow p-6 overflow-y-auto scrollbar-thin grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div className="lg:col-span-7 space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-slate-800 dark:text-slate-200">Tên sản phẩm *</label>
-                                    <input 
-                                        type="text" 
-                                        {...register("ten_san_pham")} 
-                                        disabled={isSaving}
-                                        className={`w-full rounded-lg px-3 py-2.5 text-sm bg-white/50 dark:bg-slate-700/50 border ${
-                                            errors.ten_san_pham ? 'border-red-500' : 'border-black/10 dark:border-white/10'
-                                        } disabled:opacity-50 dark:text-white`} 
-                                    />
-                                    <p className="text-red-500 text-xs mt-1 h-4">{errors.ten_san_pham?.message}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-slate-800 dark:text-slate-200">Danh mục *</label>
-                                    <select 
-                                        {...register("danh_muc_id")} 
-                                        disabled={isSaving}
-                                        className={`w-full rounded-lg px-3 py-2.5 text-sm bg-white/50 dark:bg-slate-700/50 border ${
-                                            errors.danh_muc_id ? 'border-red-500' : 'border-black/10 dark:border-white/10'
-                                        } disabled:opacity-50 dark:text-white`}
-                                    >
-                                        <option value="">Chọn danh mục</option>
-                                        {danhMucList.map(dm => (
-                                            <option key={dm.id} value={dm.id}>{dm.ten_danh_muc}</option>
-                                        ))}
-                                    </select>
-                                    <p className="text-red-500 text-xs mt-1 h-4">{errors.danh_muc_id?.message}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-slate-800 dark:text-slate-200">Thương hiệu *</label>
-                                    <select 
-                                        {...register("thuong_hieu_id")} 
-                                        disabled={isSaving}
-                                        className={`w-full rounded-lg px-3 py-2.5 text-sm bg-white/50 dark:bg-slate-700/50 border ${
-                                            errors.thuong_hieu_id ? 'border-red-500' : 'border-black/10 dark:border-white/10'
-                                        } disabled:opacity-50 dark:text-white`}
-                                    >
-                                        <option value="">Chọn thương hiệu</option>
-                                        {thuongHieuList.map(th => (
-                                            <option key={th.id} value={th.id}>{th.ten_thuong_hieu}</option>
-                                        ))}
-                                    </select>
-                                    <p className="text-red-500 text-xs mt-1 h-4">{errors.thuong_hieu_id?.message}</p>
-                                </div>
-                            </div>
-                            
-                            <Controller 
-                                name="trang_thai" 
-                                control={control} 
-                                render={({ field }) => (
-                                    <StatusToggle 
-                                        label="Tình trạng kinh doanh" 
-                                        enabled={field.value === 'dang_ban'} 
-                                        onChange={(enabled) => field.onChange(enabled ? 'dang_ban' : 'ngung_ban')}
-                                        readOnly={isSaving}
-                                    />
-                                )}
-                            />
-                            
-                            <VariantManager 
-                                control={control} 
-                                register={register} 
-                                errors={errors} 
-                                readOnly={isSaving}
-                            />
-                        </div>
-                        
-                        <div className="lg:col-span-5">
-                            <PropertyForm 
-                                control={control} 
-                                readOnly={isSaving}
-                            />
-                        </div>
-                    </div>
-                    
-                    <div className="p-6">
-                        <Controller 
-                            name="mo_ta" 
-                            control={control} 
-                            render={({ field }) => (
-                                <DescriptionEditor 
-                                    value={field.value} 
-                                    onChange={field.onChange}
-                                    readOnly={isSaving}
-                                />
-                            )} 
-                        />
-                        <p className="text-red-500 text-xs mt-1 h-4">{errors.mo_ta?.message}</p>
-                    </div>
-                    
-                    <div className="flex justify-end items-center gap-4 p-5 border-t border-black/10 dark:border-white/10">
-                        <button 
-                            type="button" 
-                            onClick={onClose}
-                            disabled={isSaving}
-                            className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-slate-900/5 dark:bg-white/10 hover:bg-slate-900/10 dark:hover:bg-white/20 transition-all disabled:opacity-50 dark:text-white"
-                        >
-                            Hủy
-                        </button>
-                        <button 
-                            type="submit" 
-                            disabled={isSaving}
-                            className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:scale-105 transition-transform duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Đang lưu...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="h-4 w-4" />
-                                    {mode === 'add' ? 'Thêm sản phẩm' : 'Lưu thay đổi'}
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </form>
-            </FormProvider>
-        </div>
-    );
+          {/* ========== FOOTER ========== */}
+          <div className="flex justify-end gap-4 p-5 border-t border-black/10 dark:border-white/10">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 rounded-lg bg-slate-900/5"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={
+                isSubmitting ||
+                createMutation.isPending ||
+                updateMutation.isPending
+              }
+              className="flex items-center gap-2 px-6 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600"
+            >
+              {isSubmitting ||
+              createMutation.isPending ||
+              updateMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Đang lưu...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />{" "}
+                  {mode === "add" ? "Thêm sản phẩm" : "Lưu thay đổi"}
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </FormProvider>
+    </div>
+  );
 };
 
 export default AddProductModal;

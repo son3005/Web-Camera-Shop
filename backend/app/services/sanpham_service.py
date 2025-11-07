@@ -215,7 +215,7 @@ class SanPhamService:
             if not thuong_hieu:
                 raise NotFound("Thương hiệu không tồn tại")
             cap_do = db.session.query(CapDo).get(data.cap_do_id)
-            if not thuong_hieu:
+            if not cap_do:
                 raise NotFound("Thương hiệu không tồn tại")
             
             # Bước 2: Generate mã
@@ -929,7 +929,7 @@ class SanPhamService:
                         db.session.delete(img)
                         # Gửi task xóa Cloudinary
                         if img.public_id:
-                            CloudinaryService.delete_image_task.delay(img.public_id)
+                            delete_image_task.delay(img.public_id)
 
             db.session.add(variant)
             logger.info(f"Cập nhật biến thể với ảnh thành công | ID: {bien_the_id}")

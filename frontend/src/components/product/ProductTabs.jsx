@@ -1,4 +1,6 @@
-// frontend/src/components/product/ProductTabs.jsx
+// src/components/product/ProductTabs.jsx
+// Tabs: mô tả | thông số | đánh giá
+
 import { useState } from "react";
 import ProductSpecsTable from "./ProductSpecsTable";
 import ReviewsPanel from "./ReviewsPanel";
@@ -8,7 +10,7 @@ export default function ProductTabs({ productId, description, specs }) {
 
   return (
     <div className="container mx-auto px-4 mt-6 mb-10">
-      {/* Tabs */}
+      {/* Tabs header */}
       <div className="flex flex-wrap gap-3 mb-4">
         {[
           { key: "overview", label: "Tổng quan" },

@@ -1,5 +1,6 @@
-// frontend/src/components/common/RatingStars.jsx
-// Hiển thị sao 0..5 + tổng đánh giá (count)
+// src/components/common/RatingStars.jsx
+// Hiển thị 0..5 sao + số lượt đánh giá
+
 export default function RatingStars({ value = 0, count = 0, className = "" }) {
   const full = Math.floor(value);
   const half = value - full >= 0.5;
