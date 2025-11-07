@@ -18,6 +18,7 @@ from .routes.thuonghieu_routes import thuonghieu_api
 from .routes.capdo_routes import capdo_api
 from .routes.diachi_routes import dia_chi_api
 from .routes.phieu_thu_routes import phieu_thu_api
+from .routes.giohang_routes import giohang_api
 
 # =====================================================
 # LOGGING CONFIG
@@ -113,6 +114,7 @@ def create_app(config_class=None):
         capdo_api,
         dia_chi_api,
         phieu_thu_api,
+        giohang_api
     ]
 
     for api in api_blueprints:

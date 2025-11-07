@@ -37,7 +37,7 @@ class ChiTietGioHang(db.Model):
 
     # --- Mối quan hệ ---
     gio_hang = db.relationship('GioHang', back_populates='items')
-    bien_the_san_pham = db.relationship('BienTheSanPham')
+    bien_the_san_pham = db.relationship('BienTheSanPham', back_populates='chi_tiet_gio_hangs', lazy='joined')
 
     #-- Ràng buộc ---
     __table_args__ = (
