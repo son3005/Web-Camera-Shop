@@ -1,8 +1,11 @@
-// frontend/src/layouts/MainLayout.jsx
+// src/layouts/MainLayout.jsx
+// Layout chính: Header + Footer + Outlet
+// Gắn theme dark theo hệ thống
+
 import { Outlet, ScrollRestoration } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "../components/layout/Header";
-import Footer from "../components/layout/Footer";
+import Footer from "../components/layout/Footer"; // nếu bạn đã có Footer
 import "../assets/styles/MainLayout.css";
 
 const GrainyFilter = () => (
@@ -22,7 +25,7 @@ const GrainyFilter = () => (
 );
 
 export default function MainLayout() {
-  // Theo dõi theme hệ thống và gắn class .dark lên <html>
+  // auto dark theo hệ điều hành
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const root = document.documentElement;
@@ -31,9 +34,7 @@ export default function MainLayout() {
       if (mq.matches) root.classList.add("dark");
       else root.classList.remove("dark");
     };
-    apply(); // áp dụng ngay khi load
-
-    // lắng nghe khi người dùng đổi theme hệ thống
+    apply();
     mq.addEventListener?.("change", apply);
     return () => mq.removeEventListener?.("change", apply);
   }, []);
@@ -42,11 +43,11 @@ export default function MainLayout() {
     <div className="relative min-h-screen overflow-hidden app-bg grain-overlay transition-all duration-500">
       <GrainyFilter />
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Header KHÔNG cần prop theme/toggle nữa */}
         <Header />
         <main className="flex-1 mt-16">
           <Outlet />
         </main>
+        {/* nếu bạn chưa có Footer thì có thể bỏ dòng dưới */}
         <Footer />
       </div>
       <ScrollRestoration />

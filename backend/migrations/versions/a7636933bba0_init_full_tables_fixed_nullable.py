@@ -1,8 +1,8 @@
 """init full tables - fixed nullable
 
-Revision ID: ba4aac00ab3e
+Revision ID: a7636933bba0
 Revises: 
-Create Date: 2025-11-06 17:23:38.798321
+Create Date: 2025-11-07 09:21:31.868501
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'ba4aac00ab3e'
+revision = 'a7636933bba0'
 down_revision = None
 branch_labels = None
 depends_on = None

@@ -1,12 +1,11 @@
-// frontend/src/components/filters/CheckboxGroup.jsx
-// Group checkbox có tiêu đề + có thể thu gọn
-
+// src/components/filters/CheckboxGroup.jsx
+// Nhóm checkbox có tiêu đề, có thể thu gọn
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 export default function CheckboxGroup({
   title,
-  options = [], // {value, label}
+  options = [], // [{value, label}]
   values = [],
   onChange = () => {},
   collapsible = true,
@@ -14,6 +13,7 @@ export default function CheckboxGroup({
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
+  // Toggle 1 giá trị
   const toggle = (v) => {
     const set = new Set(values);
     if (set.has(v)) set.delete(v);
