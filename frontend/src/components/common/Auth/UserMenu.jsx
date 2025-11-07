@@ -1,6 +1,5 @@
 // src/components/common/auth/UserMenu.jsx
-// Hiển thị avatar + tên + dropdown
-// "Đổi mật khẩu" → /quenmatkhau  ✅
+// Thêm xoá token ở localStorage khi logout
 
 import React, { useEffect, useRef, useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
@@ -34,12 +33,18 @@ export default function UserMenu() {
   };
 
   const handleLogout = () => {
+    // xoá redux
     dispatch(dangXuat());
+
+    // xoá hết token mà các API có thể xài
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("token");
+
     setOpen(false);
     navigate("/", { replace: true });
   };
 
-  // Chưa login
   if (!token) {
     return (
       <button
@@ -54,7 +59,6 @@ export default function UserMenu() {
     );
   }
 
-  // Đã login
   return (
     <div className="relative" ref={wrapRef}>
       <button
@@ -84,7 +88,6 @@ export default function UserMenu() {
             Quản lý thông tin
           </button>
 
-          {/* 👇 đi đúng flow có sẵn */}
           <button
             onClick={() => {
               setOpen(false);

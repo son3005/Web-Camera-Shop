@@ -1,143 +1,186 @@
-// services/api/productApi.js
+// src/api/productApi.js
+// ============================================================
+// API sản phẩm cho frontend, ĐÃ SỬA để khớp với Flask backend
+// của bạn đang xài endpoint:  GET /san-pham  và  GET /san-pham/:id
+// (không phải /api/san-pham nữa)
+// ============================================================
+
 import axios from "axios";
 
-// Tạo instance axios với config mặc định
-const apiClient = axios.create({
-  baseURL: "http://localhost:5000/api",
-  timeout: 10000,
+// Tạo axios instance riêng cho sản phẩm
+// Ưu tiên lấy từ .env (VITE_API_BASE_URL), không có thì localhost
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000",
+  withCredentials: false,
 });
 
-// Request interceptor để thêm token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// ============================================================
+// HELPER
+// ============================================================
+
+// Chọn ảnh đại diện từ các biến thể
+function pickPrimaryImage(variants = []) {
+  for (const v of variants) {
+    if (v.hinh_anhs && v.hinh_anhs.length) {
+      const main =
+        v.hinh_anhs.find((img) => img.la_anh_dai_dien) || v.hinh_anhs[0];
+      if (main?.url) return main.url;
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
   }
-);
+  return "";
+}
 
-// Response interceptor để xử lý lỗi chung
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("authToken");
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
+// Lấy giá nhỏ nhất trong các biến thể
+function getMinPrice(variants = []) {
+  if (!variants.length) return 0;
+  const prices = variants
+    .map((v) => Number(v.gia_ban || 0))
+    .filter((n) => !Number.isNaN(n));
+  if (!prices.length) return 0;
+  return Math.min(...prices);
+}
+
+// Chuẩn hoá sản phẩm từ backend về format FE đang dùng
+export function normalizeProduct(sp) {
+  if (!sp) return null;
+
+  // backend bạn đang dùng field "cac_bien_the"
+  const variants = sp.cac_bien_the || [];
+  const price_from = getMinPrice(variants);
+
+  return {
+    id: sp.id,
+    code: sp.ma_san_pham,
+    name: sp.ten_san_pham,
+    description: sp.mo_ta,
+    specs: sp.thong_so_ky_thuat || {},
+
+    // quan hệ
+    brand: sp.thuong_hieu?.ten_thuong_hieu || "",
+    brand_id: sp.thuong_hieu?.id,
+    category: sp.danh_muc?.ten_danh_muc || "",
+    level: sp.cap_do?.ten_cap_do || "",
+
+    // biến thể giữ nguyên để FE khác xài
+    variants,
+
+    // giá và ảnh
+    price_from,
+    primaryImage: pickPrimaryImage(variants),
+    images: variants
+      .flatMap((v) => (v.hinh_anhs || []).map((img) => img.url))
+      .filter(Boolean),
+
+    // rating (nếu backend có)
+    rating: sp.trung_binh_danh_gia || 0,
+    reviewCount: sp.so_luong_danh_gia || 0,
+  };
+}
+
+// ============================================================
+// API: LẤY DANH SÁCH SẢN PHẨM
+// khớp route Flask: GET /san-pham
+// ============================================================
+export async function getProducts({
+  page = 1,
+  limit = 12,
+  search = "",
+  sort = "",
+  filters = {},
+} = {}) {
+  const params = {
+    page,
+    per_page: limit,
+  };
+
+  // search toàn văn
+  if (search) {
+    params.search = search;
   }
-);
 
-export const productApi = {
-  // Lấy danh sách sản phẩm với các tham số lọc
-  getProducts: (params = {}) =>
-    apiClient.get("/san-pham", { params }).then((res) => res.data),
+  // giá
+  if (filters.price?.min != null) {
+    params.min_price = filters.price.min;
+  }
+  if (filters.price?.max != null) {
+    params.max_price = filters.price.max;
+  }
 
-  // Lấy chi tiết sản phẩm
-  getProductById: (id) =>
-    apiClient.get(`/san-pham/${id}`).then((res) => res.data),
+  // lọc theo thương hiệu / danh mục / cấp độ
+  if (
+    Array.isArray(filters.thuong_hieu_ids) &&
+    filters.thuong_hieu_ids.length
+  ) {
+    params.thuong_hieu_ids = filters.thuong_hieu_ids;
+  }
+  if (Array.isArray(filters.danh_muc_ids) && filters.danh_muc_ids.length) {
+    params.danh_muc_ids = filters.danh_muc_ids;
+  }
+  if (Array.isArray(filters.cap_do_ids) && filters.cap_do_ids.length) {
+    params.cap_do_ids = filters.cap_do_ids;
+  }
 
-  // Tạo sản phẩm mới
-  createProduct: (productData) =>
-    apiClient.post("/san-pham", productData).then((res) => res.data),
+  // sort: backend bạn đang dùng 1 tham số sort_by
+  if (sort) {
+    // vd: "price_asc" | "price_desc" | "name_asc" | "name_desc"
+    params.sort_by = sort;
+  }
 
-  // Cập nhật sản phẩm
-  updateProduct: (id, productData) =>
-    apiClient.put(`/san-pham/${id}`, productData).then((res) => res.data),
+  // ⚠️ ĐIỂM QUAN TRỌNG: gọi đúng /san-pham (KHÔNG phải /api/san-pham)
+  const res = await api.get("/san-pham", { params });
 
-  // Xóa sản phẩm
-  deleteProduct: (id) =>
-    apiClient.delete(`/san-pham/${id}`).then((res) => res.data),
+  // backend của bạn đã trả kiểu {data: [...], pagination: {...}}
+  const raw = res.data;
+  const arr = raw.data || raw.items || [];
+  const pagination = raw.pagination || {};
 
-  // Export Excel
-  exportExcel: () =>
-    apiClient
-      .get("/san-pham/export/excel", {
-        responseType: "blob",
-      })
-      .then((res) => res.data),
+  const total = pagination.total ?? arr.length;
+  const pages = pagination.pages ?? 1;
 
-  // Export PDF
-  exportPDF: () =>
-    apiClient
-      .get("/san-pham/export/pdf", {
-        responseType: "blob",
-      })
-      .then((res) => res.data),
-};
+  return {
+    items: arr.map((p) => normalizeProduct(p)),
+    total,
+    page: pagination.page ?? page,
+    totalPages: pages,
+  };
+}
 
-export const variantApi = {
-  // Tạo biến thể mới
-  createVariant: (productId, variantData) =>
-    apiClient
-      .post(`/san-pham/${productId}/bien-the`, variantData)
-      .then((res) => res.data),
+// ============================================================
+// API: LẤY CHI TIẾT SẢN PHẨM
+// khớp route Flask: GET /san-pham/:id
+// ============================================================
+export async function getProduct(id) {
+  // ⚠️ Cũng sửa chỗ này thành /san-pham
+  const res = await api.get(`/san-pham/${id}`);
+  return normalizeProduct(res.data);
+}
 
-  // Cập nhật biến thể
-  updateVariant: (productId, variantId, variantData) =>
-    apiClient
-      .put(`/san-pham/${productId}/bien-the/${variantId}`, variantData)
-      .then((res) => res.data),
+// ============================================================
+// API: QUICK SEARCH CHO HEADER
+// Tận dụng luôn /san-pham?search=...&per_page=6
+// ============================================================
+export async function quickSearch(term, limit = 6) {
+  const q = String(term || "").trim();
+  if (!q) return [];
 
-  // Xóa biến thể
-  deleteVariant: (productId, variantId) =>
-    apiClient
-      .delete(`/san-pham/${productId}/bien-the/${variantId}`)
-      .then((res) => res.data),
-};
+  // ⚠️ gọi /san-pham
+  const res = await api.get("/san-pham", {
+    params: {
+      search: q,
+      per_page: limit,
+      page: 1,
+    },
+  });
 
-export const imageApi = {
-  // Thêm ảnh cho biến thể
-  addImage: (productId, variantId, imageData) =>
-    apiClient
-      .post(`/san-pham/${productId}/bien-the/${variantId}/hinh-anh`, imageData)
-      .then((res) => res.data),
-
-  // Cập nhật ảnh
-  updateImage: (productId, variantId, imageId, imageData) =>
-    apiClient
-      .put(
-        `/san-pham/${productId}/bien-the/${variantId}/hinh-anh/${imageId}`,
-        imageData
-      )
-      .then((res) => res.data),
-
-  // Xóa ảnh
-  deleteImage: (productId, variantId, imageId) =>
-    apiClient
-      .delete(
-        `/san-pham/${productId}/bien-the/${variantId}/hinh-anh/${imageId}`
-      )
-      .then((res) => res.data),
-};
-
-export const catalogApi = {
-  // Danh mục
-  getCategories: () =>
-    apiClient.get("/catalogs/danh-muc").then((res) => res.data),
-  getBrands: () =>
-    apiClient.get("/catalogs/thuong-hieu").then((res) => res.data),
-};
-
-export const uploadApi = {
-  // Upload image through server
-  uploadImage: (formData) =>
-    apiClient
-      .post("/upload/image", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((res) => res.data),
-
-  // Get signature for direct Cloudinary upload
-  getSignature: (folder = "san_pham") =>
-    apiClient.post("/upload/signature", { folder }).then((res) => res.data),
-};
-
-export default apiClient;
+  const arr = res.data.data || [];
+  return arr.slice(0, limit).map((p) => {
+    const norm = normalizeProduct(p);
+    return {
+      id: norm.id,
+      name: norm.name,
+      brand: norm.brand,
+      price_from: norm.price_from,
+      primaryImage: norm.primaryImage,
+    };
+  });
+}

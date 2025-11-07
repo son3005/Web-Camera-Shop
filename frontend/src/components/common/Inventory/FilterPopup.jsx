@@ -43,10 +43,19 @@ const FilterPopup = ({
   danhMucList = [],
   thuongHieuList = [],
 }) => {
-  const { sortBy, status, priceRange, danh_muc_ids, thuong_hieu_ids, stockStatus } = localFilters;
+  // luôn có object để destructure
+  const {
+    sortBy = { name: null, price: null },
+    status = [],
+    stockStatus = [],
+    priceRange = { min: "", max: "" },
+    danh_muc_ids = [],
+    thuong_hieu_ids = [],
+  } = localFilters || {};
+
   const popupRef = useRef(null);
 
-  // Chặn click bên trong để không đóng popup
+  // chặn click bên trong để không đóng popup
   useEffect(() => {
     const handleClick = (e) => {
       if (popupRef.current && popupRef.current.contains(e.target)) {
@@ -88,12 +97,12 @@ const FilterPopup = ({
           <div className="grid grid-cols-2 gap-2">
             <CheckboxOption
               label="Đang kinh doanh"
-              checked={status.includes('dang_ban')}
+              checked={status.includes("dang_ban")}
               onChange={() => handleMultiSelectChange("status", "dang_ban")}
             />
             <CheckboxOption
               label="Ngừng kinh doanh"
-              checked={status.includes('ngung_ban')}
+              checked={status.includes("ngung_ban")}
               onChange={() => handleMultiSelectChange("status", "ngung_ban")}
             />
           </div>
@@ -105,16 +114,21 @@ const FilterPopup = ({
             Danh mục
           </h4>
           <div className="max-h-32 overflow-y-auto space-y-2">
-            {danhMucList.map((danhMuc) => (
-              <CheckboxOption
-                key={danhMuc.id}
-                label={danhMuc.ten_danh_muc}
-                checked={danh_muc_ids.includes(danhMuc.id)}
-                onChange={() => handleMultiSelectChange("danh_muc_ids", danhMuc.id)}
-              />
-            ))}
-            {danhMucList.length === 0 && (
-              <p className="text-sm text-slate-500 text-center py-2">Không có danh mục</p>
+            {danhMucList.length > 0 ? (
+              danhMucList.map((danhMuc) => (
+                <CheckboxOption
+                  key={danhMuc.id}
+                  label={danhMuc.ten_danh_muc}
+                  checked={danh_muc_ids.includes(danhMuc.id)}
+                  onChange={() =>
+                    handleMultiSelectChange("danh_muc_ids", danhMuc.id)
+                  }
+                />
+              ))
+            ) : (
+              <p className="text-sm text-slate-500 text-center py-2">
+                Không có danh mục
+              </p>
             )}
           </div>
         </div>
@@ -125,16 +139,21 @@ const FilterPopup = ({
             Thương hiệu
           </h4>
           <div className="max-h-32 overflow-y-auto space-y-2">
-            {thuongHieuList.map((thuongHieu) => (
-              <CheckboxOption
-                key={thuongHieu.id}
-                label={thuongHieu.ten_thuong_hieu}
-                checked={thuong_hieu_ids.includes(thuongHieu.id)}
-                onChange={() => handleMultiSelectChange("thuong_hieu_ids", thuongHieu.id)}
-              />
-            ))}
-            {thuongHieuList.length === 0 && (
-              <p className="text-sm text-slate-500 text-center py-2">Không có thương hiệu</p>
+            {thuongHieuList.length > 0 ? (
+              thuongHieuList.map((thuongHieu) => (
+                <CheckboxOption
+                  key={thuongHieu.id}
+                  label={thuongHieu.ten_thuong_hieu}
+                  checked={thuong_hieu_ids.includes(thuongHieu.id)}
+                  onChange={() =>
+                    handleMultiSelectChange("thuong_hieu_ids", thuongHieu.id)
+                  }
+                />
+              ))
+            ) : (
+              <p className="text-sm text-slate-500 text-center py-2">
+                Không có thương hiệu
+              </p>
             )}
           </div>
         </div>
@@ -147,18 +166,24 @@ const FilterPopup = ({
           <div className="grid grid-cols-2 gap-2">
             <CheckboxOption
               label="Còn hàng"
-              checked={stockStatus.includes('in_stock')}
-              onChange={() => handleMultiSelectChange("stockStatus", "in_stock")}
+              checked={stockStatus.includes("in_stock")}
+              onChange={() =>
+                handleMultiSelectChange("stockStatus", "in_stock")
+              }
             />
             <CheckboxOption
               label="Sắp hết"
-              checked={stockStatus.includes('low_stock')}
-              onChange={() => handleMultiSelectChange("stockStatus", "low_stock")}
+              checked={stockStatus.includes("low_stock")}
+              onChange={() =>
+                handleMultiSelectChange("stockStatus", "low_stock")
+              }
             />
             <CheckboxOption
               label="Hết hàng"
-              checked={stockStatus.includes('out_of_stock')}
-              onChange={() => handleMultiSelectChange("stockStatus", "out_of_stock")}
+              checked={stockStatus.includes("out_of_stock")}
+              onChange={() =>
+                handleMultiSelectChange("stockStatus", "out_of_stock")
+              }
             />
           </div>
         </div>
