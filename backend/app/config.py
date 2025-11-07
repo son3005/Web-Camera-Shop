@@ -32,6 +32,10 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
 
+    PAYOS_CLIENT_ID= os.environ.get('PAYOS_CLIENT_ID')
+    PAYOS_API_KEY= os.environ.get('PAYOS_API_KEY')
+    PAYOS_CHECKSUM_KEY= os.environ.get('PAYOS_CHECKSUM_KEY')
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

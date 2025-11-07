@@ -4,11 +4,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask, jsonify, send_from_directory
 from flask_openapi3 import OpenAPI
-
+from payos import PayOS
 from .config import DevelopmentConfig, ProductionConfig, TestingConfig
 from .extensions import db, migrate, jwt, cors, mail, celery
 import cloudinary
-
+from celery.schedules import crontab
 # === Import các route APIBlueprint ===
 from .routes.auth_routes import auth_api
 from .routes.sanpham_routes import product_api
@@ -19,6 +19,7 @@ from .routes.capdo_routes import capdo_api
 from .routes.diachi_routes import dia_chi_api
 from .routes.phieu_thu_routes import phieu_thu_api
 from .routes.giohang_routes import giohang_api
+from .routes.donhang_routes import don_hang_api
 
 # =====================================================
 # LOGGING CONFIG
@@ -93,6 +94,12 @@ def create_app(config_class=None):
     celery.conf.result_backend = app.config['CELERY_RESULT_BACKEND']
     celery.conf.update(app.config)
     celery.autodiscover_tasks(['app.services'])
+    celery.conf.beat_schedule = {
+        'cancel-expired-orders-every-minute': {
+            'task': 'app.tasks.order_tasks.cancel_expired_orders_task',
+            'schedule': crontab(minute='*'),
+        },
+    }
 
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):
@@ -101,6 +108,15 @@ def create_app(config_class=None):
     celery.Task = ContextTask
 
     app.extensions['celery'] = celery
+
+    # =====================================================
+    # PAYOS INITIALIZATION
+    # =====================================================
+    payos_client = PayOS(
+        client_id=app.config['PAYOS_CLIENT_ID'],
+        api_key=app.config['PAYOS_API_KEY'],
+        checksum_key=app.config['PAYOS_CHECKSUM_KEY']
+    )
 
     # =====================================================
     # REGISTER API BLUEPRINTS (SỬA TẠI ĐÂY)
@@ -114,7 +130,8 @@ def create_app(config_class=None):
         capdo_api,
         dia_chi_api,
         phieu_thu_api,
-        giohang_api
+        giohang_api,
+        don_hang_api
     ]
 
     for api in api_blueprints:
