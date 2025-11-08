@@ -48,6 +48,7 @@ class DonHang(db.Model):
     trang_thai = db.Column(db.Enum(TrangThaiDonHangEnum), default=TrangThaiDonHangEnum.CHO_XAC_NHAN, nullable=False)
     phi_van_chuyen = db.Column(db.Numeric(14, 2), default=0)
     ghi_chu = db.Column(db.Text, nullable=True)
+    ly_do = db.Column(db.Text, nullable=True)
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
     ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

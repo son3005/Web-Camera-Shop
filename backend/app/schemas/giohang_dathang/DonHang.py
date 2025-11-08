@@ -34,12 +34,12 @@ class DonHangCreate(BaseModel):
     phuong_thuc_thanh_toan: PhuongThucThanhToanEnum = Field(..., description="Phương thức thanh toán")
     ghi_chu: Optional[str] = Field(None, max_length=1000, description="Ghi chú đơn hàng")
 
+class DonHangStatusUpdate(BaseModel):
+    trang_thai: TrangThaiDonHangEnum = Field(..., description="Trạng thái mới của đơn hàng")
+    ly_do: Optional[str] = Field(None, description="Lý do thay đổi trạng thái (nếu có)")
 
-class DonHangUpdate(BaseModel):
-    trang_thai: Optional[TrangThaiDonHangEnum] = Field(None, description="Cập nhật trạng thái")
-
-    model_config = ConfigDict(from_attributes=True)
-
+class OrderCancelRequest(BaseModel):
+    ly_do: Optional[str] = Field(None, description="Lý do hủy đơn hàng")
 
 class DonHangResponse(DonHangBase):
     id: int = Field(..., description="ID đơn hàng")

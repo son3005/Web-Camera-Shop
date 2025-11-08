@@ -79,6 +79,7 @@ class PhuongThucThanhToanEnum(str, enum.Enum):
 
     Giá trị:
     - COD: Thanh toán khi nhận hàng (Cash on Delivery).
+    - PAYOS_QR: Thanh toán qua mã QR của PayOS.
     - VNPAY_QR: Thanh toán qua mã QR của VNPay.
     - VNPAY_EWALLET: Thanh toán bằng ví điện tử VNPay.
     - KHAC: Phương thức khác (dùng cho các tích hợp mở rộng).
@@ -87,7 +88,8 @@ class PhuongThucThanhToanEnum(str, enum.Enum):
     - Kế thừa từ str để dễ lưu trữ/so sánh và tuần tự hóa (DB/JSON).
     - Tương thích tốt với Pydantic/FastAPI cho mục đích validate và sinh schema.
     """
-    COD = 'cod'  # Trả tiền khi nhận hàng
+    COD = 'cod' 
+    PAYOS_QR = 'payos_qr'
     VNPAY_QR = 'vnpay_qr'
     VNPAY_EWALLET = 'vnpay_ewallet'
     KHAC = 'khac'

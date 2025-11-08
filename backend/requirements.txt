@@ -68,7 +68,7 @@ typing_extensions==4.15.0
 ##############################
 # Payment Processing
 ##############################
-payos == 0.1.4
+payos == 1.0.0
 
 ##############################
 # TESTING & QUALITY TOOLS

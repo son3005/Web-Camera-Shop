@@ -4,8 +4,9 @@ from .DonHang import (
     ChiTietDonHangResponse,
     DonHangBase,
     DonHangCreate,
-    DonHangUpdate,
-    DonHangResponse
+    DonHangResponse,
+    DonHangStatusUpdate,
+    OrderCancelRequest
 )
 from .GioHang import (
     GioHangBase,

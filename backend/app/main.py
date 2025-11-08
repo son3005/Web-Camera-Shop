@@ -20,6 +20,8 @@ from .routes.diachi_routes import dia_chi_api
 from .routes.phieu_thu_routes import phieu_thu_api
 from .routes.giohang_routes import giohang_api
 from .routes.donhang_routes import don_hang_api
+from .routes.payment_routes import payment_api 
+from .routes.admin_donhang_routes import admin_don_hang_api 
 
 # =====================================================
 # LOGGING CONFIG
@@ -88,8 +90,8 @@ def create_app(config_class=None):
     else:
         logger.warning("Missing Cloudinary config")
 
+
     # --- CELERY CONFIG ---
-    
     celery.conf.broker_url = app.config['CELERY_BROKER_URL']
     celery.conf.result_backend = app.config['CELERY_RESULT_BACKEND']
     celery.conf.update(app.config)
@@ -119,7 +121,7 @@ def create_app(config_class=None):
     )
 
     # =====================================================
-    # REGISTER API BLUEPRINTS (SỬA TẠI ĐÂY)
+    # REGISTER API BLUEPRINTS 
     # =====================================================
     api_blueprints = [
         auth_api,
@@ -131,7 +133,9 @@ def create_app(config_class=None):
         dia_chi_api,
         phieu_thu_api,
         giohang_api,
-        don_hang_api
+        don_hang_api,
+        payment_api,
+        admin_don_hang_api
     ]
 
     for api in api_blueprints:
