@@ -1,0 +1,112 @@
+2025-11-11 04:17:25,167 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:17:25,200 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:18:25,161 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:18:25,163 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:18:36,319 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-11 04:18:36,414 - app.app.main - INFO - Cloudinary initialized
+2025-11-11 04:18:36,532 - app.app.main - INFO - PayOS initialized successfully
+2025-11-11 04:18:38,383 - app.app.main - INFO - All blueprints registered successfully
+2025-11-11 04:18:39,323 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Nguyen Van A', 'so_dien_thoai_nguoi_nhan': '0123456789', 'id_dia_chi': 123, 'dia_chi_giao': '123 Đường ABC', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'Giao hàng giờ hành chính', 'items': [{'id_bien_the': 5, 'so_luong': 2}, {'id_bien_the': 3, 'so_luong': 1}], 'id_nguoi_dung': 11}
+2025-11-11 04:18:39,333 - app.app.main - ERROR - Lỗi tạo đơn: Lỗi truy vấn địa chỉ: 'module' object is not callable: 123 - 11: <class 'flask_sqlalchemy.model.DefaultMeta'>
+Traceback (most recent call last):
+  File "/app/app/services/donhang_ao_service.py", line 42, in tao_don_hang_ao
+    dia_chi = self.db.query(DiaChi).filter(
+              ^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'module' object is not callable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
+    don_ao = service.tao_don_hang_ao(body)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/services/donhang_ao_service.py", line 120, in tao_don_hang_ao
+    raise e
+  File "/app/app/services/donhang_ao_service.py", line 47, in tao_don_hang_ao
+    raise Exception(f"Lỗi truy vấn địa chỉ: {str(e)}: {don_hang_data.get('id_dia_chi')} - {user_id}: {type(DiaChi)}")
+Exception: Lỗi truy vấn địa chỉ: 'module' object is not callable: 123 - 11: <class 'flask_sqlalchemy.model.DefaultMeta'>
+2025-11-11 04:19:25,161 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:19:25,163 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:20:25,163 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:20:25,166 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:21:25,161 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:21:25,163 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:21:29,033 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-11 04:21:29,077 - app.app.main - INFO - Cloudinary initialized
+2025-11-11 04:21:29,157 - app.app.main - INFO - PayOS initialized successfully
+2025-11-11 04:21:31,080 - app.app.main - INFO - All blueprints registered successfully
+2025-11-11 04:21:32,106 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Nguyen Van A', 'so_dien_thoai_nguoi_nhan': '0123456789', 'id_dia_chi': 123, 'dia_chi_giao': '123 Đường ABC', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'Giao hàng giờ hành chính', 'items': [{'id_bien_the': 5, 'so_luong': 2}, {'id_bien_the': 3, 'so_luong': 1}], 'id_nguoi_dung': 11}
+2025-11-11 04:21:32,111 - app.app.main - ERROR - Lỗi tạo đơn: Lỗi truy vấn địa chỉ: 'module' object is not callable: 123 - 11: <class 'flask_sqlalchemy.model.DefaultMeta'>
+Traceback (most recent call last):
+  File "/app/app/services/donhang_ao_service.py", line 43, in tao_don_hang_ao
+    dia_chi = self.db.query(DiaChi).filter(
+              ^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'module' object is not callable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
+    don_ao = service.tao_don_hang_ao(body)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/services/donhang_ao_service.py", line 121, in tao_don_hang_ao
+    raise e
+  File "/app/app/services/donhang_ao_service.py", line 48, in tao_don_hang_ao
+    raise Exception(f"Lỗi truy vấn địa chỉ: {str(e)}: {don_hang_data.get('id_dia_chi')} - {user_id}: {type(DiaChi)}")
+Exception: Lỗi truy vấn địa chỉ: 'module' object is not callable: 123 - 11: <class 'flask_sqlalchemy.model.DefaultMeta'>
+2025-11-11 04:22:25,161 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:22:25,163 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:23:25,167 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:23:25,170 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:24:25,165 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:24:25,170 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:25:25,162 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:25:25,165 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:26:25,167 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:26:25,171 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:27:25,162 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:27:25,166 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:27:35,481 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-11 04:27:35,554 - app.app.main - INFO - Cloudinary initialized
+2025-11-11 04:27:35,633 - app.app.main - INFO - PayOS initialized successfully
+2025-11-11 04:27:37,298 - app.app.main - INFO - All blueprints registered successfully
+2025-11-11 04:27:41,571 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-11 04:27:41,596 - app.app.main - INFO - Cloudinary initialized
+2025-11-11 04:27:41,643 - app.app.main - INFO - PayOS initialized successfully
+2025-11-11 04:27:43,405 - app.app.main - INFO - All blueprints registered successfully
+2025-11-11 04:27:46,046 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Nguyen Van A', 'so_dien_thoai_nguoi_nhan': '0123456789', 'id_dia_chi': 123, 'dia_chi_giao': '123 Đường ABC', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'Giao hàng giờ hành chính', 'items': [{'id_bien_the': 5, 'so_luong': 2}, {'id_bien_the': 3, 'so_luong': 1}], 'id_nguoi_dung': 11}
+2025-11-11 04:27:46,120 - app.app.main - ERROR - Lỗi tạo đơn: Lỗi truy vấn địa chỉ: Địa chỉ giao hàng không thuộc về người dùng này
+Traceback (most recent call last):
+  File "/app/app/services/donhang_ao_service.py", line 50, in tao_don_hang_ao
+    raise Exception("Địa chỉ giao hàng không thuộc về người dùng này")
+Exception: Địa chỉ giao hàng không thuộc về người dùng này
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
+    don_ao = service.tao_don_hang_ao(body)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/services/donhang_ao_service.py", line 124, in tao_don_hang_ao
+    raise e
+  File "/app/app/services/donhang_ao_service.py", line 53, in tao_don_hang_ao
+    raise Exception(f"Lỗi truy vấn địa chỉ: {str(e)}")
+Exception: Lỗi truy vấn địa chỉ: Địa chỉ giao hàng không thuộc về người dùng này
+2025-11-11 04:28:02,803 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Nguyen Van A', 'so_dien_thoai_nguoi_nhan': '0123456789', 'id_dia_chi': 12, 'dia_chi_giao': '123 Đường ABC', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'Giao hàng giờ hành chính', 'items': [{'id_bien_the': 5, 'so_luong': 2}, {'id_bien_the': 3, 'so_luong': 1}], 'id_nguoi_dung': 11}
+2025-11-11 04:28:03,394 - app.app.main - INFO - KÍCH HOẠT CHECK PAYOS CHO ĐƠN: 17628352825617
+2025-11-11 04:28:03,398 - app.app.main - INFO - BẮT ĐẦU POLLING: Đơn 17628352825617 (ID Ảo: f5c9252d-4c38-45c1-b059-1f409bb1b82e)
+2025-11-11 04:28:03,400 - app.app.main - DEBUG - Polling 17628352825617...
+2025-11-11 04:28:03,504 - app.app.main - INFO - Trạng thái PayOS: PENDING cho order 17628352825617
+2025-11-11 04:28:03,506 - app.app.main - DEBUG - Đơn 17628352825617 vẫn đang ở trạng thái PENDING
+2025-11-11 04:28:13,508 - app.app.main - DEBUG - Polling 17628352825617...
+2025-11-11 04:28:13,691 - app.app.main - INFO - Trạng thái PayOS: PENDING cho order 17628352825617
+2025-11-11 04:28:13,692 - app.app.main - DEBUG - Đơn 17628352825617 vẫn đang ở trạng thái PENDING
+2025-11-11 04:28:23,691 - app.app.main - DEBUG - Polling 17628352825617...
+2025-11-11 04:28:23,875 - app.app.main - INFO - Trạng thái PayOS: PENDING cho order 17628352825617
+2025-11-11 04:28:23,876 - app.app.main - DEBUG - Đơn 17628352825617 vẫn đang ở trạng thái PENDING
+2025-11-11 04:28:25,162 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-11 04:28:25,165 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-11 04:28:33,879 - app.app.main - DEBUG - Polling 17628352825617...
+2025-11-11 04:28:34,169 - app.app.main - INFO - Trạng thái PayOS: PENDING cho order 17628352825617
+2025-11-11 04:28:34,172 - app.app.main - DEBUG - Đơn 17628352825617 vẫn đang ở trạng thái PENDING
+2025-11-11 04:28:44,174 - app.app.main - DEBUG - Polling 17628352825617...

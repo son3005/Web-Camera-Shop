@@ -14,7 +14,7 @@ class BienTheSanPham(db.Model):
     san_pham_id = db.Column(db.Integer, ForeignKey('san_pham.id'), nullable=False, index=True)
     ten_bien_the = db.Column(db.String(100), nullable=False)
     trang_thai_kich_hoat = db.Column(db.Enum(TrangThaiSanPhamEnum), default=TrangThaiSanPhamEnum.DANG_BAN, nullable=False)
-    gia_ban = db.Column(db.Numeric(12, 2), nullable=False)
+    gia_ban = db.Column(db.Numeric(12), nullable=False)
     mau = db.Column(db.String(20), nullable=True)
     so_luong = db.Column(db.Integer, nullable=False, default=0)
     

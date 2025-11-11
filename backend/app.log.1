@@ -1,0 +1,15 @@
+2025-11-11 04:28:44,356 - app.app.main - INFO - Trạng thái PayOS: PAID cho order 17628352825617
+2025-11-11 04:28:44,374 - app.app.main - INFO - TRẠNG THÁI PAID: Đơn 17628352825617
+2025-11-11 04:28:44,376 - app.app.main - INFO - XỬ LÝ ĐƠN PAID (ID Ảo: f5c9252d-4c38-45c1-b059-1f409bb1b82e)
+2025-11-11 04:28:44,429 - app.app.main - INFO - HOÀN TẤT ĐƠN THẬT: DH202511110428449bf8a4e9
+2025-11-11 04:31:40,273 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Nguyen Van A', 'so_dien_thoai_nguoi_nhan': '0123456789', 'id_dia_chi': 12, 'dia_chi_giao': '123 Đường ABC', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'Giao hàng giờ hành chính', 'items': [{'id_bien_the': 5, 'so_luong': 2}, {'id_bien_the': 3, 'so_luong': 1}], 'id_nguoi_dung': 11}
+2025-11-11 04:31:40,282 - app.app.main - ERROR - Lỗi tạo đơn: Sản phẩm Canon RF 24-70mm f/2.8 - RF 24-70mm không đủ số lượng
+Traceback (most recent call last):
+  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
+    don_ao = service.tao_don_hang_ao(body)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app/services/donhang_ao_service.py", line 124, in tao_don_hang_ao
+    raise e
+  File "/app/app/services/donhang_ao_service.py", line 62, in tao_don_hang_ao
+    raise Exception(error_msg)
+Exception: Sản phẩm Canon RF 24-70mm f/2.8 - RF 24-70mm không đủ số lượng

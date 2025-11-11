@@ -106,71 +106,55 @@ class GioHangService:
         return chi_tiet_gio_hang
 
     def cap_nhat_so_luong(
-        self, 
-        chi_tiet_gio_hang_id: int, 
+        self,
+        chi_tiet_gio_hang_id: int,
         so_luong_moi: int,
-        nguoi_dung_id: int  # Thêm tham số kiểm tra quyền
+        nguoi_dung_id: int
     ) -> ChiTietGioHang:
         """Cập nhật số lượng sản phẩm trong giỏ hàng - CHỈ cho phép cập nhật của chính mình"""
-        
         print(f"🔐 Kiểm tra quyền cập nhật:")
         print(f"   - Người dùng ID: {nguoi_dung_id}")
         print(f"   - Chi tiết giỏ hàng ID: {chi_tiet_gio_hang_id}")
-        
-        # Kiểm tra số lượng tối thiểu
+
         if so_luong_moi < 1:
             raise ValueError("Số lượng phải lớn hơn hoặc bằng 1")
-        
-        # Lấy chi tiết giỏ hàng và kiểm tra quyền sở hữu
+
         chi_tiet_gio_hang = self.db.query(ChiTietGioHang).join(GioHang).filter(
             ChiTietGioHang.id == chi_tiet_gio_hang_id,
-            GioHang.nguoi_dung_id == nguoi_dung_id  # CHỈ cho phép cập nhật của chính mình
+            GioHang.nguoi_dung_id == nguoi_dung_id
         ).first()
-        
+
         if not chi_tiet_gio_hang:
             raise ValueError("Chi tiết giỏ hàng không tồn tại hoặc bạn không có quyền cập nhật")
-        
-        # ... phần còn lại của hàm giữ nguyên
-        # Lấy thông tin biến thể sản phẩm
+
         bien_the = self.db.query(BienTheSanPham).filter(
             BienTheSanPham.id == chi_tiet_gio_hang.bien_the_san_pham_id
         ).first()
-        
+
         if not bien_the:
             raise ValueError("Biến thể sản phẩm không tồn tại")
-        
+
         print(f"🔍 Kiểm tra cập nhật số lượng:")
         print(f"   - Chi tiết giỏ hàng ID: {chi_tiet_gio_hang_id}")
         print(f"   - Biến thể ID: {bien_the.id}")
         print(f"   - Tồn kho: {bien_the.so_luong}")
         print(f"   - Số lượng hiện tại trong giỏ: {chi_tiet_gio_hang.so_luong}")
         print(f"   - Số lượng mới yêu cầu: {so_luong_moi}")
-        
-        # Kiểm tra số lượng tối đa (không vượt quá tồn kho)
+
         if so_luong_moi > bien_the.so_luong:
             raise ValueError(f"Số lượng yêu cầu ({so_luong_moi}) vượt quá tồn kho hiện có ({bien_the.so_luong})")
-        
-        # Kiểm tra nếu số lượng không thay đổi
+
         if chi_tiet_gio_hang.so_luong == so_luong_moi:
             print("⚠️  Số lượng không thay đổi")
             return chi_tiet_gio_hang
-        
-        # Cập nhật số lượng
+
+        old_so_luong = chi_tiet_gio_hang.so_luong
         chi_tiet_gio_hang.so_luong = so_luong_moi
         self.db.commit()
         self.db.refresh(chi_tiet_gio_hang)
-        
-        print(f"✅ Đã cập nhật số lượng từ {chi_tiet_gio_hang.so_luong} thành {so_luong_moi}")
-        
-        return chi_tiet_gio_hang
-        
-        # Cập nhật số lượng
-        chi_tiet_gio_hang.so_luong = so_luong_moi
-        self.db.commit()
-        self.db.refresh(chi_tiet_gio_hang)
-        
-        print(f"✅ Đã cập nhật số lượng từ {chi_tiet_gio_hang.so_luong} thành {so_luong_moi}")
-        
+
+        print(f"✅ Đã cập nhật số lượng từ {old_so_luong} thành {so_luong_moi}")
+
         return chi_tiet_gio_hang
 
     def xoa_san_pham_khoi_gio_hang(self, chi_tiet_gio_hang_id: int, nguoi_dung_id: int) -> bool:

@@ -14,6 +14,7 @@ class BienTheSanPhamBase(BaseModel):
         TrangThaiSanPhamEnum.DANG_BAN,
         description="Trạng thái kích hoạt của biến thể sản phẩm"
     )
+    so_luong: Optional[int] = Field(0, ge=0, description="Số lượng tồn kho của biến thể sản phẩm")
     gia_ban: Decimal = Field(..., gt=0, description="Giá bán của biến thể sản phẩm")
     mau: Optional[str] = Field(None,max_length=20, description="Màu của biến thể")
 

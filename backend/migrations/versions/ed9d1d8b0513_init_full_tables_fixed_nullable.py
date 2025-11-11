@@ -1,8 +1,8 @@
 """init full tables - fixed nullable
 
-Revision ID: a7636933bba0
+Revision ID: ed9d1d8b0513
 Revises: 
-Create Date: 2025-11-07 09:21:31.868501
+Create Date: 2025-11-09 02:58:27.151690
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a7636933bba0'
+revision = 'ed9d1d8b0513'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -163,8 +163,9 @@ def upgrade():
     sa.Column('trang_thai', sa.Enum('CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DANG_GIAO_HANG', 'HOAN_THANH', 'DA_HUY', 'YEU_CAU_TRA_HANG', 'DA_TRA_HANG', name='trangthaidonhangenum'), nullable=False),
     sa.Column('phi_van_chuyen', sa.Numeric(precision=14, scale=2), nullable=True),
     sa.Column('ghi_chu', sa.Text(), nullable=True),
-    sa.Column('ngay_tao', sa.DateTime(), nullable=True),
-    sa.Column('ngay_cap_nhat', sa.DateTime(), nullable=True),
+    sa.Column('ly_do', sa.Text(), nullable=True),
+    sa.Column('ngay_tao', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('ngay_cap_nhat', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.CheckConstraint('phi_van_chuyen >= 0', name='ck_phivanchuyen'),
     sa.ForeignKeyConstraint(['dia_chi_id'], ['dia_chi.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['nguoi_dung_id'], ['nguoi_dung.id'], ondelete='SET NULL'),
@@ -197,7 +198,7 @@ def upgrade():
     sa.Column('gio_hang_id', sa.Integer(), nullable=False),
     sa.Column('bien_the_san_pham_id', sa.Integer(), nullable=False),
     sa.Column('so_luong', sa.Integer(), nullable=False),
-    sa.Column('ngay_them', sa.DateTime(), nullable=True),
+    sa.Column('ngay_them', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.CheckConstraint('so_luong >= 1', name='ck_so_luong_positive'),
     sa.ForeignKeyConstraint(['bien_the_san_pham_id'], ['bien_the_san_pham.id'], ),
     sa.ForeignKeyConstraint(['gio_hang_id'], ['gio_hang.id'], ),
@@ -243,7 +244,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('don_hang_id', sa.Integer(), nullable=False),
     sa.Column('so_tien', sa.Numeric(precision=14, scale=2), nullable=False),
-    sa.Column('phuong_thuc', sa.Enum('COD', 'VNPAY_QR', 'VNPAY_EWALLET', 'KHAC', name='phuongthucthanhtoanenum'), nullable=False),
+    sa.Column('phuong_thuc', sa.Enum('COD', 'PAYOS_QR', 'VNPAY_QR', 'VNPAY_EWALLET', 'KHAC', name='phuongthucthanhtoanenum'), nullable=False),
     sa.Column('trang_thai', sa.Enum('CHO_THANH_TOAN', 'DA_THANH_TOAN', 'THAT_BAI', 'DA_HOAN_TIEN', name='trangthaithanhtoanenum'), nullable=False),
     sa.Column('ma_giao_dich_ben_thu_3', sa.String(length=255), nullable=True),
     sa.Column('ngay_tao', sa.DateTime(), nullable=True),

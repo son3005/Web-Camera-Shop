@@ -9,17 +9,11 @@ from ...models.enums import TrangThaiThanhToanEnum, PhuongThucThanhToanEnum
 class ThanhToanBase(BaseModel):
     don_hang_id: int = Field(..., description="ID đơn hàng")
     so_tien: Decimal = Field(..., ge=0, description="Số tiền thanh toán")
-    phuong_thuc: PhuongThucThanhToanEnum = Field(
-        default=PhuongThucThanhToanEnum.COD,
-        description="Phương thức thanh toán"
-    )
-    trang_thai: TrangThaiThanhToanEnum = Field(
-        default=TrangThaiThanhToanEnum.CHO_THANH_TOAN,
-        description="Trạng thái thanh toán"
-    )
+    phuong_thuc: PhuongThucThanhToanEnum = Field(default=PhuongThucThanhToanEnum.COD, description="Phương thức thanh toán")
+    trang_thai: TrangThaiThanhToanEnum = Field(default=TrangThaiThanhToanEnum.CHO_THANH_TOAN, description="Trạng thái thanh toán")
     ma_giao_dich_ben_thu_3: Optional[str] = Field(None, max_length=255, description="Mã giao dịch bên thứ 3")
-    ngay_tao: datetime = Field(default_factory=datetime.utcnow, description="Ngày tạo")
-    ngay_cap_nhat: datetime = Field(default_factory=datetime.utcnow, description="Ngày cập nhật")
+    ngay_tao: Optional[datetime] = Field(None, description="Ngày tạo")  
+    ngay_cap_nhat: Optional[datetime] = Field(None, description="Ngày cập nhật")
 
     model_config = ConfigDict(from_attributes=True)
 

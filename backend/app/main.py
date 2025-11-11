@@ -1,4 +1,4 @@
-# /backend/app/main.py
+# backend/app/main.py
 import os
 import logging
 from logging.handlers import RotatingFileHandler
@@ -9,19 +9,7 @@ from .config import DevelopmentConfig, ProductionConfig, TestingConfig
 from .extensions import db, migrate, jwt, cors, mail, celery
 import cloudinary
 from celery.schedules import crontab
-# === Import các route APIBlueprint ===
-from .routes.auth_routes import auth_api
-from .routes.sanpham_routes import product_api
-from .routes.upload_routes import upload_api
-from .routes.danhmuc_routes import danhmuc_api
-from .routes.thuonghieu_routes import thuonghieu_api
-from .routes.capdo_routes import capdo_api
-from .routes.diachi_routes import dia_chi_api
-from .routes.phieu_thu_routes import phieu_thu_api
-from .routes.giohang_routes import giohang_api
-from .routes.donhang_routes import don_hang_api
-from .routes.payment_routes import payment_api 
-from .routes.admin_donhang_routes import admin_don_hang_api 
+from .tasks import *
 
 # =====================================================
 # LOGGING CONFIG
@@ -69,8 +57,6 @@ def create_app(config_class=None):
 
     logger.info(f"=== Flask App Started ({env}) ===")
 
-    
-
     # --- EXTENSIONS ---
     db.init_app(app)
     migrate.init_app(app, db)
@@ -90,19 +76,11 @@ def create_app(config_class=None):
     else:
         logger.warning("Missing Cloudinary config")
 
-
     # --- CELERY CONFIG ---
     celery.conf.broker_url = app.config['CELERY_BROKER_URL']
     celery.conf.result_backend = app.config['CELERY_RESULT_BACKEND']
     celery.conf.update(app.config)
-    celery.autodiscover_tasks(['app.services'])
-    celery.conf.beat_schedule = {
-        'cancel-expired-orders-every-minute': {
-            'task': 'app.tasks.order_tasks.cancel_expired_orders_task',
-            'schedule': crontab(minute='*'),
-        },
-    }
-
+    
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):
             with app.app_context():
@@ -114,33 +92,57 @@ def create_app(config_class=None):
     # =====================================================
     # PAYOS INITIALIZATION
     # =====================================================
-    payos_client = PayOS(
-        client_id=app.config['PAYOS_CLIENT_ID'],
-        api_key=app.config['PAYOS_API_KEY'],
-        checksum_key=app.config['PAYOS_CHECKSUM_KEY']
-    )
+    try:
+        # Kiểm tra xem có đủ cấu hình PayOS không
+        payos_config_required = ['PAYOS_CLIENT_ID', 'PAYOS_API_KEY', 'PAYOS_CHECKSUM_KEY']
+        has_payos_config = all(app.config.get(key) for key in payos_config_required)
+        
+        if has_payos_config and app.config['PAYOS_CLIENT_ID'] not in ['', 'dummy_client_id']:
+            payos_client = PayOS(
+                client_id=app.config['PAYOS_CLIENT_ID'],
+                api_key=app.config['PAYOS_API_KEY'],
+                checksum_key=app.config['PAYOS_CHECKSUM_KEY']
+            )
+            app.payos_client = payos_client
+            logger.info("PayOS initialized successfully")
+        else:
+            app.payos_client = None
+            logger.info("PayOS not configured - using dummy mode")
+            
+    except Exception as e:
+        logger.warning(f"PayOS initialization failed: {str(e)}")
+        app.payos_client = None
 
     # =====================================================
-    # REGISTER API BLUEPRINTS 
+    # REGISTER API BLUEPRINTS - IMPORT TRỰC TIẾP
     # =====================================================
-    api_blueprints = [
-        auth_api,
-        product_api,
-        upload_api,
-        danhmuc_api,
-        thuonghieu_api,
-        capdo_api,
-        dia_chi_api,
-        phieu_thu_api,
-        giohang_api,
-        don_hang_api,
-        payment_api,
-        admin_don_hang_api
-    ]
+    
+    # IMPORT TRONG FUNCTION ĐỂ TRÁNH CIRCULAR IMPORT
+    with app.app_context():
+        from .routes.auth_routes import auth_api
+        from .routes.sanpham_routes import product_api
+        from .routes.upload_routes import upload_api
+        from .routes.danhmuc_routes import danhmuc_api
+        from .routes.thuonghieu_routes import thuonghieu_api
+        from .routes.capdo_routes import capdo_api
+        from .routes.diachi_routes import dia_chi_api
+        from .routes.phieu_thu_routes import phieu_thu_api
+        from .routes.giohang_routes import giohang_api
+        from .routes.thanhtoan_routes import thanhtoan_api
 
-    for api in api_blueprints:
-        app.register_blueprint(api, url_prefix=api.url_prefix)  # ← SỬA DÒNG NÀY
-        logger.debug(f"Registered APIBlueprint: {api.name} at {api.url_prefix}")
+        # ĐĂNG KÝ BLUEPRINTS
+        app.register_blueprint(auth_api, url_prefix='/api/auth')
+        app.register_blueprint(product_api, url_prefix='/api/san-pham')
+        app.register_blueprint(upload_api, url_prefix='/api/upload')
+        app.register_blueprint(danhmuc_api, url_prefix='/api/danh-muc')
+        app.register_blueprint(thuonghieu_api, url_prefix='/api/thuong-hieu')
+        app.register_blueprint(capdo_api, url_prefix='/api/cap-do')
+        app.register_blueprint(dia_chi_api, url_prefix='/api/dia-chi')
+        app.register_blueprint(phieu_thu_api, url_prefix='/api/phieu-thu')
+        app.register_blueprint(giohang_api, url_prefix='/api/gio-hang')
+        app.register_blueprint(thanhtoan_api, url_prefix='/api/thanh-toan')
+
+        logger.info("All blueprints registered successfully")
 
     # =====================================================
     # OPENAPI SPEC

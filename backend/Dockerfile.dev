@@ -1,7 +1,13 @@
-# /backend/Dockerfile.dev
 FROM python:3.11-slim
 
 WORKDIR /app
+
+# Install system dependencies for MySQL and build
+RUN apt-get update && apt-get install -y \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
 COPY requirements.txt .
@@ -15,7 +21,7 @@ RUN pip install --upgrade pip && \
 COPY . .
 
 # Environment
-ENV FLASK_APP=app.main:app
+ENV FLASK_APP=app.main:create_app
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
 ENV PYTHONUNBUFFERED=1

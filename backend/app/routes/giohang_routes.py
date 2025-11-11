@@ -219,3 +219,44 @@ def kiem_tra_ton_kho():
             "success": False,
             "message": f"Có lỗi xảy ra khi kiểm tra tồn kho: {str(e)}"
         }), 400
+    
+@giohang_api.route('/checkout-items', methods=['GET'])
+@jwt_required()
+def get_checkout_items():
+    """Lấy danh sách sản phẩm trong giỏ hàng để checkout"""
+    try:
+        current_user_id = get_jwt_identity()
+        session = get_db_session()
+        
+        service = GioHangService(session)
+        gio_hang = service.get_gio_hang_public(current_user_id)
+        
+        # Format response cho checkout
+        checkout_data = {
+            "items": [
+                {
+                    "bien_the_id": item.bien_the_san_pham_id,
+                    "ten_san_pham": item.ten_san_pham,
+                    "ten_bien_the": item.ten_bien_the,
+                    "don_gia": float(item.don_gia),
+                    "so_luong": item.so_luong,
+                    "thanh_tien": float(item.thanh_tien),
+                    "hinh_anh": item.hinh_anh,
+                    "so_luong_toi_da": min(service.get_ton_kho(item.bien_the_san_pham_id), 10)
+                }
+                for item in gio_hang.items
+            ],
+            "tong_so_luong": gio_hang.tong_so_luong,
+            "tong_tien": float(gio_hang.tong_gia_tri)
+        }
+        
+        return jsonify({
+            "success": True,
+            "data": checkout_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Có lỗi xảy ra: {str(e)}"
+        }), 500

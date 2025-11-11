@@ -1,160 +1,168 @@
-# /backend/app/routes/admin_don_hang_routes.py
-from datetime import datetime
-from flask import request
+# backend/app/routes/admin_donhang_routes.py
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_openapi3 import APIBlueprint, Tag
-from datetime import datetime
 
+from ..models.giohang_dathang.ThanhToan import ThanhToan
+from ..models.giohang_dathang.DonHang import DonHang
+from ..models.nguoidung.NguoiDung import NguoiDung
+from ..schemas.giohang_dathang import DonHangResponse, DonHangStatusUpdate, ChiTietDonHangResponse
 from ..extensions import db
-from ..services.donhang_service import DonHangService
-from ..schemas.giohang_dathang.DonHang import DonHangResponse
-from ..schemas.giohang_dathang import DonHangStatusUpdate, OrderCancelRequest
-from ..models import NguoiDung, DonHang, ThanhToan
-from ..models.enums import TrangThaiDonHangEnum, TrangThaiThanhToanEnum
-from ..models.enums import VaiTroNguoiDungEnum
-from ..utils.decorators import admin_required
-# Tạo blueprint
-admin_don_hang_api = APIBlueprint('admin_don_hang', __name__, url_prefix='/api/admin/orders')
-admin_tag = Tag(name="Admin Đơn hàng", description="Quản lý đơn hàng cho admin")
+from datetime import datetime, timedelta
+from sqlalchemy import func, extract
 
+# QUAN TRỌNG: ĐẢM BẢO TÊN NÀY KHỚP VỚI IMPORT
+admin_donhang_api = Blueprint('admin_donhang_api', __name__)
 
-@admin_don_hang_api.get('/')
-@admin_required
+@admin_donhang_api.route('/orders', methods=['GET'])
+@jwt_required()
 def get_all_orders():
-    """Lấy tất cả đơn hàng (cho admin) với phân trang và filter"""
+    """Admin: Lấy tất cả đơn hàng với filter"""
     try:
+        current_user_id = get_jwt_identity()
+        
+        # Check admin role
+        user = NguoiDung.query.get(current_user_id)
+        if user.vai_tro != 'quan_tri_vien':
+            return jsonify({"error": "Không có quyền truy cập"}), 403
+        
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
-        status = request.args.get('status', type=str)
-        search = request.args.get('search', type=str)
+        per_page = request.args.get('per_page', 20, type=int)
+        trang_thai = request.args.get('trang_thai')
+        from_date = request.args.get('from_date')
+        to_date = request.args.get('to_date')
         
-        # Convert string status to enum
-        status_enum = None
-        if status:
-            try:
-                status_enum = TrangThaiDonHangEnum(status)
-            except ValueError:
-                return {'error': 'Trạng thái không hợp lệ'}, 400
+        # Build query
+        query = DonHang.query
         
-        orders, total = DonHangService.get_all_orders(page, per_page, status_enum, search)
+        if trang_thai:
+            query = query.filter(DonHang.trang_thai == trang_thai)
         
-        orders_data = [DonHangResponse.from_orm(order).dict() for order in orders]
+        if from_date:
+            query = query.filter(DonHang.ngay_tao >= from_date)
+        if to_date:
+            query = query.filter(DonHang.ngay_tao <= to_date)
         
-        return {
-            'data': orders_data,
-            'pagination': {
-                'page': page,
-                'per_page': per_page,
-                'total': total,
-                'pages': (total + per_page - 1) // per_page
+        total_orders = query.count()
+        orders = query.order_by(DonHang.ngay_tao.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        orders_data = []
+        for order in orders.items:
+            order_dict = DonHangResponse.from_orm(order).dict()
+            orders_data.append(order_dict)
+        
+        return jsonify({
+            "success": True,
+            "data": orders_data,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_orders,
+                "pages": (total_orders + per_page - 1) // per_page
             }
-        }, 200
+        }), 200
         
     except Exception as e:
-        return {'error': str(e)}, 500
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
-@admin_don_hang_api.get('/<int:order_id>')
-@admin_required
-def get_order_detail_admin(order_id: int):
-    """Lấy chi tiết đơn hàng (admin)"""
+@admin_donhang_api.route('/orders/<int:order_id>/status', methods=['PUT'])
+@jwt_required()
+def update_order_status(order_id):
+    """Admin: Cập nhật trạng thái đơn hàng"""
     try:
-        order = DonHangService.get_order_detail(order_id, is_admin=True)
+        current_user_id = get_jwt_identity()
+        
+        # Check admin role
+        user = NguoiDung.query.get(current_user_id)
+        if user.vai_tro != 'quan_tri_vien':
+            return jsonify({"error": "Không có quyền truy cập"}), 403
+        
+        order = DonHang.query.get(order_id)
         if not order:
-            return {'error': 'Đơn hàng không tồn tại'}, 404
+            return jsonify({"error": "Đơn hàng không tồn tại"}), 404
         
-        return DonHangResponse.from_orm(order).dict(), 200
+        data = request.get_json()
+        status_update = DonHangStatusUpdate(**data)
         
-    except Exception as e:
-        return {'error': str(e)}, 500
-
-@admin_don_hang_api.put('/<int:order_id>/status')
-@admin_required
-def update_order_status(order_id: int, body: DonHangStatusUpdate):
-    """Admin cập nhật trạng thái đơn hàng"""
-    try:
-        order = DonHangService.update_order_status(
-            order_id, 
-            body.trang_thai,
-            is_admin=True
-        )
+        # Cập nhật trạng thái
+        old_status = order.trang_thai
+        order.trang_thai = status_update.trang_thai
+        order.ly_do = status_update.ly_do
+        order.ngay_cap_nhat = datetime.utcnow()
         
-        # Gửi thông báo cập nhật trạng thái
-        from ..tasks.notification_task import send_order_status_update_notification
-        send_order_status_update_notification.delay(order.id, body.trang_thai.value, body.ly_do)
+        db.session.commit()
         
-        return {
-            'message': 'Cập nhật trạng thái thành công',
-            'don_hang': DonHangResponse.from_orm(order).dict()
-        }, 200
+        return jsonify({
+            "success": True,
+            "message": "Cập nhật trạng thái thành công"
+        }), 200
         
-    except ValueError as e:
-        return {'error': str(e)}, 400
     except Exception as e:
         db.session.rollback()
-        return {'error': f'Lỗi khi cập nhật trạng thái: {str(e)}'}, 500
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
-@admin_don_hang_api.put('/<int:order_id>/cancel')
-@admin_required
-def admin_cancel_order(order_id: int, body: OrderCancelRequest):
-    """Admin hủy đơn hàng"""
-    try:
-        order = DonHangService.update_order_status(
-            order_id, 
-            TrangThaiDonHangEnum.DA_HUY,
-            is_admin=True
-        )
-        
-        # Gửi thông báo hủy đơn hàng
-        from ..tasks.notification_task import send_order_cancellation_notification
-        send_order_cancellation_notification.delay(order.id, body.ly_do, is_admin=True)
-        
-        return {
-            'message': 'Đã hủy đơn hàng thành công',
-            'don_hang': DonHangResponse.from_orm(order).dict()
-        }, 200
-        
-    except ValueError as e:
-        return {'error': str(e)}, 400
-    except Exception as e:
-        db.session.rollback()
-        return {'error': f'Lỗi khi hủy đơn hàng: {str(e)}'}, 500
-
-@admin_don_hang_api.get('/statistics')
-@admin_required
+@admin_donhang_api.route('/orders/statistics', methods=['GET'])
+@jwt_required()
 def get_order_statistics():
-    """Lấy thống kê đơn hàng cho dashboard admin"""
+    """Admin: Thống kê đơn hàng"""
     try:
+        current_user_id = get_jwt_identity()
+        
+        # Check admin role
+        user = NguoiDung.query.get(current_user_id)
+        if user.vai_tro != 'quan_tri_vien':
+            return jsonify({"error": "Không có quyền truy cập"}), 403
+        
         # Thống kê theo trạng thái
-        status_stats = db.session.execute(
-            db.select(
-                DonHang.trang_thai,
-                db.func.count(DonHang.id)
-            ).group_by(DonHang.trang_thai)
-        ).all()
+        status_stats = db.session.query(
+            DonHang.trang_thai,
+            func.count(DonHang.id)
+        ).group_by(DonHang.trang_thai).all()
         
-        # Tổng doanh thu (các đơn đã hoàn thành)
-        total_revenue = db.session.execute(
-            db.select(db.func.sum(ThanhToan.so_tien)).where(
-                ThanhToan.trang_thai == TrangThaiThanhToanEnum.DA_THANH_TOAN
-            )
-        ).scalar() or 0
+        # Thống kê theo tháng
+        current_year = datetime.now().year
+        monthly_stats = db.session.query(
+            extract('month', DonHang.ngay_tao).label('month'),
+            func.count(DonHang.id),
+            func.sum(ThanhToan.so_tien)
+        ).join(ThanhToan).filter(
+            extract('year', DonHang.ngay_tao) == current_year
+        ).group_by('month').all()
         
-        # Số đơn hàng trong ngày
-        today = datetime.utcnow().date()
-        orders_today = db.session.execute(
-            db.select(db.func.count(DonHang.id)).where(
-                db.func.date(DonHang.ngay_tao) == today
-            )
-        ).scalar() or 0
+        # Tổng doanh thu
+        total_revenue = db.session.query(
+            func.sum(ThanhToan.so_tien)
+        ).filter(ThanhToan.trang_thai == 'da_thanh_toan').scalar() or 0
         
-        return {
-            'status_statistics': {
-                status.value: count for status, count in status_stats
+        statistics = {
+            "status_distribution": {
+                status: count for status, count in status_stats
             },
-            'total_revenue': float(total_revenue),
-            'orders_today': orders_today,
-            'total_orders': sum(count for _, count in status_stats)
-        }, 200
+            "monthly_stats": [
+                {
+                    "month": month,
+                    "order_count": count,
+                    "revenue": float(revenue) if revenue else 0
+                } for month, count, revenue in monthly_stats
+            ],
+            "total_revenue": float(total_revenue),
+            "total_orders": DonHang.query.count()
+        }
+        
+        return jsonify({
+            "success": True,
+            "data": statistics
+        }), 200
         
     except Exception as e:
-        return {'error': str(e)}, 500
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
