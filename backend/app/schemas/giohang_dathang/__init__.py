@@ -7,6 +7,7 @@ from .DonHang import (
     DonHangResponse,
     DonHangCancelRequest,
     DonHangUpdate,
+    DonHangFilter,
     
 )
 from .GioHang import (

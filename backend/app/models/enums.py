@@ -7,14 +7,16 @@ class TrangThaiSanPhamEnum(str, enum.Enum):
 
     Thành viên:
     - DANG_BAN ('dang_ban'): Sản phẩm đang được hiển thị và có thể đặt mua.
-    - AN ('ngung_ban'): Sản phẩm ngừng bán/ẩn khỏi cửa hàng, không cho phép đặt mua.
+    - SAP_BAN ('sap_ban'): Sản phẩm sắp được bán, có thể hiển thị nhưng chưa cho phép đặt mua.
+    - NGUNG_BAN ('ngung_ban'): Sản phẩm ngừng bán/ẩn khỏi cửa hàng, không cho phép đặt mua.
 
     Ghi chú:
     Kế thừa từ `str` để thuận tiện cho lưu trữ và trao đổi dữ liệu (ví dụ: DB, JSON)
     và cho phép so sánh trực tiếp với giá trị chuỗi.
     """
     DANG_BAN = 'dang_ban'
-    AN = 'ngung_ban'
+    SAP_BAN = 'sap_ban'
+    NGUNG_BAN = 'ngung_ban'
 
 # --- ENUMS CHO ĐÁNH GIÁ (Lấy từ file sanpham.py của bạn) ---
 class TrangThaiDanhGiaEnum(str, enum.Enum):
@@ -33,25 +35,18 @@ class TrangThaiNguoiDungEnum(str, enum.Enum):
 
 # --- ENUMS CHO ĐƠN HÀNG ---
 class TrangThaiDonHangEnum(str, enum.Enum):
-    """
-    Enum định nghĩa các trạng thái của đơn hàng trong hệ thống.
-
-    Attributes:
-        CHO_XAC_NHAN: Đơn hàng đang chờ xác nhận từ người bán
-        DA_XAC_NHAN: Đơn hàng đã được xác nhận và đang chuẩn bị
-        DANG_GIAO_HANG: Đơn hàng đang trong quá trình vận chuyển
-        HOAN_THANH: Đơn hàng đã được giao thành công cho khách hàng
-        DA_HUY: Đơn hàng đã bị hủy bởi người mua hoặc người bán
-        YEU_CAU_TRA_HANG: Khách hàng yêu cầu trả lại hàng
-        DA_TRA_HANG: Đơn hàng đã được trả lại và xử lý hoàn tất
-    """
     CHO_XAC_NHAN = "cho_xac_nhan"
     DA_XAC_NHAN = "da_xac_nhan"
-    DANG_GIAO_HANG = "dang_giao_hang"
-    HOAN_THANH = "hoan_thanh" # Đã giao hàng thành công
+    DANG_GIAO = "dang_giao"
+    DA_GIAO = "da_giao"
     DA_HUY = "da_huy"
-    YEU_CAU_TRA_HANG = "yeu_cau_tra_hang"
-    DA_TRA_HANG = "da_tra_hang"
+    YEU_CAU_DOI_TRA = "yeu_cau_doi_tra"
+    CHAP_NHAN_DOI_TRA = "chap_nhan_doi_tra"
+    TU_CHOI_DOI_TRA = "tu_choi_doi_tra"
+    DA_HOAN_TIEN = "da_hoan_tien"
+
+
+
 
 # --- ENUMS CHO THANH TOÁN ---
 class TrangThaiThanhToanEnum(str, enum.Enum):

@@ -129,6 +129,8 @@ def create_app(config_class=None):
         from .routes.phieu_thu_routes import phieu_thu_api
         from .routes.giohang_routes import giohang_api
         from .routes.thanhtoan_routes import thanhtoan_api
+        from .routes.khachhang_donhang_routes import khachhang_donhang_api
+        from .routes.admin_donhang_routes import admin_don_hang_api
 
         # ĐĂNG KÝ BLUEPRINTS
         app.register_blueprint(auth_api, url_prefix='/api/auth')
@@ -141,6 +143,8 @@ def create_app(config_class=None):
         app.register_blueprint(phieu_thu_api, url_prefix='/api/phieu-thu')
         app.register_blueprint(giohang_api, url_prefix='/api/gio-hang')
         app.register_blueprint(thanhtoan_api, url_prefix='/api/thanh-toan')
+        app.register_blueprint(khachhang_donhang_api, url_prefix='/api/khach-hang/don-hang')
+        app.register_blueprint(admin_don_hang_api, url_prefix='/api/admin/don-hang')
 
         logger.info("All blueprints registered successfully")
 

@@ -256,7 +256,6 @@ class SanPhamService:
                         san_pham_id=new_san_pham.id,
                         ten_bien_the=bt_data.ten_bien_the,
                         trang_thai_kich_hoat=bt_data.trang_thai_kich_hoat,
-                        so_luong=bt_data.so_luong,
                         mau=bt_data.mau,
                         gia_ban=bt_data.gia_ban,
                     )
@@ -402,7 +401,6 @@ class SanPhamService:
             san_pham_id=san_pham_id,
             ten_bien_the=data.ten_bien_the,
             trang_thai_kich_hoat=data.trang_thai_kich_hoat,
-            so_luong=data.so_luong,
             gia_ban=data.gia_ban,
             mau=data.mau
         )

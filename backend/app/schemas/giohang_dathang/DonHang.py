@@ -50,3 +50,16 @@ class DonHangResponse(DonHangBase):
     thanh_toan: Optional[ThanhToanResponse] = Field(None, description="Thông tin thanh toán")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DonHangFilter(BaseModel):
+    trang_thai: Optional[TrangThaiDonHangEnum] = None
+    tu_ngay: Optional[datetime] = None
+    den_ngay: Optional[datetime] = None
+    tu_gia: Optional[Decimal] = None
+    den_gia: Optional[Decimal] = None
+    phuong_thuc_thanh_toan: Optional[PhuongThucThanhToanEnum] = None
+    sap_xep_theo: Optional[str] = "ngay_tao"
+    thu_tu: Optional[str] = "desc"
+
+    model_config = ConfigDict(from_attributes=True)

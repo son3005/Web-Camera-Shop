@@ -1,8 +1,8 @@
 """init full tables - fixed nullable
 
-Revision ID: ed9d1d8b0513
+Revision ID: 2e8320938e4e
 Revises: 
-Create Date: 2025-11-09 02:58:27.151690
+Create Date: 2025-11-11 12:36:04.581911
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'ed9d1d8b0513'
+revision = '2e8320938e4e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -139,8 +139,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('san_pham_id', sa.Integer(), nullable=False),
     sa.Column('ten_bien_the', sa.String(length=100), nullable=False),
-    sa.Column('trang_thai_kich_hoat', sa.Enum('DANG_BAN', 'AN', name='trangthaisanphamenum'), nullable=False),
-    sa.Column('gia_ban', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('trang_thai_kich_hoat', sa.Enum('DANG_BAN', 'SAP_BAN', 'NGUNG_BAN', name='trangthaisanphamenum'), nullable=False),
+    sa.Column('gia_ban', sa.Numeric(precision=12), nullable=False),
     sa.Column('mau', sa.String(length=20), nullable=True),
     sa.Column('so_luong', sa.Integer(), nullable=False),
     sa.CheckConstraint('gia_ban > 0', name='check_gia_positive'),
@@ -160,8 +160,8 @@ def upgrade():
     sa.Column('ten_nguoi_nhan', sa.String(length=50), nullable=False),
     sa.Column('so_dien_thoai_nguoi_nhan', sa.String(length=15), nullable=False),
     sa.Column('dia_chi_giao', sa.String(length=500), nullable=False),
-    sa.Column('trang_thai', sa.Enum('CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DANG_GIAO_HANG', 'HOAN_THANH', 'DA_HUY', 'YEU_CAU_TRA_HANG', 'DA_TRA_HANG', name='trangthaidonhangenum'), nullable=False),
-    sa.Column('phi_van_chuyen', sa.Numeric(precision=14, scale=2), nullable=True),
+    sa.Column('trang_thai', sa.Enum('CHO_XAC_NHAN', 'DA_XAC_NHAN', 'DANG_GIAO', 'DA_GIAO', 'DA_HUY', 'YEU_CAU_DOI_TRA', 'CHAP_NHAN_DOI_TRA', 'TU_CHOI_DOI_TRA', 'DA_HOAN_TIEN', name='trangthaidonhangenum'), nullable=False),
+    sa.Column('phi_van_chuyen', sa.Numeric(precision=14), nullable=True),
     sa.Column('ghi_chu', sa.Text(), nullable=True),
     sa.Column('ly_do', sa.Text(), nullable=True),
     sa.Column('ngay_tao', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
@@ -180,8 +180,7 @@ def upgrade():
     sa.Column('don_hang_id', sa.Integer(), nullable=False),
     sa.Column('bien_the_san_pham_id', sa.Integer(), nullable=True),
     sa.Column('ten_san_pham_luc_mua', sa.String(length=255), nullable=False),
-    sa.Column('ten_bien_the_luc_mua', sa.String(length=150), nullable=True),
-    sa.Column('don_gia_luc_mua', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('don_gia_luc_mua', sa.Numeric(precision=12), nullable=False),
     sa.Column('so_luong', sa.Integer(), server_default='1', nullable=False),
     sa.CheckConstraint('don_gia_luc_mua >= 0', name='ck_dongia_positive'),
     sa.CheckConstraint('so_luong > 0', name='ck_ctdh_so_luong'),

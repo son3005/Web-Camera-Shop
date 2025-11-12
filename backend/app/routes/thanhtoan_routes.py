@@ -143,14 +143,6 @@ def tao_don_hang_ao():
         app.logger.error(f"Lỗi tạo đơn: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 400
     
-# === CÁC ROUTE KHÁC ===
-@thanhtoan_api.get('/thanh-cong', tags=[tag])
-def thanh_toan_thanh_cong():
-    return jsonify({"message": "Thanh toán thành công", "order_code": request.args.get('orderCode')}), 200
-
-@thanhtoan_api.get('/that-bai', tags=[tag])
-def thanh_toan_that_bai():
-    return jsonify({"message": "Thanh toán thất bại", "order_code": request.args.get('orderCode')}), 400
 
 @thanhtoan_api.get('/kiem-tra-don-hang-ao/<string:don_hang_ao_id>', tags=[tag])
 @jwt_required()
@@ -160,26 +152,3 @@ def kiem_tra_don_hang_ao(don_hang_ao_id: str):
     if not don_ao:
         return jsonify({"error": "Đơn không tồn tại"}), 404
     return jsonify({"data": don_ao.model_dump()}), 200
-
-@thanhtoan_api.post('/xac-nhan-cod/<string:don_hang_ao_id>', tags=[tag])
-@jwt_required()
-def xac_nhan_cod(don_hang_ao_id: str):
-    service = DonHangAoService(redis, app.payos_client, db)
-    don_ao = service.lay_don_hang_ao(don_hang_ao_id)
-    
-    # Đảm bảo đơn ảo tồn tại VÀ là đơn COD
-    if not don_ao or don_ao.phuong_thuc_thanh_toan.lower() != 'cod':
-        return jsonify({"error": "Đơn hàng không hợp lệ hoặc không phải COD"}), 400
-
-    try:
-        real_service = DonHangThatService(db)
-        kho = KhoService(redis, db)
-        result = real_service.chuyen_doi_don_hang_that(don_ao, kho)
-        
-        # Xóa đơn ảo sau khi đã tạo đơn thật
-        service.xoa_don_hang_ao(don_hang_ao_id)
-        
-        return jsonify({"message": "COD xác nhận OK", "don_hang_that": result}), 200
-    except Exception as e:
-        app.logger.error(f"Lỗi khi xác nhận COD cho đơn {don_hang_ao_id}: {e}")
-        return jsonify({"error": str(e)}), 500
