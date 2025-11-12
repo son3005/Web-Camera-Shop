@@ -8,6 +8,7 @@ import ProtectedRoute from "./ProtectedRoute";
 const Dashboard = lazy(() => import("../pages/Admin/Dashboard"));
 const Inventory = lazy(() => import("../pages/Admin/Inventory"));
 const Orders = lazy(() => import("../pages/Admin/Orders"));
+const PhieuThu = lazy(() => import("../pages/Admin/PhieuThuPage"));
 
 const AdminLayoutWrapper = () => (
   <ProtectedRoute adminOnly={true}>
@@ -34,6 +35,10 @@ const AdminRoutes = {
     {
       path: "orders",
       element: <Orders />,
+    },
+    {
+      path: "phieu-thu", // ✅ route mới
+      element: <PhieuThu />,
     },
   ],
 };

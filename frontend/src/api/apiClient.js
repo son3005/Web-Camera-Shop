@@ -1,5 +1,9 @@
-// frontend/src/api/apiClient.js
-// Instance axios dùng chung cho toàn bộ app
+// src/api/apiClient.js
+// ----------------------------------------------------
+// Instance axios dùng chung cho toàn bộ app.
+// Base: http://localhost:5000/api
+// Tự gắn token từ localStorage (3 key để tương thích code cũ).
+// ----------------------------------------------------
 
 import axios from "axios";
 
@@ -8,16 +12,17 @@ const apiClient = axios.create({
   withCredentials: false,
 });
 
-// Gắn token tự động cho mọi request
+// ✅ Gắn token tự động cho mọi request
 apiClient.interceptors.request.use((config) => {
-  // đọc lần lượt, cái nào có thì dùng
   const token =
-    localStorage.getItem("admin_token") ||
+    localStorage.getItem("token") ||
     localStorage.getItem("access_token") ||
-    localStorage.getItem("token");
+    localStorage.getItem("admin_token");
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    delete config.headers.Authorization;
   }
 
   return config;

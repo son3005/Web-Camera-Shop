@@ -1,83 +1,88 @@
-2025-11-07 15:19:36,972 - app.app.main - INFO -     - ID: 15, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762528471/san_pham/20251107_151428_362046_9d5e_Screenshot%202025-10-15%20080830.png
-2025-11-07 15:19:36,998 - app.app.main - INFO -     - ID: 16, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762528472/san_pham/20251107_151429_476662_7bdd_Screenshot%202025-10-15%20101215.png
-2025-11-07 15:19:37,050 - app.app.main - INFO - 🎉 CẬP NHẬT THÀNH CÔNG
-2025-11-07 15:23:40,668 - app.app.main - INFO - Files nhận được: ['images[0][0]', 'images[0][1]', 'images[0][2]', 'images[0][3]', 'images[1][0]', 'images[1][1]', 'images[1][2]', 'images[1][3]']
-2025-11-07 15:23:40,675 - app.app.main - INFO - Kiểm tra file key: images[0][0]
-2025-11-07 15:23:40,680 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-13 084822.png
-2025-11-07 15:23:41,373 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529023/san_pham/20251107_152340_683505_e69e_Screenshot%202025-10-13%20084822.png
-2025-11-07 15:23:41,376 - app.app.main - INFO - Kiểm tra file key: images[0][1]
-2025-11-07 15:23:41,379 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-13 135634.png
-2025-11-07 15:23:42,329 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529024/san_pham/20251107_152341_382002_1ba0_Screenshot%202025-10-13%20135634.png
-2025-11-07 15:23:42,331 - app.app.main - INFO - Kiểm tra file key: images[0][2]
-2025-11-07 15:23:42,334 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-16 105647.png
-2025-11-07 15:23:43,964 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529025/san_pham/20251107_152342_337568_f923_Screenshot%202025-10-16%20105647.png
-2025-11-07 15:23:43,966 - app.app.main - INFO - Kiểm tra file key: images[0][3]
-2025-11-07 15:23:43,968 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-22 144201.png
-2025-11-07 15:23:44,697 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529026/san_pham/20251107_152343_970683_fb80_Screenshot%202025-10-22%20144201.png
-2025-11-07 15:23:44,699 - app.app.main - INFO - Kiểm tra file key: images[1][0]
-2025-11-07 15:23:44,700 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-11-07 214423.png
-2025-11-07 15:23:45,560 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529027/san_pham/20251107_152344_704150_3ac8_Screenshot%202025-11-07%20214423.png
-2025-11-07 15:23:45,562 - app.app.main - INFO - Kiểm tra file key: images[1][1]
-2025-11-07 15:23:45,566 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-11-07 214941.png
-2025-11-07 15:23:46,523 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529028/san_pham/20251107_152345_568576_7dae_Screenshot%202025-11-07%20214941.png
-2025-11-07 15:23:46,525 - app.app.main - INFO - Kiểm tra file key: images[1][2]
-2025-11-07 15:23:46,527 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-11-07 220934.png
-2025-11-07 15:23:47,378 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529029/san_pham/20251107_152346_530337_baab_Screenshot%202025-11-07%20220934.png
-2025-11-07 15:23:47,380 - app.app.main - INFO - Kiểm tra file key: images[1][3]
-2025-11-07 15:23:47,384 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-11-06 234728 - Copy.png
-2025-11-07 15:23:48,072 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529030/san_pham/20251107_152347_386459_c07d_Screenshot%202025-11-06%20234728%20-%20Copy.png
-2025-11-07 15:23:48,074 - app.app.main - INFO - Bắt đầu validate dữ liệu sản phẩm...
-2025-11-07 15:23:48,078 - app.app.main - INFO - Validate dữ liệu sản phẩm thành công
-2025-11-07 15:23:48,080 - app.app.main - INFO - Gọi service tạo sản phẩm...
-2025-11-07 15:23:48,134 - app.app.main - ERROR - Lỗi BadRequest/NotFound: 400 Bad Request: Lỗi tạo sản phẩm: (pymysql.err.DataError) (1264, "Out of range value for column 'gia_ban' at row 1")
-[SQL: INSERT INTO bien_the_san_pham (san_pham_id, ten_bien_the, trang_thai_kich_hoat, gia_ban, mau, so_luong) VALUES (%(san_pham_id)s, %(ten_bien_the)s, %(trang_thai_kich_hoat)s, %(gia_ban)s, %(mau)s, %(so_luong)s)]
-[parameters: {'san_pham_id': 13, 'ten_bien_the': 'nâng cao', 'trang_thai_kich_hoat': 'DANG_BAN', 'gia_ban': Decimal('10101010101'), 'mau': 'đen ánh đỏ', 'so_luong': 0}]
-(Background on this error at: https://sqlalche.me/e/20/9h9h)
-2025-11-07 15:24:34,258 - app.app.main - INFO - Files nhận được: ['images[0][0]', 'images[0][1]', 'images[0][2]', 'images[0][3]']
-2025-11-07 15:24:34,260 - app.app.main - INFO - Kiểm tra file key: images[0][0]
-2025-11-07 15:24:34,262 - app.app.main - INFO - Tìm thấy file: Screenshot (1).png
-2025-11-07 15:24:35,128 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529077/san_pham/20251107_152434_265709_edd7_Screenshot%20%281%29.png
-2025-11-07 15:24:35,129 - app.app.main - INFO - Kiểm tra file key: images[0][1]
-2025-11-07 15:24:35,131 - app.app.main - INFO - Tìm thấy file: Screenshot (2).png
-2025-11-07 15:24:36,258 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529078/san_pham/20251107_152435_133835_faee_Screenshot%20%282%29.png
-2025-11-07 15:24:36,259 - app.app.main - INFO - Kiểm tra file key: images[0][2]
-2025-11-07 15:24:36,260 - app.app.main - INFO - Tìm thấy file: Screenshot (3).png
-2025-11-07 15:24:37,213 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529079/san_pham/20251107_152436_261982_5a60_Screenshot%20%283%29.png
-2025-11-07 15:24:37,216 - app.app.main - INFO - Kiểm tra file key: images[0][3]
-2025-11-07 15:24:37,217 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-09-16 000050.png
-2025-11-07 15:24:38,866 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529080/san_pham/20251107_152437_219469_42f0_Screenshot%202025-09-16%20000050.png
-2025-11-07 15:24:38,867 - app.app.main - INFO - Tự động set ảnh đầu tiên làm ảnh đại diện cho biến thể 0
-2025-11-07 15:24:38,869 - app.app.main - INFO - Bắt đầu validate dữ liệu sản phẩm...
-2025-11-07 15:24:38,870 - app.app.main - INFO - Validate dữ liệu sản phẩm thành công
-2025-11-07 15:24:38,872 - app.app.main - INFO - Gọi service tạo sản phẩm...
-2025-11-07 15:24:38,919 - app.app.main - INFO - Tạo sản phẩm thành công
-2025-11-07 15:26:01,197 - app.app.main - INFO - 🎬 BẮT ĐẦU UPDATE SẢN PHẨM
-2025-11-07 15:26:01,216 - app.app.main - INFO - 📦 PRODUCT DATA STRUCTURE:
-2025-11-07 15:26:01,218 - app.app.main - INFO -   Biến thể 0: ID=14, Ảnh=4
-2025-11-07 15:26:01,221 - app.app.main - INFO -   Biến thể 1: ID=NEW, Ảnh=4
-2025-11-07 15:26:01,224 - app.app.main - INFO - 🖼️ XỬ LÝ UPLOAD ẢNH...
-2025-11-07 15:26:01,228 - app.app.main - INFO - 📎 File key: images[1][0]
-2025-11-07 15:26:01,230 - app.app.main - INFO - 📎 File key: images[1][1]
-2025-11-07 15:26:01,232 - app.app.main - INFO - 📎 File key: images[1][2]
-2025-11-07 15:26:01,235 - app.app.main - INFO - 📎 File key: images[1][3]
-2025-11-07 15:26:01,237 - app.app.main - INFO - 🔧 Xử lý biến thể 0 (ID: 14)
-2025-11-07 15:26:01,240 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=17
-2025-11-07 15:26:01,244 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=18
-2025-11-07 15:26:01,248 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=19
-2025-11-07 15:26:01,251 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=20
-2025-11-07 15:26:01,253 - app.app.main - INFO - 🔧 Xử lý biến thể 1 (ID: NEW)
-2025-11-07 15:26:01,255 - app.app.main - INFO -   🆕 Ảnh mới: index=0, alt=Screenshot 2025-10-11 193311.png
-2025-11-07 15:26:01,258 - app.app.main - INFO -   📁 Tìm thấy file với key: images[1][0]
-2025-11-07 15:26:01,260 - app.app.main - INFO -   ⬆️ Uploading file: Screenshot 2025-10-11 193311.png
-2025-11-07 15:26:02,108 - app.app.main - INFO -   ✅ Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529164/san_pham/20251107_152601_264012_d616_Screenshot%202025-10-11%20193311.png
-2025-11-07 15:26:02,109 - app.app.main - INFO -   🆕 Ảnh mới: index=1, alt=Screenshot 2025-10-12 150643.png
-2025-11-07 15:26:02,111 - app.app.main - INFO -   📁 Tìm thấy file với key: images[1][1]
-2025-11-07 15:26:02,113 - app.app.main - INFO -   ⬆️ Uploading file: Screenshot 2025-10-12 150643.png
-2025-11-07 15:26:03,033 - app.app.main - INFO -   ✅ Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529164/san_pham/20251107_152602_114971_4954_Screenshot%202025-10-12%20150643.png
-2025-11-07 15:26:03,035 - app.app.main - INFO -   🆕 Ảnh mới: index=2, alt=Screenshot 2025-10-13 084822.png
-2025-11-07 15:26:03,037 - app.app.main - INFO -   📁 Tìm thấy file với key: images[1][2]
-2025-11-07 15:26:03,038 - app.app.main - INFO -   ⬆️ Uploading file: Screenshot 2025-10-13 084822.png
-2025-11-07 15:26:03,751 - app.app.main - INFO -   ✅ Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762529165/san_pham/20251107_152603_041336_265e_Screenshot%202025-10-13%20084822.png
-2025-11-07 15:26:03,753 - app.app.main - INFO -   🆕 Ảnh mới: index=3, alt=Screenshot 2025-10-13 135634.png
-2025-11-07 15:26:03,755 - app.app.main - INFO -   📁 Tìm thấy file với key: images[1][3]
-2025-11-07 15:26:03,757 - app.app.main - INFO -   ⬆️ Uploading file: Screenshot 2025-10-13 135634.png
+2025-11-10 02:51:01,063 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=44
+2025-11-10 02:51:01,100 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=45
+2025-11-10 02:51:01,102 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=46
+2025-11-10 02:51:01,104 - app.app.main - INFO - 📊 KẾT QUẢ XỬ LÝ ẢNH:
+2025-11-10 02:51:01,107 - app.app.main - INFO -   Biến thể 0: 4 ảnh
+2025-11-10 02:51:01,110 - app.app.main - INFO -     - ID: 43, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762742997/san_pham/20251110_024954_079286_5277_Screenshot%202025-10-30%20101346.png
+2025-11-10 02:51:01,112 - app.app.main - INFO -     - ID: 44, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762742998/san_pham/20251110_024957_410911_47e8_Screenshot%202025-10-30%20101356.png
+2025-11-10 02:51:01,114 - app.app.main - INFO -     - ID: 45, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762742999/san_pham/20251110_024958_715606_02ef_Screenshot%202025-10-30%20130945.png
+2025-11-10 02:51:01,116 - app.app.main - INFO -     - ID: 46, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762743000/san_pham/20251110_024959_331736_8fe6_Screenshot%202025-10-30%20134733.png
+2025-11-10 02:51:01,173 - app.app.main - INFO - 🎉 CẬP NHẬT THÀNH CÔNG
+2025-11-11 01:24:16,880 - app.app.main - INFO - 🎬 BẮT ĐẦU UPDATE SẢN PHẨM
+2025-11-11 01:24:16,887 - app.app.main - INFO - 📦 PRODUCT DATA STRUCTURE:
+2025-11-11 01:24:16,889 - app.app.main - INFO -   Biến thể 0: ID=19, Ảnh=4
+2025-11-11 01:24:16,891 - app.app.main - INFO - 🖼️ XỬ LÝ UPLOAD ẢNH...
+2025-11-11 01:24:16,893 - app.app.main - INFO - 🔧 Xử lý biến thể 0 (ID: 19)
+2025-11-11 01:24:16,894 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=43
+2025-11-11 01:24:16,896 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=44
+2025-11-11 01:24:16,898 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=45
+2025-11-11 01:24:16,900 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=46
+2025-11-11 01:24:16,902 - app.app.main - INFO - 📊 KẾT QUẢ XỬ LÝ ẢNH:
+2025-11-11 01:24:16,904 - app.app.main - INFO -   Biến thể 0: 4 ảnh
+2025-11-11 01:24:16,906 - app.app.main - INFO -     - ID: 43, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762742997/san_pham/20251110_024954_079286_5277_Screenshot%202025-10-30%20101346.png
+2025-11-11 01:24:16,908 - app.app.main - INFO -     - ID: 44, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762742998/san_pham/20251110_024957_410911_47e8_Screenshot%202025-10-30%20101356.png
+2025-11-11 01:24:16,910 - app.app.main - INFO -     - ID: 45, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762742999/san_pham/20251110_024958_715606_02ef_Screenshot%202025-10-30%20130945.png
+2025-11-11 01:24:16,913 - app.app.main - INFO -     - ID: 46, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762743000/san_pham/20251110_024959_331736_8fe6_Screenshot%202025-10-30%20134733.png
+2025-11-11 01:24:17,005 - app.app.main - INFO - 🎉 CẬP NHẬT THÀNH CÔNG
+2025-11-11 01:24:55,648 - app.app.main - INFO - 🎬 BẮT ĐẦU UPDATE SẢN PHẨM
+2025-11-11 01:24:55,650 - app.app.main - INFO - 📦 PRODUCT DATA STRUCTURE:
+2025-11-11 01:24:55,651 - app.app.main - INFO -   Biến thể 0: ID=3, Ảnh=1
+2025-11-11 01:24:55,653 - app.app.main - INFO - 🖼️ XỬ LÝ UPLOAD ẢNH...
+2025-11-11 01:24:55,655 - app.app.main - INFO - 🔧 Xử lý biến thể 0 (ID: 3)
+2025-11-11 01:24:55,656 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=4
+2025-11-11 01:24:55,657 - app.app.main - INFO - 📊 KẾT QUẢ XỬ LÝ ẢNH:
+2025-11-11 01:24:55,659 - app.app.main - INFO -   Biến thể 0: 1 ảnh
+2025-11-11 01:24:55,661 - app.app.main - INFO -     - ID: 4, URL: https://example.com/sony-a7iii-1.jpg
+2025-11-11 01:24:55,767 - app.app.main - INFO - 🎉 CẬP NHẬT THÀNH CÔNG
+2025-11-11 01:25:04,941 - app.app.main - INFO - 🎬 BẮT ĐẦU UPDATE SẢN PHẨM
+2025-11-11 01:25:04,943 - app.app.main - INFO - 📦 PRODUCT DATA STRUCTURE:
+2025-11-11 01:25:04,945 - app.app.main - INFO -   Biến thể 0: ID=18, Ảnh=4
+2025-11-11 01:25:04,948 - app.app.main - INFO - 🖼️ XỬ LÝ UPLOAD ẢNH...
+2025-11-11 01:25:04,949 - app.app.main - INFO - 🔧 Xử lý biến thể 0 (ID: 18)
+2025-11-11 01:25:04,952 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=39
+2025-11-11 01:25:04,954 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=40
+2025-11-11 01:25:04,956 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=41
+2025-11-11 01:25:04,958 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=42
+2025-11-11 01:25:04,961 - app.app.main - INFO - 📊 KẾT QUẢ XỬ LÝ ẢNH:
+2025-11-11 01:25:04,964 - app.app.main - INFO -   Biến thể 0: 4 ảnh
+2025-11-11 01:25:04,966 - app.app.main - INFO -     - ID: 39, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762697794/san_pham/20251109_141632_218659_17b5_Screenshot%202025-09-20%20181745.png
+2025-11-11 01:25:04,969 - app.app.main - INFO -     - ID: 40, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762697795/san_pham/20251109_141634_414692_fc25_Screenshot%202025-09-23%20151853.png
+2025-11-11 01:25:04,971 - app.app.main - INFO -     - ID: 41, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762697798/san_pham/20251109_141636_375370_996e_Screenshot%202025-09-23%20215155.png
+2025-11-11 01:25:04,973 - app.app.main - INFO -     - ID: 42, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762697799/san_pham/20251109_141639_267879_7f05_Screenshot%202025-10-07%20192554.png
+2025-11-11 01:25:05,037 - app.app.main - INFO - 🎉 CẬP NHẬT THÀNH CÔNG
+2025-11-11 01:25:49,906 - app.app.main - INFO - Files nhận được: ['images[0][0]', 'images[0][1]', 'images[0][2]', 'images[0][3]']
+2025-11-11 01:25:49,908 - app.app.main - INFO - Kiểm tra file key: images[0][0]
+2025-11-11 01:25:49,912 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-16 134503.png
+2025-11-11 01:25:52,488 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762824352/san_pham/20251111_012549_914516_cc1e_Screenshot%202025-10-16%20134503.png
+2025-11-11 01:25:52,489 - app.app.main - INFO - Kiểm tra file key: images[0][1]
+2025-11-11 01:25:52,491 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-16 134619.png
+2025-11-11 01:25:53,212 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762824353/san_pham/20251111_012552_493016_6ae7_Screenshot%202025-10-16%20134619.png
+2025-11-11 01:25:53,214 - app.app.main - INFO - Kiểm tra file key: images[0][2]
+2025-11-11 01:25:53,216 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-21 213332.png
+2025-11-11 01:25:56,278 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762824355/san_pham/20251111_012553_217975_8bf5_Screenshot%202025-10-21%20213332.png
+2025-11-11 01:25:56,280 - app.app.main - INFO - Kiểm tra file key: images[0][3]
+2025-11-11 01:25:56,281 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-21 213546.png
+2025-11-11 01:25:58,016 - app.app.main - INFO - Upload thành công: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762824358/san_pham/20251111_012556_283647_9a83_Screenshot%202025-10-21%20213546.png
+2025-11-11 01:25:58,018 - app.app.main - INFO - Bắt đầu validate dữ liệu sản phẩm...
+2025-11-11 01:25:58,021 - app.app.main - INFO - Validate dữ liệu sản phẩm thành công
+2025-11-11 01:25:58,023 - app.app.main - INFO - Gọi service tạo sản phẩm...
+2025-11-11 01:25:58,078 - app.app.main - INFO - Tạo sản phẩm thành công
+2025-11-11 01:26:08,719 - app.app.main - INFO - 🎬 BẮT ĐẦU UPDATE SẢN PHẨM
+2025-11-11 01:26:08,722 - app.app.main - INFO - 📦 PRODUCT DATA STRUCTURE:
+2025-11-11 01:26:08,724 - app.app.main - INFO -   Biến thể 0: ID=20, Ảnh=4
+2025-11-11 01:26:08,726 - app.app.main - INFO - 🖼️ XỬ LÝ UPLOAD ẢNH...
+2025-11-11 01:26:08,727 - app.app.main - INFO - 🔧 Xử lý biến thể 0 (ID: 20)
+2025-11-11 01:26:08,730 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=47
+2025-11-11 01:26:08,732 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=48
+2025-11-11 01:26:08,734 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=49
+2025-11-11 01:26:08,736 - app.app.main - INFO -   ✅ Giữ ảnh cũ: ID=50
+2025-11-11 01:26:08,739 - app.app.main - INFO - 📊 KẾT QUẢ XỬ LÝ ẢNH:
+2025-11-11 01:26:08,741 - app.app.main - INFO -   Biến thể 0: 4 ảnh
+2025-11-11 01:26:08,743 - app.app.main - INFO -     - ID: 47, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762824352/san_pham/20251111_012549_914516_cc1e_Screenshot%202025-10-16%20134503.png
+2025-11-11 01:26:08,745 - app.app.main - INFO -     - ID: 48, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762824353/san_pham/20251111_012552_493016_6ae7_Screenshot%202025-10-16%20134619.png
+2025-11-11 01:26:08,747 - app.app.main - INFO -     - ID: 49, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762824355/san_pham/20251111_012553_217975_8bf5_Screenshot%202025-10-21%20213332.png
+2025-11-11 01:26:08,749 - app.app.main - INFO -     - ID: 50, URL: https://res.cloudinary.com/dvm5nhwef/image/upload/v1762824358/san_pham/20251111_012556_283647_9a83_Screenshot%202025-10-21%20213546.png
+2025-11-11 01:26:08,809 - app.app.main - INFO - 🎉 CẬP NHẬT THÀNH CÔNG
+2025-11-11 01:32:16,968 - app.app.main - INFO - Files nhận được: ['images[0][0]', 'images[0][1]', 'images[0][2]', 'images[0][3]', 'images[1][0]', 'images[1][1]', 'images[1][2]', 'images[1][3]']
+2025-11-11 01:32:16,970 - app.app.main - INFO - Kiểm tra file key: images[0][0]
+2025-11-11 01:32:16,972 - app.app.main - INFO - Tìm thấy file: Screenshot 2025-10-25 223044.png

@@ -1,6 +1,6 @@
 // src/pages/ProductDetailPage.jsx
 // ============================================================
-// Trang chi tiết sản phẩm (đã chỉnh để phần thông tin ở giữa và cao bằng phần ảnh)
+// Trang chi tiết sản phẩm – đã nối đúng với giỏ hàng backend
 // ============================================================
 
 import { useState, useMemo } from "react";
@@ -8,11 +8,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getProduct } from "../api/productApi";
 import ProductTabs from "../components/product/ProductTabs";
+import { useCart } from "../hooks/useCart";
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
 
+  // hook giỏ hàng
+  const { useAddToCart, useCheckStock } = useCart();
+  const addToCart = useAddToCart();
+  const checkStock = useCheckStock();
+
+  // load sản phẩm
   const {
     data: product,
     isLoading,
@@ -28,6 +35,7 @@ export default function ProductDetailPage() {
   const vnd = (n) =>
     Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + "₫";
 
+  // xử lý biến thể + ảnh
   const { variants, selectedVariant, gallery, displayPrice } = useMemo(() => {
     if (!product)
       return {
@@ -41,6 +49,7 @@ export default function ProductDetailPage() {
     const currentVariant =
       vars.find((v) => v.id === selectedVariantId) || vars[0] || null;
 
+    // ảnh
     let imgs = Array.isArray(product.images) ? product.images : [];
     if ((!imgs || imgs.length === 0) && vars.length) {
       imgs = vars
@@ -71,6 +80,7 @@ export default function ProductDetailPage() {
   if (isError || !product)
     return <div className="p-6 text-red-500">Không tải được sản phẩm.</div>;
 
+  // chọn biến thể
   const handlePickVariant = (variantId) => {
     setSelectedVariantId(variantId);
     const found = variants.find((v) => v.id === variantId);
@@ -80,14 +90,36 @@ export default function ProductDetailPage() {
     if (thumb) setActiveImage(thumb);
   };
 
-  const handleAddToCart = () =>
-    alert(
-      `Đã thêm vào giỏ: ${product.name}${
-        selectedVariant
-          ? " - " + (selectedVariant.ten_bien_the || selectedVariant.name || "")
-          : ""
-      }`
-    );
+  // thêm giỏ
+  const handleAddToCart = async () => {
+    const variant = selectedVariant || variants[0];
+
+    if (!variant?.id) {
+      alert("Vui lòng chọn biến thể trước khi thêm vào giỏ hàng!");
+      return;
+    }
+
+    try {
+      // 1. kiểm tra tồn kho
+      await checkStock.mutateAsync({
+        bienTheId: variant.id,
+        soLuong: 1,
+      });
+
+      // 2. thêm vào giỏ
+      await addToCart.mutateAsync({
+        bienTheId: variant.id,
+        soLuong: 1,
+      });
+
+      alert("✅ Đã thêm vào giỏ hàng!");
+    } catch (err) {
+      console.error("Add to cart error:", err);
+      alert(
+        err?.response?.data?.message || "Có lỗi khi thêm vào giỏ hàng, thử lại!"
+      );
+    }
+  };
 
   const handleBuyNow = () => navigate("/checkout");
 
@@ -97,7 +129,7 @@ export default function ProductDetailPage() {
     <div className="container mx-auto px-4 py-6 space-y-6">
       {/* ===================== KHỐI TRÊN ===================== */}
       <div className="grid lg:grid-cols-3 gap-6 items-stretch">
-        {/* ========== CỘT 1: ẢNH SẢN PHẨM ========== */}
+        {/* CỘT 1: ẢNH */}
         <div className="lg:col-span-1 flex flex-col justify-center">
           <div className="w-full rounded-xl bg-slate-100 object-cover aspect-square overflow-hidden flex items-center justify-center">
             {currentImage ? (
@@ -134,8 +166,7 @@ export default function ProductDetailPage() {
           )}
         </div>
 
-        {/* ========== CỘT 2: THÔNG TIN SẢN PHẨM ========== */}
-        {/* ✅ ĐÃ SỬA: căn giữa theo chiều dọc & cao bằng ảnh bên trái */}
+        {/* CỘT 2: THÔNG TIN */}
         <div className="lg:col-span-1 flex flex-col justify-center h-full text-center lg:text-left px-4">
           <div className="flex flex-col justify-center h-full">
             <h1 className="text-2xl font-semibold mb-1 text-white">
@@ -205,7 +236,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* ========== CỘT 3: CHÍNH SÁCH ========== */}
+        {/* CỘT 3: CHÍNH SÁCH */}
         <div className="lg:col-span-1 space-y-3 flex flex-col justify-center h-full">
           <div className="rounded-xl bg-slate-900/40 border border-slate-700 p-4 text-slate-50">
             <h3 className="font-semibold mb-2">Chính sách bán hàng</h3>
@@ -240,7 +271,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* ===================== KHỐI DƯỚI: TABS ===================== */}
+      {/* KHỐI DƯỚI: TABS */}
       <ProductTabs
         productId={product.id}
         description={product.description}

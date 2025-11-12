@@ -50,6 +50,9 @@ const ProductDetailModal = ({ productId, onClose }) => {
 
   const properties = product?.thong_so_ky_thuat || {};
 
+  const maSanPham =
+    product?.ma_san_pham || (product?.id ? `SP${product.id}` : "—");
+
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
       <div className="relative w-full max-w-6xl max-h-[95vh] flex flex-col rounded-3xl bg-slate-200/60 dark:bg-slate-800/70 overflow-hidden">
