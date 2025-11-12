@@ -1,19 +1,41 @@
-# Stage: Dev 
-FROM node:22-slim
+# Dockerfile.dev - FRONTEND - CHẠY MƯỢT Node 22 + Alpine + Vite 6 + Tailwind 4
+FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy package.json và package-lock.json trước để cache dependency
+# ÉP npm tải đúng binary cho Alpine (musl)
+ENV npm_config_platform=linux
+ENV npm_config_arch=x64
+ENV npm_config_cache=/tmp/.npm
+ENV npm_config_build_from_source=false
+
+# Cài npm mới nhất + tools
+RUN apk add --no-cache python3 make g++ git \
+    && npm i -g npm@10.9.0 --force \
+    && npm config set fund false \
+    && npm config set update-notifier false
+
+# Tạo cache sạch
+RUN rm -rf /tmp/.npm && mkdir -p /tmp/.npm
+
 COPY package*.json ./
 
-# Cài dependencies (bao gồm devDependencies) + tránh lỗi peer deps
-RUN npm install --legacy-peer-deps
+# DÍNH ĐÍCH: Install + rebuild + cài thủ công 2 binary bị thiếu
+RUN npm cache clean --force
+
+# Install bình thường
+RUN npm install --legacy-peer-deps --force
+
+# BƯỚC QUAN TRỌNG NHẤT: CÀI THỦ CÔNG 2 BINARY CHO ALPINE
+RUN npm install --save-optional --force \
+    @rollup/rollup-linux-x64-musl \
+    lightningcss-linux-x64-musl
+
+# Rebuild lại lần cuối
+RUN npm rebuild --verbose
 
 COPY . .
 
-# Copy toàn bộ source cod
-# Expose port Vite dev server
 EXPOSE 5173
 
-# Chạy Vite server với host 0.0.0.0 để container có thể truy cập
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--force"]
+CMD ["sh", "-c", "npm run dev -- --host 0.0.0.0"]

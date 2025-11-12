@@ -23,7 +23,7 @@ cryptography==42.0.8  # MySQL 8+ auth plugin support
 ##############################
 # API & Validation (Pydantic v2)
 ##############################
-pydantic==2.9.2
+pydantic==2.11.7
 flask-openapi3==4.3.0
 Flask-Cors==6.0.1
 
@@ -64,6 +64,16 @@ MarkupSafe==3.0.2
 packaging==25.0
 python-dateutil==2.9.0.post0
 typing_extensions==4.15.0
+
+##############################
+# Payment Processing
+##############################
+payos == 1.0.0
+
+#############################
+# Requests & HTTP Clients
+##############################
+requests==2.31.0
 
 ##############################
 # TESTING & QUALITY TOOLS

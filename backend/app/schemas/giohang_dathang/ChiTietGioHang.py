@@ -24,7 +24,7 @@ class ChiTietGioHangUpdate(BaseModel):
 
 class ChiTietGioHangResponse(ChiTietGioHangBase):
     id: int = Field(..., description="ID chi tiết giỏ hàng")
-    ngay_them: datetime = Field(..., description="Ngày thêm vào giỏ")
+    ngay_them: datetime = Field(None, description="Ngày thêm vào giỏ")
     
     # Thông tin từ biến thể sản phẩm
     ten_san_pham: str = Field(..., description="Tên sản phẩm")

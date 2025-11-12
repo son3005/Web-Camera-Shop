@@ -33,8 +33,7 @@ class ChiTietGioHang(db.Model):
     gio_hang_id = db.Column(db.Integer, db.ForeignKey('gio_hang.id'), nullable=False, index=True)
     bien_the_san_pham_id = db.Column(db.Integer, db.ForeignKey('bien_the_san_pham.id'), nullable=False, index=True)
     so_luong = db.Column(db.Integer, nullable=False, default=1)
-    ngay_them = db.Column(db.DateTime, default=datetime.utcnow)
-
+    ngay_them = db.Column(db.DateTime, server_default=db.func.now())
     # --- Mối quan hệ ---
     gio_hang = db.relationship('GioHang', back_populates='items')
     bien_the_san_pham = db.relationship('BienTheSanPham', back_populates='chi_tiet_gio_hangs', lazy='joined')
