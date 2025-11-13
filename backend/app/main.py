@@ -9,7 +9,7 @@ from .config import DevelopmentConfig, ProductionConfig, TestingConfig
 from .extensions import db, migrate, jwt, cors, mail, celery
 import cloudinary
 from celery.schedules import crontab
-from .tasks import *
+
 
 # =====================================================
 # LOGGING CONFIG

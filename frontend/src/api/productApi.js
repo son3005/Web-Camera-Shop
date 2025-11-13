@@ -113,14 +113,34 @@ export async function getProducts({
   }
 
   // sort: backend của bạn dùng 2 param riêng (sort_by_price, sort_by_name)
-  // nhưng bạn từng gom thành 1 "sort" → mình map lại:
+  // nhưng bạn gom thành 1 "sort" → map lại:
   if (sort?.startsWith("price_")) {
     params.sort_by_price = sort; // "price_asc" | "price_desc"
   } else if (sort?.startsWith("name_")) {
     params.sort_by_name = sort; // "name_asc" | "name_desc"
   }
 
-  const res = await apiClient.get("/san-pham", { params });
+  // 🔥 paramsSerializer để axios gửi array theo dạng:
+  // ?thuong_hieu_ids=1&thuong_hieu_ids=2
+  const res = await apiClient.get("/san-pham", {
+    params,
+    paramsSerializer: (paramsObj) => {
+      const sp = new URLSearchParams();
+      Object.entries(paramsObj).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((v) => {
+            if (v !== undefined && v !== null) {
+              sp.append(key, String(v));
+            }
+          });
+        } else if (value !== undefined && value !== null) {
+          sp.append(key, String(value));
+        }
+      });
+      return sp.toString();
+    },
+  });
+
   const raw = res.data;
   const arr = raw.data || [];
   const pagination = raw.pagination || {};
