@@ -108,34 +108,43 @@ def tao_don_hang_ao():
         # Thêm ID người dùng và set mặc định phí vận chuyển
         body['id_nguoi_dung'] = int(current_user)
         body['phi_van_chuyen'] = body.get('phi_van_chuyen', 2000)
-        
-        app.logger.info(f"Tạo đơn hàng ảo - User {current_user}: {body}")
-
         service = DonHangAoService(redis, payos_client, db)
         don_ao = service.tao_don_hang_ao(body)
 
-        response = {
-            "message": "Tạo đơn hàng ảo thành công",
-            "data": don_ao.model_dump()
-        }
+        # Nếu là COD, chuyển ngay thành đơn hàng thật
+        if body.get('phuong_thuc_thanh_toan') == 'cod':
+            real_service = DonHangThatService(db)
+            kho_service = KhoService(redis, db)
+            result = real_service.chuyen_doi_don_hang_that(don_ao, kho_service)
+            # Xóa đơn hàng ảo
+            service.xoa_don_hang_ao(don_ao.id)
+            response = {
+                "message": "Tạo đơn hàng COD thành công",
+                "data": result
+            }
+        else:
+            response = {
+                "message": "Tạo đơn hàng ảo thành công",
+                "data": don_ao.model_dump()
+            }
 
-        # Kích hoạt check thanh toán cho PayOS QR
-        if body.get('phuong_thuc_thanh_toan') == 'payos_qr' and don_ao.ma_giao_dich_payos:
-            app.logger.info(f"KÍCH HOẠT CHECK PAYOS CHO ĐƠN: {don_ao.ma_giao_dich_payos}")
-            
-            # Truyền application context vào thread
-            threading.Thread(
-                target=check_order_status,
-                args=(
-                    don_ao.ma_giao_dich_payos, 
-                    don_ao.id,
-                    app._get_current_object(),  # Lấy app instance
-                    redis,
-                    payos_client,
-                    db
-                ),
-                daemon=True
-            ).start()
+            # Kích hoạt check thanh toán cho PayOS QR
+            if body.get('phuong_thuc_thanh_toan') == 'payos_qr' and don_ao.ma_giao_dich_payos:
+                app.logger.info(f"KÍCH HOẠT CHECK PAYOS CHO ĐƠN: {don_ao.ma_giao_dich_payos}")
+                
+                # Truyền application context vào thread
+                threading.Thread(
+                    target=check_order_status,
+                    args=(
+                        don_ao.ma_giao_dich_payos, 
+                        don_ao.id,
+                        app._get_current_object(),  # Lấy app instance
+                        redis,
+                        payos_client,
+                        db
+                    ),
+                    daemon=True
+                ).start()
 
         return jsonify(response), 200
 
