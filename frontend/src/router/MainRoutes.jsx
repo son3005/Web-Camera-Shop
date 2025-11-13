@@ -1,17 +1,21 @@
 import React, { lazy, Suspense } from "react";
+import MainLayout from "../layouts/MainLayout";
+import ProtectedRoute from "./ProtectedRoute"; // bảo vệ route cần đăng nhập
 
+// === Lazy load các trang ===
 const HomePage = lazy(() => import("../pages/HomePage"));
 const ProductListPage = lazy(() => import("../pages/ProductListPage"));
 const ProductDetailPage = lazy(() => import("../pages/ProductDetailPage"));
 const CartPage = lazy(() => import("../pages/CartPage"));
 const CheckoutPage = lazy(() => import("../pages/CheckoutPage"));
-const AccountPage = lazy(() => import("../pages/AccountPage")); // 👈 thêm
+const AccountPage = lazy(() => import("../pages/AccountPage"));
 
-import MainLayout from "../layouts/MainLayout";
-import ProtectedRoute from "./ProtectedRoute"; // 👈 dùng để chặn khách vãng lai
+// === 3 TRANG MỚI THEO BACKEND ĐÃ CÓ ===
+const PaymentResultPage = lazy(() => import("../pages/PaymentResultPage"));
+const OrderHistoryPage = lazy(() => import("../pages/OrderHistoryPage"));
 
-// fallback đơn giản
-const Fallback = <div>Loading...</div>;
+// fallback khi đang lazy-load
+const Fallback = <div className="p-6 text-center text-slate-300">Đang tải...</div>;
 
 const MainRoutes = {
   path: "/",
@@ -49,15 +53,40 @@ const MainRoutes = {
         </Suspense>
       ),
     },
+    // === TRANG THANH TOÁN (PayOS/COD) ===
     {
       path: "checkout",
       element: (
-        <Suspense fallback={Fallback}>
-          <CheckoutPage />
-        </Suspense>
+        <ProtectedRoute>
+          <Suspense fallback={Fallback}>
+            <CheckoutPage />
+          </Suspense>
+        </ProtectedRoute>
       ),
     },
-    // 👇 mới: trang quản lý thông tin cá nhân
+    // === TRANG KẾT QUẢ THANH TOÁN (PayOS) ===
+    {
+      path: "payment-result/:id",
+      element: (
+        <ProtectedRoute>
+          <Suspense fallback={Fallback}>
+            <PaymentResultPage />
+          </Suspense>
+        </ProtectedRoute>
+      ),
+    },
+    // === TRANG LỊCH SỬ ĐƠN HÀNG KHÁCH HÀNG ===
+    {
+      path: "orders",
+      element: (
+        <ProtectedRoute>
+          <Suspense fallback={Fallback}>
+            <OrderHistoryPage />
+          </Suspense>
+        </ProtectedRoute>
+      ),
+    },
+    // === TRANG TÀI KHOẢN ===
     {
       path: "tai-khoan",
       element: (
