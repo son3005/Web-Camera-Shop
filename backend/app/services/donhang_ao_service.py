@@ -65,6 +65,8 @@ class DonHangAoService:
             don_hang_ao_id = str(uuid.uuid4())
             thoi_gian_tao = datetime.now()
             thoi_gian_het_han = thoi_gian_tao + timedelta(minutes=7)
+            url_success = don_hang_data.get("url_success","https://www.youtube.com/watch?v=NSU2hJ5wT08")
+            url_cancel = don_hang_data.get("url_cancel","https://www.youtube.com/shorts/kVulfyOfx1g")
 
             # Tính tổng tiền từ items_enriched (đã có đơn giá)
             tong_tien = Decimal('0.0')
@@ -104,7 +106,7 @@ class DonHangAoService:
             
             # Xử lý thanh toán online nếu cần
             if don_hang_ao.phuong_thuc_thanh_toan != 'cod':
-                payment_result = self.tao_payment_link(don_hang_ao)
+                payment_result = self.tao_payment_link(url_success,url_cancel,don_hang_ao)
                 don_hang_ao.payment_url = payment_result.get('payment_url')
                 don_hang_ao.ma_giao_dich_payos = str(payment_result.get('order_code'))
                 
@@ -147,7 +149,7 @@ class DonHangAoService:
         random_part = random.randint(1000, 9999)
         return timestamp * 10000 + random_part
     
-    def tao_payment_link(self, don_hang_ao: DonHangAoResponse) -> Dict[str, Any]:
+    def tao_payment_link(self,url_success : str, url_cancel:str, don_hang_ao: DonHangAoResponse) -> Dict[str, Any]:
 
         """Tạo payment link từ PayOS với SDK mới"""
         try:
@@ -159,8 +161,8 @@ class DonHangAoService:
                 order_code=order_code,
                 amount=int(don_hang_ao.tong_tien),
                 description=description,
-                cancel_url="https://www.youtube.com/shorts/kVulfyOfx1g",
-                return_url="https://www.youtube.com/watch?v=NSU2hJ5wT08",
+                cancel_url= str(url_cancel),
+                return_url=str(url_success),
             )
             
             # Gọi API PayOS để tạo payment link
