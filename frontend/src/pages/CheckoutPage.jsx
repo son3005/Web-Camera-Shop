@@ -1,25 +1,25 @@
 // ==========================
-// FIXED CheckoutPage.jsx (Only multi-product support)
+// CheckoutPage.jsx (COD = đơn thật – PayOS = đơn ảo)
 // ==========================
 
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { getProduct } from "../api/productApi";
-import { taoDonHangAo } from "../api/paymentApi";
+import { taoDonHangAo } from "../api/paymentApi"; // 🚀 CHỈ DÙNG MỘT API NÀY
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
   // ================================
-  // 1) MULTI CHECKOUT
+  // 1) MULTI CHECKOUT (từ giỏ hàng)
   // ================================
   const itemsFromCart = state?.items || null;
   const isCartCheckout = Array.isArray(itemsFromCart);
 
   // ================================
-  // 2) SINGLE CHECKOUT
+  // 2) SINGLE CHECKOUT (mua ngay)
   // ================================
   const productId = state?.productId || null;
   const variantId = state?.variantId || null;
@@ -82,25 +82,49 @@ export default function CheckoutPage() {
   }
 
   // ================================
-  // GỌI PAYMENT
+  // HÀM LẤY MESSAGE LỖI
   // ================================
-  const mutation = useMutation({
-    mutationFn: taoDonHangAo,
+  const getErrorMessage = (err) =>
+    err?.response?.data?.error ||
+    err?.response?.data?.message ||
+    err?.message ||
+    "Có lỗi xảy ra, vui lòng thử lại";
+
+  // ================================
+  // MUTATION DUY NHẤT — COD & PAYOS
+  // ================================
+  const orderMutation = useMutation({
+    mutationFn: taoDonHangAo, // luôn dùng /thanh-toan/tao-don-hang-ao
     onSuccess: (res) => {
-      const data = res.data;
+      const data = res.data || res;
+
       if (form.phuong_thuc_thanh_toan === "payos_qr") {
-        window.location.href = data.payment_url;
+        // PAYOS → Redirect sang link thanh toán
+        window.location.href =
+          data.payment_url || data.data?.payment_url || "";
       } else {
-        navigate(`/payment-result/${data.id}?status=cod_thanhcong`);
+        // COD → Backend trả trực tiếp ID đơn thật
+        const id = data.id || data.data?.id;
+        navigate(`/payment-result/${id}?status=cod_thanhcong`);
       }
     },
+    onError: (err) => {
+      alert(getErrorMessage(err));
+      console.error("❌ Lỗi tạo đơn hàng:", err);
+    },
   });
+
+  const isSubmitting = orderMutation.isLoading;
 
   // ================================
   // PAYLOAD
   // ================================
   const handleSubmit = () => {
-    if (!form.ten_nguoi_nhan || !form.so_dien_thoai_nguoi_nhan || !form.dia_chi_giao) {
+    if (
+      !form.ten_nguoi_nhan ||
+      !form.so_dien_thoai_nguoi_nhan ||
+      !form.dia_chi_giao
+    ) {
       alert("Vui lòng nhập đầy đủ thông tin giao hàng!");
       return;
     }
@@ -108,8 +132,9 @@ export default function CheckoutPage() {
     let itemsPayload = [];
 
     if (isCartCheckout) {
+      // SỬA ĐÚNG KEY → PHẢI LÀ id_bien_the
       itemsPayload = itemsFromCart.map((it) => ({
-        id_bien_the: it.bien_the_id, // FIX — từ giỏ hàng
+        id_bien_the: it.bien_the_san_pham_id, // <-- FIX CHUẨN
         so_luong: it.so_luong,
       }));
     } else {
@@ -134,7 +159,9 @@ export default function CheckoutPage() {
       items: itemsPayload,
     };
 
-    mutation.mutate(payload);
+    console.log("PAYLOAD SUBMIT:", payload);
+
+    orderMutation.mutate(payload);
   };
 
   // ================================
@@ -146,17 +173,15 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold text-slate-800 mb-10">Thanh toán</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-
-        {/* CỘT TRÁI — giữ nguyên UI */}
+        
+        {/* Cột trái */}
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 space-y-6">
           <h2 className="text-xl font-semibold text-slate-900 mb-4">Sản phẩm</h2>
 
-          {/* MULTI UI */}
           {isCartCheckout &&
             itemsFromCart.map((it) => (
               <div key={it.id} className="flex items-center gap-4 border-b pb-4">
                 <img src={it.hinh_anh} className="w-20 h-20 rounded-lg object-cover" />
-
                 <div className="flex-1">
                   <div className="font-semibold text-lg">{it.ten_san_pham}</div>
                   <div className="text-sm text-slate-500">Biến thể: {it.ten_bien_the}</div>
@@ -167,7 +192,6 @@ export default function CheckoutPage() {
               </div>
             ))}
 
-          {/* SINGLE UI giữ nguyên */}
           {!isCartCheckout && (
             <div className="flex items-center gap-4">
               <img src={product.primaryImage} className="w-20 h-20 rounded-lg object-cover" />
@@ -198,7 +222,6 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {/* Tổng tiền */}
           <div className="mt-4 text-slate-700 border-t pt-4">
             <div>Phí ship: {phiShip.toLocaleString("vi-VN")}₫</div>
             <div className="text-2xl font-bold text-emerald-600 mt-2">
@@ -230,7 +253,7 @@ export default function CheckoutPage() {
           </label>
         </div>
 
-        {/* CỘT PHẢI giữ nguyên */}
+        {/* Cột phải */}
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 space-y-4">
           <h2 className="text-xl font-semibold">Thông tin giao hàng</h2>
 
@@ -268,10 +291,10 @@ export default function CheckoutPage() {
 
           <button
             onClick={handleSubmit}
-            disabled={mutation.isLoading}
+            disabled={isSubmitting}
             className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-lg"
           >
-            {mutation.isLoading ? "Đang xử lý..." : "Xác nhận thanh toán"}
+            {isSubmitting ? "Đang xử lý..." : "Xác nhận thanh toán"}
           </button>
         </div>
       </div>

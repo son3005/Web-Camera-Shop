@@ -63,7 +63,7 @@ export default function CartPage() {
     const checkoutData = selectedItems.map((it) => ({
       id: it.id,                      // id chi tiết giỏ hàng
       san_pham_id: it.san_pham_id,
-      bien_the_id: it.bien_the_id,
+      bien_the_san_pham_id: it.bien_the_san_pham_id,  // ✔ QUAN TRỌNG NHẤT
       ten_san_pham: it.ten_san_pham,
       ten_bien_the: it.ten_bien_the,
       hinh_anh: it.hinh_anh,

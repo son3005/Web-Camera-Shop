@@ -1,58 +1,14 @@
-2025-11-13 07:30:54,732 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Hồng Hà', 'so_dien_thoai_nguoi_nhan': '0963096914', 'id_dia_chi': None, 'dia_chi_giao': '123 Lý Thường Kiệt, Quận 10, TP HCM', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'test 4 ', 'url_success': 'http://localhost:5173/payment-result/success', 'url_cancel': 'http://localhost:5173/payment-result/cancel', 'items': [{'id_bien_the': 12, 'so_luong': 1}], 'id_nguoi_dung': 11}
-2025-11-13 07:30:54,745 - app.app.main - ERROR - Lỗi tạo đơn: Sản phẩm nhan tạm thời hết hàng
-Traceback (most recent call last):
-  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
-    don_ao = service.tao_don_hang_ao(body)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/services/donhang_ao_service.py", line 126, in tao_don_hang_ao
-    raise e
-  File "/app/app/services/donhang_ao_service.py", line 62, in tao_don_hang_ao
-    raise Exception(error_msg)
-Exception: Sản phẩm nhan tạm thời hết hàng
-2025-11-13 07:30:54,906 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Hồng Hà', 'so_dien_thoai_nguoi_nhan': '0963096914', 'id_dia_chi': None, 'dia_chi_giao': '123 Lý Thường Kiệt, Quận 10, TP HCM', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'test 4 ', 'url_success': 'http://localhost:5173/payment-result/success', 'url_cancel': 'http://localhost:5173/payment-result/cancel', 'items': [{'id_bien_the': 12, 'so_luong': 1}], 'id_nguoi_dung': 11}
-2025-11-13 07:30:54,910 - app.app.main - ERROR - Lỗi tạo đơn: Sản phẩm nhan tạm thời hết hàng
-Traceback (most recent call last):
-  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
-    don_ao = service.tao_don_hang_ao(body)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/services/donhang_ao_service.py", line 126, in tao_don_hang_ao
-    raise e
-  File "/app/app/services/donhang_ao_service.py", line 62, in tao_don_hang_ao
-    raise Exception(error_msg)
-Exception: Sản phẩm nhan tạm thời hết hàng
-2025-11-13 07:31:04,610 - app.app.main - DEBUG - Polling 17630190542245...
-2025-11-13 07:31:04,811 - app.app.main - INFO - Trạng thái PayOS: CANCELLED cho order 17630190542245
-2025-11-13 07:31:04,812 - app.app.main - INFO - Đơn 17630190542245 bị hủy (CANCELLED) → giải phóng kho
-2025-11-13 07:33:51,629 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Hồng Hà', 'so_dien_thoai_nguoi_nhan': '0963096914', 'id_dia_chi': None, 'dia_chi_giao': '123 Lý Thường Kiệt, Quận 10, TP HCM', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'test 6 ', 'url_success': 'http://localhost:5173/payment-result/success', 'url_cancel': 'http://localhost:5173/payment-result/cancel', 'items': [{'so_luong': 1}, {'so_luong': 2}], 'id_nguoi_dung': 11}
-2025-11-13 07:33:51,630 - app.app.main - ERROR - Lỗi tạo đơn: Lỗi kiểm tra kho: 'id_bien_the'
-Traceback (most recent call last):
-  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
-    don_ao = service.tao_don_hang_ao(body)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/services/donhang_ao_service.py", line 126, in tao_don_hang_ao
-    raise e
-  File "/app/app/services/donhang_ao_service.py", line 62, in tao_don_hang_ao
-    raise Exception(error_msg)
-Exception: Lỗi kiểm tra kho: 'id_bien_the'
-2025-11-13 07:34:29,714 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Hồng Hà', 'so_dien_thoai_nguoi_nhan': '0963096914', 'id_dia_chi': None, 'dia_chi_giao': '123 Lý Thường Kiệt, Quận 10, TP HCM', 'phuong_thuc_thanh_toan': 'cod', 'phi_van_chuyen': 2000, 'ghi_chu': 'test 5', 'url_success': 'http://localhost:5173/payment-result/success', 'url_cancel': 'http://localhost:5173/payment-result/cancel', 'items': [{'so_luong': 1}, {'so_luong': 2}], 'id_nguoi_dung': 11}
-2025-11-13 07:34:29,715 - app.app.main - ERROR - Lỗi tạo đơn: Lỗi kiểm tra kho: 'id_bien_the'
-Traceback (most recent call last):
-  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
-    don_ao = service.tao_don_hang_ao(body)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/services/donhang_ao_service.py", line 126, in tao_don_hang_ao
-    raise e
-  File "/app/app/services/donhang_ao_service.py", line 62, in tao_don_hang_ao
-    raise Exception(error_msg)
-Exception: Lỗi kiểm tra kho: 'id_bien_the'
-2025-11-13 07:34:36,748 - app.app.main - INFO - Tạo đơn hàng ảo - User 11: {'ten_nguoi_nhan': 'Hồng Hà', 'so_dien_thoai_nguoi_nhan': '0963096914', 'id_dia_chi': None, 'dia_chi_giao': '123 Lý Thường Kiệt, Quận 10, TP HCM', 'phuong_thuc_thanh_toan': 'payos_qr', 'phi_van_chuyen': 2000, 'ghi_chu': 'test 5', 'url_success': 'http://localhost:5173/payment-result/success', 'url_cancel': 'http://localhost:5173/payment-result/cancel', 'items': [{'so_luong': 1}, {'so_luong': 2}], 'id_nguoi_dung': 11}
-2025-11-13 07:34:36,749 - app.app.main - ERROR - Lỗi tạo đơn: Lỗi kiểm tra kho: 'id_bien_the'
-Traceback (most recent call last):
-  File "/app/app/routes/thanhtoan_routes.py", line 115, in tao_don_hang_ao
-    don_ao = service.tao_don_hang_ao(body)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/services/donhang_ao_service.py", line 126, in tao_don_hang_ao
-    raise e
-  File "/app/app/services/donhang_ao_service.py", line 62, in tao_don_hang_ao
-    raise Exception(error_msg)
-Exception: Lỗi kiểm tra kho: 'id_bien_the'
+2025-11-15 14:07:59,871 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 14:07:59,884 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 14:08:59,870 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 14:08:59,871 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 14:09:59,871 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 14:09:59,872 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 14:10:59,871 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 14:10:59,872 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 14:11:59,870 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 14:11:59,871 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 14:12:59,871 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 14:12:59,872 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 14:13:59,871 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 14:13:59,872 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
