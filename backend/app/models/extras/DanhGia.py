@@ -52,7 +52,8 @@ class DanhGia(db.Model):
     # --- Quan hệ ---
     nguoi_dung = db.relationship('NguoiDung', back_populates='danh_gias')
     san_pham = db.relationship('SanPham', back_populates='danh_gias')
-    chi_tiet_don_hang_id = db.Column(db.Integer, db.ForeignKey('chi_tiet_don_hang.id'), nullable=False, unique=True)
+    chi_tiet_don_hang = db.relationship('ChiTietDonHang', back_populates='danh_gia')
+    
 
     def __repr__(self):
         return f'<Đánh giá {self.id} - Sản phẩm {self.san_pham_id} - Người dùng {self.nguoi_dung_id}>'
