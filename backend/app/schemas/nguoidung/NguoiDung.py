@@ -41,7 +41,7 @@ class NguoiDungResponse(NguoiDungBase):
     vai_tro: VaiTroNguoiDungEnum
     so_dien_thoai: Optional[str] = None
     trang_thai: TrangThaiNguoiDungEnum
-    ngay_tao: datetime
+    ngay_tao: Optional[datetime] = None
     lan_cuoi_dang_nhap: Optional[datetime] = None
 
     model_config = ConfigDict(

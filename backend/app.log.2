@@ -1,116 +1,116 @@
-2025-11-15 10:48:23,458 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:48:23,482 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:49:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:49:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:50:23,462 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:50:23,467 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:51:09,606 - app.app.main - INFO - === Flask App Started (development) ===
-2025-11-15 10:51:09,671 - app.app.main - INFO - Cloudinary initialized
-2025-11-15 10:51:09,766 - app.app.main - INFO - PayOS initialized successfully
-2025-11-15 10:51:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:51:23,466 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:51:27,286 - app.app.main - INFO - === Flask App Started (development) ===
-2025-11-15 10:51:27,310 - app.app.main - INFO - Cloudinary initialized
-2025-11-15 10:51:27,376 - app.app.main - INFO - PayOS initialized successfully
-2025-11-15 10:51:55,126 - app.app.main - INFO - === Flask App Started (development) ===
-2025-11-15 10:51:55,158 - app.app.main - INFO - Cloudinary initialized
-2025-11-15 10:51:55,224 - app.app.main - INFO - PayOS initialized successfully
-2025-11-15 10:51:57,954 - app.app.main - INFO - All blueprints registered successfully
-2025-11-15 10:51:59,077 - app.app.main - ERROR - [nguoidung.doi_mat_khau] Traceback (most recent call last):
-  File "/app/app/routes/nguoidung_routes.py", line 98, in doi_mat_khau
-    NguoiDungService.doi_mat_khau(current_user, body)
-  File "/app/app/services/nguoidung_service.py", line 79, in doi_mat_khau
-    if not NguoiDungService.kiem_tra_mat_khau(nguoi_dung, du_lieu_mat_khau.mat_khau_cu):
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/app/app/services/nguoidung_service.py", line 92, in kiem_tra_mat_khau
-    return check_password_hash(nguoi_dung.mat_khau_hash, mat_khau_plain)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/werkzeug/security.py", line 131, in check_password_hash
-    return hmac.compare_digest(_hash_internal(method, salt, password)[0], hashval)
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/werkzeug/security.py", line 70, in _hash_internal
-    raise ValueError(f"Invalid hash method '{method}'.")
-ValueError: Invalid hash method ''.
-
-2025-11-15 10:52:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:52:23,463 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:53:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:53:23,461 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:54:23,463 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:54:23,468 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:55:23,461 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:55:23,465 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:55:59,517 - app.app.main - INFO - === Flask App Started (development) ===
-2025-11-15 10:55:59,569 - app.app.main - INFO - Cloudinary initialized
-2025-11-15 10:55:59,671 - app.app.main - INFO - PayOS initialized successfully
-2025-11-15 10:56:01,563 - app.app.main - INFO - All blueprints registered successfully
-2025-11-15 10:56:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:56:23,466 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:57:23,458 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:57:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:58:23,458 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:58:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 10:59:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 10:59:23,460 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:00:23,458 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:00:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:01:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:01:23,463 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:02:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:02:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:03:23,458 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:03:23,461 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:04:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:04:23,461 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:05:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:05:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:06:23,458 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:06:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:07:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:07:23,463 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:08:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:08:23,464 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:09:23,458 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:09:23,460 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:10:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:10:23,463 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:11:23,463 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:11:23,466 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:12:23,464 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:12:23,468 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:13:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:13:23,461 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:14:23,461 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:14:23,463 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:15:23,458 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:15:23,461 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:16:23,464 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:16:23,469 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:17:12,328 - app.app.main - INFO - === Flask App Started (development) ===
-2025-11-15 11:17:12,386 - app.app.main - INFO - Cloudinary initialized
-2025-11-15 11:17:12,514 - app.app.main - INFO - PayOS initialized successfully
-2025-11-15 11:17:15,029 - app.app.main - INFO - All blueprints registered successfully
-2025-11-15 11:17:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:17:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:17:54,498 - app.app.main - INFO - === Flask App Started (development) ===
-2025-11-15 11:17:54,517 - app.app.main - INFO - Cloudinary initialized
-2025-11-15 11:17:54,572 - app.app.main - INFO - PayOS initialized successfully
-2025-11-15 11:17:56,750 - app.app.main - INFO - All blueprints registered successfully
-2025-11-15 11:17:58,317 - app.app.main - ERROR - [nguoidung.doi_mat_khau] Traceback (most recent call last):
-  File "/app/app/routes/nguoidung_routes.py", line 98, in doi_mat_khau
-    NguoiDungService.doi_mat_khau(current_user, body)
-  File "/app/app/services/nguoidung_service.py", line 96, in doi_mat_khau
-    raise BadRequest("Mật khẩu hiện tại không đúng")
-werkzeug.exceptions.BadRequest: 400 Bad Request: Mật khẩu hiện tại không đúng
-
-2025-11-15 11:18:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:18:23,466 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:19:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:19:23,463 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:20:23,467 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:20:23,471 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:21:23,459 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:21:23,462 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:22:23,460 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
-2025-11-15 11:22:23,463 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
-2025-11-15 11:23:23,461 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:26:23,468 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:26:23,500 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:27:23,464 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:27:23,467 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:28:14,819 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:28:14,840 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:28:14,893 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:28:17,486 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:28:23,465 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:28:23,467 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:29:23,473 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:29:23,476 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:29:35,209 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:29:35,275 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:29:35,385 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:29:37,683 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:30:23,468 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:30:23,474 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:30:41,247 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:30:41,293 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:30:41,377 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:30:43,755 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:31:23,467 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:31:23,470 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:32:04,361 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:32:04,407 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:32:04,511 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:32:06,582 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:32:23,467 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:32:23,471 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:33:03,536 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:33:03,575 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:33:03,662 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:33:05,719 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:33:23,465 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:33:23,470 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:34:23,475 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:34:23,481 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:34:43,243 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:34:43,295 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:34:43,387 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:35:23,469 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:35:23,474 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:36:23,468 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:36:23,474 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:36:44,530 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:36:44,574 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:36:44,665 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:36:46,789 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:37:23,465 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:37:23,469 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:37:34,745 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:37:34,791 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:37:34,873 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:37:36,932 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:38:11,650 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:38:11,685 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:38:11,736 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:38:13,979 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:38:17,271 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:38:17,307 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:38:17,367 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:38:19,336 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:38:23,466 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:38:23,470 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:39:23,466 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:39:23,470 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:40:11,097 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:40:11,135 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:40:11,221 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:40:13,032 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:40:23,469 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:40:23,473 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:41:23,468 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:41:23,475 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:41:28,062 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:41:28,098 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:41:28,180 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:41:30,250 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:42:23,469 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:42:23,472 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:42:24,449 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:42:24,524 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:42:24,638 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:42:27,432 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:43:23,466 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:43:23,470 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:44:23,471 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:44:23,476 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:45:18,404 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:45:18,440 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:45:18,516 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:45:20,642 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:45:23,472 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:45:23,480 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:45:45,194 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:45:45,225 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:45:45,282 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:45:47,159 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:46:23,471 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:46:23,476 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:47:23,469 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:47:23,473 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:48:16,100 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:48:16,146 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:48:16,239 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:48:18,438 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:48:23,467 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:48:23,473 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:48:31,248 - app.app.main - INFO - === Flask App Started (development) ===
+2025-11-15 13:48:31,272 - app.app.main - INFO - Cloudinary initialized
+2025-11-15 13:48:31,324 - app.app.main - INFO - PayOS initialized successfully
+2025-11-15 13:48:33,185 - app.app.main - INFO - All blueprints registered successfully
+2025-11-15 13:49:23,467 - app.main - INFO - 🔍 Đang kiểm tra đơn hàng ảo hết hạn...
+2025-11-15 13:49:23,470 - app.main - INFO - ✅ Không có đơn hàng ảo hết hạn
+2025-11-15 13:50:13,786 - app.app.main - INFO - === Flask App Started (development) ===

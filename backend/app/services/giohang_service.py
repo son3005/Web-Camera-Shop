@@ -56,13 +56,13 @@ class GioHangService:
         
         print(f"🔍 Kiểm tra tồn kho:")
         print(f"   - Biến thể: {bien_the_san_pham_id}")
-        print(f"   - Tồn kho hiện có: {bien_the.so_luong}")
+        print(f"   - Tồn kho hiện có: {bien_the.so_luong_nhap - bien_the.so_luong_ban}")
         print(f"   - Số lượng hiện có trong giỏ: {so_luong_hien_co_trong_gio}")
         print(f"   - Số lượng muốn thêm: {so_luong_muon_them}")
         print(f"   - Tổng số lượng sau khi thêm: {tong_so_luong_sau_khi_them}")
-        print(f"   - Kết quả: {bien_the.so_luong >= tong_so_luong_sau_khi_them}")
+        print(f"   - Kết quả: {bien_the.so_luong_nhap - bien_the.so_luong_ban >= tong_so_luong_sau_khi_them}")
         
-        return bien_the.so_luong >= tong_so_luong_sau_khi_them
+        return bien_the.so_luong_nhap - bien_the.so_luong_ban >= tong_so_luong_sau_khi_them
 
     def them_san_pham_vao_gio_hang(
         self, 
@@ -137,12 +137,12 @@ class GioHangService:
         print(f"🔍 Kiểm tra cập nhật số lượng:")
         print(f"   - Chi tiết giỏ hàng ID: {chi_tiet_gio_hang_id}")
         print(f"   - Biến thể ID: {bien_the.id}")
-        print(f"   - Tồn kho: {bien_the.so_luong}")
+        print(f"   - Tồn kho: {bien_the.so_luong_nhap - bien_the.so_luong_ban}")
         print(f"   - Số lượng hiện tại trong giỏ: {chi_tiet_gio_hang.so_luong}")
         print(f"   - Số lượng mới yêu cầu: {so_luong_moi}")
 
-        if so_luong_moi > bien_the.so_luong:
-            raise ValueError(f"Số lượng yêu cầu ({so_luong_moi}) vượt quá tồn kho hiện có ({bien_the.so_luong})")
+        if so_luong_moi > bien_the.so_luong_nhap - bien_the.so_luong_ban:
+            raise ValueError(f"Số lượng yêu cầu ({so_luong_moi}) vượt quá tồn kho hiện có ({bien_the.so_luong_nhap - bien_the.so_luong_ban})")
 
         if chi_tiet_gio_hang.so_luong == so_luong_moi:
             print("⚠️  Số lượng không thay đổi")
