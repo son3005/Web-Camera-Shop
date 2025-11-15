@@ -1,4 +1,5 @@
 # backend/app/routes/thanhtoan_routes.py
+from decimal import Decimal
 import json
 import time
 import threading
@@ -108,21 +109,60 @@ def tao_don_hang_ao():
         # Thêm ID người dùng và set mặc định phí vận chuyển
         body['id_nguoi_dung'] = int(current_user)
         body['phi_van_chuyen'] = body.get('phi_van_chuyen', 2000)
-        service = DonHangAoService(redis, payos_client, db)
-        don_ao = service.tao_don_hang_ao(body)
 
-        # Nếu là COD, chuyển ngay thành đơn hàng thật
+        # XỬ LÝ COD: TẠO LUÔN ĐƠN HÀNG THẬT, KHÔNG QUA ĐƠN ẢO
         if body.get('phuong_thuc_thanh_toan') == 'cod':
-            real_service = DonHangThatService(db)
             kho_service = KhoService(redis, db)
-            result = real_service.chuyen_doi_don_hang_that(don_ao, kho_service)
-            # Xóa đơn hàng ảo
-            service.xoa_don_hang_ao(don_ao.id)
-            response = {
-                "message": "Tạo đơn hàng COD thành công",
-                "data": result
-            }
+            real_service = DonHangThatService(db)
+            
+            # Kiểm tra và lock số lượng
+            success, items_enriched, error_msg = kho_service.kiem_tra_va_lock_so_luong(body['items'])
+            if not success:
+                return jsonify({"error": error_msg}), 400
+
+            try:
+                # Tạo đối tượng đơn hàng tạm thời để chuyển đổi
+                don_hang_temp = {
+                    'id_nguoi_dung': body['id_nguoi_dung'],
+                    'id_dia_chi': body.get('id_dia_chi'),
+                    'ten_nguoi_nhan': body['ten_nguoi_nhan'],
+                    'so_dien_thoai_nguoi_nhan': body['so_dien_thoai_nguoi_nhan'],
+                    'dia_chi_giao': body['dia_chi_giao'],
+                    'phuong_thuc_thanh_toan': body['phuong_thuc_thanh_toan'],
+                    'phi_van_chuyen': Decimal(str(body.get('phi_van_chuyen', 2000))),
+                    'ghi_chu': body.get('ghi_chu'),
+                    'items': body['items'],
+                    'items_enriched': items_enriched,
+                    'tong_tien': Decimal('0.0')  # Sẽ được tính trong service
+                }
+                
+                # Tính tổng tiền
+                tong_tien = Decimal('0.0')
+                for item in items_enriched:
+                    don_gia_item = Decimal(item['don_gia'])
+                    tong_tien += don_gia_item * item['so_luong']
+                tong_tien += Decimal(str(body.get('phi_van_chuyen', 2000)))
+                don_hang_temp['tong_tien'] = tong_tien
+
+                # Tạo đơn hàng thật trực tiếp
+                result = real_service.tao_don_hang_that_truc_tiep(don_hang_temp, kho_service)
+                
+                response = {
+                    "message": "Tạo đơn hàng COD thành công",
+                    "data": result
+                }
+                return jsonify(response), 200
+
+            except Exception as e:
+                # Nếu có lỗi, giải phóng lock
+                kho_service.giai_phong_lock(items_enriched)
+                raise e
+
         else:
+            # PayOS: vẫn tạo đơn hàng ảo như bình thường
+            service = DonHangAoService(redis, payos_client, db)
+            don_ao = service.tao_don_hang_ao(body)
+
             response = {
                 "message": "Tạo đơn hàng ảo thành công",
                 "data": don_ao.model_dump()
@@ -132,13 +172,12 @@ def tao_don_hang_ao():
             if body.get('phuong_thuc_thanh_toan') == 'payos_qr' and don_ao.ma_giao_dich_payos:
                 app.logger.info(f"KÍCH HOẠT CHECK PAYOS CHO ĐƠN: {don_ao.ma_giao_dich_payos}")
                 
-                # Truyền application context vào thread
                 threading.Thread(
                     target=check_order_status,
                     args=(
                         don_ao.ma_giao_dich_payos, 
                         don_ao.id,
-                        app._get_current_object(),  # Lấy app instance
+                        app._get_current_object(),
                         redis,
                         payos_client,
                         db
@@ -146,7 +185,7 @@ def tao_don_hang_ao():
                     daemon=True
                 ).start()
 
-        return jsonify(response), 200
+            return jsonify(response), 200
 
     except Exception as e:
         app.logger.error(f"Lỗi tạo đơn: {e}", exc_info=True)

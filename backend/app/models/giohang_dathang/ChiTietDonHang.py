@@ -40,7 +40,7 @@ class ChiTietDonHang(db.Model):
     # --- Mối quan hệ ---
     don_hang = db.relationship('DonHang', back_populates='items')
     bien_the_san_pham = db.relationship('BienTheSanPham') 
-    # danh_gia = db.relationship('DanhGia',back_populates='chi_tiet_don_hang', uselist=False, cascade='all, delete-orphan')
+    danh_gia = db.relationship('DanhGia', back_populates='chi_tiet_don_hang', uselist=False, cascade='all, delete-orphan')
 
     #--- Ràng buộc ---
     __table_args__ = (

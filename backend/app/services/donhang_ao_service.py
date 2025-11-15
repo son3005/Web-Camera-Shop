@@ -181,15 +181,22 @@ class DonHangAoService:
             raise Exception(f"Lỗi tạo payment link: {str(e)}")
         
     def xu_ly_thanh_toan_that_bai(self, don_hang_ao_id: str):
-        """Xử lý khi thanh toán thất bại"""
+        """Xử lý khi thanh toán thất bại - CHỈ GIẢI PHÓNG LOCK (vì chưa cộng số lượng bán)"""
         don_hang_ao = self.lay_don_hang_ao(don_hang_ao_id)
         if don_hang_ao:
-            # Giải phóng lock số lượng
-            self.kho_service.giai_phong_lock(don_hang_ao.items_enriched)
-            
-            # Tăng đếm đơn hàng không thanh toán
-            if don_hang_ao.id_nguoi_dung:
-                self.giam_sat_service.tang_dem_don_hang_khong_thanh_toan(don_hang_ao.id_nguoi_dung)
-            
-            # Xóa khỏi Redis
-            self.xoa_don_hang_ao(don_hang_ao_id)
+            try:
+                # 🔴 QUAN TRỌNG: Đơn hàng ảo CHƯA cập nhật số lượng bán 
+                # nên chỉ cần giải phóng lock, KHÔNG trừ số lượng
+                self.kho_service.giai_phong_lock(don_hang_ao.items_enriched)
+                
+                # Tăng đếm đơn hàng không thanh toán
+                if don_hang_ao.id_nguoi_dung:
+                    self.giam_sat_service.tang_dem_don_hang_khong_thanh_toan(don_hang_ao.id_nguoi_dung)
+                
+                # Xóa khỏi Redis
+                self.xoa_don_hang_ao(don_hang_ao_id)
+                
+            except Exception as e:
+                print(f"Lỗi xử lý thanh toán thất bại: {str(e)}")
+                # Vẫn phải giải phóng lock dù có lỗi
+                self.kho_service.giai_phong_lock(don_hang_ao.items_enriched)

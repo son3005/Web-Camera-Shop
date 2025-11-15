@@ -31,15 +31,8 @@ class NguoiDungUpdate(BaseModel):
 
 
 class NguoiDungUpdateMatKhau(BaseModel):
-    mat_khau: str = Field(..., min_length=8, description="Mật khẩu mới")
-    xac_nhan_mat_khau: str = Field(..., description="Xác nhận lại mật khẩu")
-
-    @field_validator("xac_nhan_mat_khau")
-    @classmethod
-    def passwords_match(cls, v: str, info) -> str:
-        if "mat_khau" in info.data and v != info.data["mat_khau"]:
-            raise ValueError("Mật khẩu xác nhận không khớp")
-        return v
+    mat_khau_cu: str = Field(..., min_length=8, description="Mật khẩu mới")
+    mat_khau_moi: str = Field(..., min_length=8, description="Xác nhận lại mật khẩu")
 
 
 class NguoiDungResponse(NguoiDungBase):

@@ -16,7 +16,8 @@ class BienTheSanPham(db.Model):
     trang_thai_kich_hoat = db.Column(db.Enum(TrangThaiSanPhamEnum), default=TrangThaiSanPhamEnum.DANG_BAN, nullable=False)
     gia_ban = db.Column(db.Numeric(12), nullable=False)
     mau = db.Column(db.String(20), nullable=True)
-    so_luong = db.Column(db.Integer, nullable=False, default=0)
+    so_luong_nhap = db.Column(db.Integer, nullable=False, default=0)
+    so_luong_ban = db.Column(db.Integer, nullable=False, default=0)
     
     # --- Mối quan hệ ---
     san_pham = db.relationship('SanPham', back_populates='cac_bien_the')
@@ -29,7 +30,8 @@ class BienTheSanPham(db.Model):
     __table_args__ = (
         Index('idx_trang_thai', 'trang_thai_kich_hoat'),
         CheckConstraint('gia_ban > 0', name='check_gia_positive'),
-        CheckConstraint('so_luong >= 0', name='check_so_luong_positive')
+        CheckConstraint('so_luong_nhap >= 0', name='check_so_luong_nhap_positive'),
+        CheckConstraint('so_luong_ban >= 0', name='check_so_luong_ban_positive')
     )
 
     def __repr__(self):

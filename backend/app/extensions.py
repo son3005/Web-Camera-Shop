@@ -35,4 +35,14 @@ def init_payos(app):
         )
     return payos
 
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    """
+    Callback để load user từ JWT token
+    """
+    from .models.nguoidung import NguoiDung  # Import trong hàm để tránh circular import
+    identity = jwt_data["sub"]
+    return NguoiDung.query.filter_by(id=identity).first()
+
+
 __all__ = ['db', 'migrate', 'jwt', 'cors', 'mail', 'celery', 'redis', 'payos', 'init_payos']

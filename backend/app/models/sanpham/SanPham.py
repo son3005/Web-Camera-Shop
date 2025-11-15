@@ -19,6 +19,8 @@ class SanPham(db.Model):
     ten_san_pham = db.Column(db.String(100), nullable=False, index=True)
     mo_ta = db.Column(db.Text, nullable=True)
     thong_so_ky_thuat = db.Column(db.JSON, nullable=True)
+    so_sao_trung_binh = db.Column(db.Numeric(2,1), nullable=True, default=0.0)
+    so_luong_danh_gia = db.Column(db.Integer, nullable=False, default=0)
     ngay_tao = db.Column(db.DateTime, default=datetime.utcnow)
     ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

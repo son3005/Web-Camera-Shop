@@ -14,7 +14,7 @@ class PhieuThuService:
     Service xử lý nghiệp vụ Phiếu Thu
     - Tạo phiếu thu và cộng dồn số lượng biến thể
     - Cập nhật phiếu thu và điều chỉnh số lượng biến thể
-    - Xử lý thay đổi biến thể sản phẩm
+    - Chỉ cho phép cập nhật biến thể trong phiếu thu mới nhất
     """
     
     @staticmethod
@@ -22,6 +22,29 @@ class PhieuThuService:
         """Tạo mã phiếu thu tự động (PT + timestamp)"""
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         return f"PT{timestamp}"
+    
+    @staticmethod
+    def _kiem_tra_bien_the_trong_phieu_thu_moi_nhat(
+        session: Session, 
+        bien_the_id: int, 
+        phieu_thu_id: int
+    ) -> bool:
+        """
+        Kiểm tra xem biến thể có nằm trong phiếu thu mới nhất không
+        Returns: True nếu biến thể nằm trong phiếu thu mới nhất, False nếu không
+        """
+        # Tìm phiếu thu mới nhất có chứa biến thể này
+        latest_phieu_with_bien_the = session.query(PhieuThu).\
+            join(ChiTietPhieuThu, PhieuThu.id == ChiTietPhieuThu.phieu_thu_id).\
+            filter(ChiTietPhieuThu.bien_the_san_pham_id == bien_the_id).\
+            order_by(PhieuThu.ngay_thu.desc(), PhieuThu.id.desc()).\
+            first()
+        
+        # Nếu không tìm thấy phiếu thu nào chứa biến thể, hoặc phiếu thu mới nhất là phiếu thu hiện tại
+        if not latest_phieu_with_bien_the or latest_phieu_with_bien_the.id == phieu_thu_id:
+            return True
+        
+        return False
     
     @staticmethod
     def _cap_nhat_so_luong_bien_the(
@@ -36,7 +59,7 @@ class PhieuThuService:
             so_luong_thay_doi: Số lượng thay đổi (dương = cộng, âm = trừ)
             session: Database session
         """
-        if not bien_the_id:
+        if not bien_the_id: 
             raise ValueError("bien_the_id không được để trống")
             
         bien_the = session.query(BienTheSanPham).filter_by(id=bien_the_id).first()
@@ -44,14 +67,14 @@ class PhieuThuService:
             raise ValueError(f"Biến thể sản phẩm với ID {bien_the_id} không tồn tại")
         
         # Tính toán số lượng mới
-        so_luong_moi = (bien_the.so_luong or 0) + so_luong_thay_doi
+        so_luong_moi = (bien_the.so_luong_nhap or 0) + so_luong_thay_doi
         
         # Kiểm tra số lượng không âm
         if so_luong_moi < 0:
             raise ValueError(f"Số lượng biến thể {bien_the_id} không thể âm: {so_luong_moi}")
         
         # Cập nhật số lượng
-        bien_the.so_luong = so_luong_moi
+        bien_the.so_luong_nhap = so_luong_moi
         session.add(bien_the)
     
     @staticmethod
@@ -233,6 +256,7 @@ class PhieuThuService:
     def cap_nhat_phieu_thu(phieu_thu_id: int, update_data: PhieuThuUpdate) -> Optional[PhieuThu]:
         """
         Cập nhật phiếu thu và điều chỉnh số lượng biến thể
+        - Chỉ cho phép cập nhật biến thể trong phiếu thu mới nhất
         - Xử lý thay đổi biến thể sản phẩm
         - Điều chỉnh số lượng tồn kho của cả biến thể cũ và mới
         """
@@ -247,6 +271,11 @@ class PhieuThuService:
             if not phieu_thu:
                 return None
             
+            # Kiểm tra xem phiếu thu này có phải là phiếu thu mới nhất không
+            latest_phieu = session.query(PhieuThu).order_by(PhieuThu.ngay_thu.desc()).first()
+            if latest_phieu.id != phieu_thu_id:
+                raise ValueError("Chỉ được cập nhật phiếu thu mới nhất")
+
             # Cập nhật thông tin cơ bản
             if update_data.ten_nha_cung_cap is not None:
                 phieu_thu.ten_nha_cung_cap = update_data.ten_nha_cung_cap
@@ -272,6 +301,20 @@ class PhieuThuService:
                             so_luong_moi = chi_tiet_update.so_luong if chi_tiet_update.so_luong is not None else so_luong_cu
                             bien_the_id_moi = chi_tiet_update.bien_the_san_pham_id if chi_tiet_update.bien_the_san_pham_id is not None else bien_the_id_cu
                             gia_nhap_moi = chi_tiet_update.gia_nhap_tung_vat if chi_tiet_update.gia_nhap_tung_vat is not None else chi_tiet.gia_nhap_tung_vat
+                            
+                            # KIỂM TRA QUYỀN CẬP NHẬT CHO BIẾN THỂ MỚI
+                            if bien_the_id_moi != bien_the_id_cu:
+                                # Nếu thay đổi biến thể, kiểm tra biến thể mới có trong phiếu thu mới nhất không
+                                if not PhieuThuService._kiem_tra_bien_the_trong_phieu_thu_moi_nhat(
+                                    session, bien_the_id_moi, phieu_thu_id
+                                ):
+                                    raise ValueError(f"Không được phép cập nhật biến thể {bien_the_id_moi} vì nó không nằm trong phiếu thu mới nhất")
+                            else:
+                                # Nếu cùng biến thể, kiểm tra biến thể hiện tại có trong phiếu thu mới nhất không
+                                if not PhieuThuService._kiem_tra_bien_the_trong_phieu_thu_moi_nhat(
+                                    session, bien_the_id_cu, phieu_thu_id
+                                ):
+                                    raise ValueError(f"Không được phép cập nhật biến thể {bien_the_id_cu} vì nó không nằm trong phiếu thu mới nhất")
                             
                             # Xử lý thay đổi biến thể
                             if bien_the_id_cu != bien_the_id_moi:
@@ -311,6 +354,12 @@ class PhieuThuService:
                             raise ValueError("so_luong là bắt buộc khi thêm chi tiết mới")
                         if chi_tiet_update.gia_nhap_tung_vat is None:
                             raise ValueError("gia_nhap_tung_vat là bắt buộc khi thêm chi tiết mới")
+                        
+                        # KIỂM TRA QUYỀN THÊM MỚI CHO BIẾN THỂ
+                        if not PhieuThuService._kiem_tra_bien_the_trong_phieu_thu_moi_nhat(
+                            session, chi_tiet_update.bien_the_san_pham_id, phieu_thu_id
+                        ):
+                            raise ValueError(f"Không được phép thêm biến thể {chi_tiet_update.bien_the_san_pham_id} vì nó không nằm trong phiếu thu mới nhất")
                         
                         chi_tiet_moi = ChiTietPhieuThu(
                             phieu_thu_id=phieu_thu_id,
