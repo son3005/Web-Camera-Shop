@@ -1,5 +1,6 @@
 // src/pages/CartPage.jsx
 import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useCart } from "../hooks/useCart";
 
 const vnd = (n) => Number(n || 0).toLocaleString("vi-VN") + "₫";
@@ -12,12 +13,71 @@ export default function CartPage() {
   const removeItem = useRemoveItem();
   const navigate = useNavigate();
 
+  // ===============================
+  // QUẢN LÝ SẢN PHẨM ĐƯỢC CHỌN
+  // ===============================
+  const [selected, setSelected] = useState([]);
+
+  useEffect(() => {
+    if (cart?.items) {
+      setSelected(cart.items.map((it) => it.id)); // mặc định chọn hết
+    }
+  }, [cart]);
+
+  const toggleItem = (id) => {
+    setSelected((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
+    );
+  };
+
+  const toggleAll = () => {
+    if (!cart?.items) return;
+    if (selected.length === cart.items.length) {
+      setSelected([]); // bỏ chọn hết
+    } else {
+      setSelected(cart.items.map((it) => it.id)); // chọn hết
+    }
+  };
+
+  // ===============================
+  // TÍNH TỔNG CHO SẢN PHẨM ĐƯỢC CHỌN
+  // ===============================
+  const selectedItems = cart?.items?.filter((it) =>
+    selected.includes(it.id)
+  ) || [];
+
+  const tongSoLuong = selectedItems.reduce((s, it) => s + it.so_luong, 0);
+  const tongTien = selectedItems.reduce((s, it) => s + it.so_luong * it.don_gia, 0);
+
+  // ===============================
+  // CHUYỂN SANG TRANG THANH TOÁN
+  // ===============================
+  const handleCheckout = () => {
+    if (selectedItems.length === 0) {
+      alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán!");
+      return;
+    }
+
+    const checkoutData = selectedItems.map((it) => ({
+      id: it.id,                      // id chi tiết giỏ hàng
+      san_pham_id: it.san_pham_id,
+      bien_the_id: it.bien_the_id,
+      ten_san_pham: it.ten_san_pham,
+      ten_bien_the: it.ten_bien_the,
+      hinh_anh: it.hinh_anh,
+      don_gia: Number(it.don_gia),
+      so_luong: it.so_luong,
+    }));
+
+    navigate("/checkout", { state: { items: checkoutData } });
+  };
+
   if (isLoading)
     return <div className="p-6 text-center">Đang tải giỏ hàng...</div>;
 
   const items = cart?.items || [];
-  const tongSoLuong = cart?.tong_so_luong || 0;
-  const tongTien = cart?.tong_gia_tri || 0;
 
   if (items.length === 0) {
     return (
@@ -36,7 +96,19 @@ export default function CartPage() {
         Giỏ hàng
       </h1>
 
+      {/* Chọn tất cả */}
+      <div className="mb-3 flex items-center">
+        <input
+          type="checkbox"
+          checked={selected.length === items.length}
+          onChange={toggleAll}
+          className="w-5 h-5 mr-2"
+        />
+        <span className="text-slate-700">Chọn tất cả</span>
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-6">
+        
         {/* === Danh sách sản phẩm === */}
         <div className="lg:col-span-2 space-y-3">
           {items.map((it) => (
@@ -44,6 +116,14 @@ export default function CartPage() {
               key={it.id}
               className="surface-panel p-3 flex gap-3 items-center"
             >
+              {/* Tick chọn */}
+              <input
+                type="checkbox"
+                checked={selected.includes(it.id)}
+                onChange={() => toggleItem(it.id)}
+                className="w-5 h-5"
+              />
+
               <img
                 src={it.hinh_anh}
                 alt={it.ten_san_pham}
@@ -58,6 +138,7 @@ export default function CartPage() {
                 <div className="mt-1 font-semibold">{vnd(it.don_gia)}</div>
               </div>
 
+              {/* Tăng giảm số lượng */}
               <div className="flex items-center border rounded-xl overflow-hidden">
                 <button
                   className="px-3 py-1 hover:bg-black/5 dark:hover:bg-white/10"
@@ -86,6 +167,7 @@ export default function CartPage() {
                 </button>
               </div>
 
+              {/* Xóa */}
               <button
                 className="ml-3 text-red-600 hover:underline"
                 disabled={removeItem.isPending}
@@ -110,7 +192,7 @@ export default function CartPage() {
 
           <button
             className="btn-emerald w-full rounded-xl mt-4 py-2"
-            onClick={() => navigate("/checkout")}
+            onClick={handleCheckout}
           >
             Tiến hành thanh toán
           </button>

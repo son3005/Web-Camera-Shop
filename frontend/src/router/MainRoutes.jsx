@@ -12,7 +12,6 @@ const AccountPage = lazy(() => import("../pages/AccountPage"));
 
 // === 3 TRANG MỚI THEO BACKEND ĐÃ CÓ ===
 const PaymentResultPage = lazy(() => import("../pages/PaymentResultPage"));
-const OrderHistoryPage = lazy(() => import("../pages/OrderHistoryPage"));
 
 // fallback khi đang lazy-load
 const Fallback = <div className="p-6 text-center text-slate-300">Đang tải...</div>;
@@ -75,17 +74,7 @@ const MainRoutes = {
         </ProtectedRoute>
       ),
     },
-    // === TRANG LỊCH SỬ ĐƠN HÀNG KHÁCH HÀNG ===
-    {
-      path: "orders",
-      element: (
-        <ProtectedRoute>
-          <Suspense fallback={Fallback}>
-            <OrderHistoryPage />
-          </Suspense>
-        </ProtectedRoute>
-      ),
-    },
+
     // === TRANG TÀI KHOẢN ===
     {
       path: "tai-khoan",
