@@ -1,14 +1,8 @@
 """init full tables - fixed nullable
 
-<<<<<<<< HEAD:backend/migrations/versions/a19ad46e178e_init_full_tables_fixed_nullable.py
-Revision ID: a19ad46e178e
+Revision ID: 1c1cd5c8d64a
 Revises: 
-Create Date: 2025-11-12 16:10:22.875728
-========
-Revision ID: 6e022ebff1a6
-Revises: 
-Create Date: 2025-11-14 01:17:42.276248
->>>>>>>> 4a6d89f14383001a94b9364dee92efc1e705d249:backend/migrations/versions/6e022ebff1a6_init_full_tables_fixed_nullable.py
+Create Date: 2025-11-15 15:05:54.507356
 
 """
 from alembic import op
@@ -16,11 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-<<<<<<<< HEAD:backend/migrations/versions/a19ad46e178e_init_full_tables_fixed_nullable.py
-revision = 'a19ad46e178e'
-========
-revision = '6e022ebff1a6'
->>>>>>>> 4a6d89f14383001a94b9364dee92efc1e705d249:backend/migrations/versions/6e022ebff1a6_init_full_tables_fixed_nullable.py
+revision = '1c1cd5c8d64a'
 down_revision = None
 branch_labels = None
 depends_on = None
