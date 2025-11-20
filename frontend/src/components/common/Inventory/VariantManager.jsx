@@ -38,36 +38,16 @@ const FormInput = ({
   </div>
 );
 
-const DateInput = ({
-  label,
-  name,
-  register,
-  errors,
-  readOnly,
-  defaultValue,
-}) => (
-  <div className="flex-1 min-w-[120px]">
-    <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
-      {label}
-    </label>
-    <input
-      type="datetime-local"
-      readOnly={readOnly}
-      defaultValue={readOnly ? defaultValue : undefined}
-      {...(register ? register(name) : {})}
-      className={`w-full rounded-lg px-3 py-2 text-sm transition-all bg-white/50 dark:bg-slate-700/50 border ${
-        errors
-          ? "border-red-500 focus:ring-red-500"
-          : "border-black/10 dark:border-white/10 focus:ring-cyan-500"
-      } focus:outline-none focus:ring-2 ${
-        readOnly ? "cursor-not-allowed bg-slate-200 dark:bg-slate-700/30" : ""
-      }`}
-    />
-    {errors && (
-      <p className="text-red-500 text-xs mt-1 h-4">{errors.message}</p>
-    )}
-  </div>
-);
+const toActiveBool = (raw) => {
+  if (typeof raw === "boolean") return raw;
+  if (typeof raw === "string") {
+    const v = raw.trim().toLowerCase();
+    // nhận cả "dang_ban" và "dang_ban" từ "DANG_BAN"
+    if (v === "dang_ban") return true;
+    return false; // "an", "ngung_ban", ...
+  }
+  return false;
+};
 
 const VariantManager = ({
   control,
@@ -77,10 +57,9 @@ const VariantManager = ({
   readOnly = false,
   uploadProgress,
   placeholderImage,
-  // ✅ thêm prop này
   onDeleteExistingVariant,
 }) => {
-  // chế độ đọc
+  // ========= MODE READONLY (xem chi tiết) =========
   if (readOnly) {
     return (
       <div className="space-y-4">
@@ -102,6 +81,13 @@ const VariantManager = ({
                   readOnly={true}
                   defaultValue={variant.ten_bien_the}
                 />
+                <FormInput
+                  label="Trạng thái"
+                  readOnly={true}
+                  defaultValue={
+                    variant.trang_thai_kich_hoat ? "Đang bán" : "Ngừng bán"
+                  }
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormInput
@@ -111,18 +97,9 @@ const VariantManager = ({
                   defaultValue={variant.gia_ban}
                 />
                 <FormInput
-                  label="Giá khuyến mãi"
-                  type="number"
-                  readOnly={true}
-                  defaultValue={variant.gia_khuyen_mai}
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                <FormInput
                   label="Số lượng tồn"
                   type="number"
                   readOnly={true}
-                  // backend có thể trả so_luong_ton hoặc so_luong
                   defaultValue={
                     typeof variant.so_luong_ton === "number"
                       ? variant.so_luong_ton
@@ -147,7 +124,7 @@ const VariantManager = ({
     );
   }
 
-  // chế độ edit/add
+  // ========= MODE EDIT / ADD =========
   const { fields, append, remove } = useFieldArray({
     control,
     name: "bien_the_san_phams",
@@ -158,7 +135,7 @@ const VariantManager = ({
       ten_bien_the: "",
       gia_ban: 0,
       so_luong: 0,
-      trang_thai_kich_hoat: "dang_ban",
+      trang_thai_kich_hoat: "dang_ban", // mặc định đang bán
       mau: "",
       hinh_anhs: [],
     });
@@ -183,7 +160,6 @@ const VariantManager = ({
                 <button
                   type="button"
                   onClick={() => {
-                    // ✅ nếu biến thể này là biến thể cũ (có id) thì báo lên trên để đẩy vào bien_the_xoa_ids
                     const maybeId = field?.id_in_db || field?.id;
                     if (maybeId && onDeleteExistingVariant) {
                       onDeleteExistingVariant(maybeId);
@@ -197,6 +173,7 @@ const VariantManager = ({
               )}
             </div>
 
+            {/* Hàng 1: tên + màu */}
             <div className="grid grid-cols-2 gap-4">
               <FormInput
                 label="Tên biến thể"
@@ -212,7 +189,8 @@ const VariantManager = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Hàng 2: giá + số lượng */}
+            <div className="grid grid-cols-3 gap-4">
               <FormInput
                 label="Giá bán"
                 type="number"
@@ -227,8 +205,40 @@ const VariantManager = ({
                 register={register}
                 errors={errors?.bien_the_san_phams?.[index]?.so_luong}
               />
+
+              {/* ✅ Trạng thái biến thể */}
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
+                  Trạng thái
+                </label>
+                <Controller
+                  name={`bien_the_san_phams.${index}.trang_thai_kich_hoat`}
+                  control={control}
+                  defaultValue={field.trang_thai_kich_hoat || "dang_ban"}
+                  render={({ field: stField }) => {
+                    const isOn =
+                      stField.value === "dang_ban" || stField.value === true;
+                    return (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          stField.onChange(isOn ? "ngung_ban" : "dang_ban")
+                        }
+                        className={`px-3 py-1 rounded-lg text-sm font-semibold w-fit ${
+                          isOn
+                            ? "bg-emerald-500 text-white"
+                            : "bg-slate-600/40 text-slate-100"
+                        }`}
+                      >
+                        {isOn ? "Đang bán" : "Ngừng bán"}
+                      </button>
+                    );
+                  }}
+                />
+              </div>
             </div>
 
+            {/* Hình ảnh */}
             <div>
               <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">
                 Hình ảnh
@@ -250,6 +260,7 @@ const VariantManager = ({
           </div>
         ))}
       </div>
+
       <button
         type="button"
         onClick={handleAddVariant}

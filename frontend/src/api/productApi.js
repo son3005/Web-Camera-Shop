@@ -1,27 +1,20 @@
 // src/api/productApi.js
 // ============================================================
-// API sản phẩm cho frontend, ĐÃ SỬA để khớp với Flask backend
-// của bạn đang xài endpoint:  GET /san-pham  và  GET /san-pham/:id
-// (không phải /api/san-pham nữa)
+// API sản phẩm cho frontend (client)
+// - Dùng apiClient (base: http://localhost:5000/api)
+// - Endpoint thực tế: /api/san-pham  và  /api/san-pham/:id
+// - Có normalizeProduct để FE xài đồng nhất
+// - Có getProductsBasic để module Phiếu Thu dùng
 // ============================================================
 
-import axios from "axios";
+import apiClient from "./apiClient";
 
-// Tạo axios instance riêng cho sản phẩm
-// Ưu tiên lấy từ .env (VITE_API_BASE_URL), không có thì localhost
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000",
-  withCredentials: false,
-});
-
-// ============================================================
-// HELPER
-// ============================================================
-
-// Chọn ảnh đại diện từ các biến thể
+// ----------------------------------------------
+// HELPER: chọn ảnh đại diện từ biến thể
+// ----------------------------------------------
 function pickPrimaryImage(variants = []) {
   for (const v of variants) {
-    if (v.hinh_anhs && v.hinh_anhs.length) {
+    if (Array.isArray(v.hinh_anhs) && v.hinh_anhs.length > 0) {
       const main =
         v.hinh_anhs.find((img) => img.la_anh_dai_dien) || v.hinh_anhs[0];
       if (main?.url) return main.url;
@@ -30,7 +23,7 @@ function pickPrimaryImage(variants = []) {
   return "";
 }
 
-// Lấy giá nhỏ nhất trong các biến thể
+// HELPER: lấy giá nhỏ nhất
 function getMinPrice(variants = []) {
   if (!variants.length) return 0;
   const prices = variants
@@ -40,11 +33,12 @@ function getMinPrice(variants = []) {
   return Math.min(...prices);
 }
 
+// ----------------------------------------------
 // Chuẩn hoá sản phẩm từ backend về format FE đang dùng
+// ----------------------------------------------
 export function normalizeProduct(sp) {
   if (!sp) return null;
 
-  // backend bạn đang dùng field "cac_bien_the"
   const variants = sp.cac_bien_the || [];
   const price_from = getMinPrice(variants);
 
@@ -59,28 +53,33 @@ export function normalizeProduct(sp) {
     brand: sp.thuong_hieu?.ten_thuong_hieu || "",
     brand_id: sp.thuong_hieu?.id,
     category: sp.danh_muc?.ten_danh_muc || "",
+    category_id: sp.danh_muc?.id,
     level: sp.cap_do?.ten_cap_do || "",
+    level_id: sp.cap_do?.id,
 
-    // biến thể giữ nguyên để FE khác xài
+    // dữ liệu gốc để chỗ khác xài
     variants,
 
-    // giá và ảnh
+    // giá & ảnh
     price_from,
     primaryImage: pickPrimaryImage(variants),
     images: variants
       .flatMap((v) => (v.hinh_anhs || []).map((img) => img.url))
       .filter(Boolean),
 
-    // rating (nếu backend có)
+    // nếu backend sau này có rating thì vẫn giữ chỗ
     rating: sp.trung_binh_danh_gia || 0,
     reviewCount: sp.so_luong_danh_gia || 0,
+
+    created_at: sp.ngay_tao,
+    updated_at: sp.ngay_cap_nhat,
   };
 }
 
-// ============================================================
-// API: LẤY DANH SÁCH SẢN PHẨM
-// khớp route Flask: GET /san-pham
-// ============================================================
+// ----------------------------------------------
+// LẤY DANH SÁCH SẢN PHẨM (client)
+// GET /api/san-pham
+// ----------------------------------------------
 export async function getProducts({
   page = 1,
   limit = 12,
@@ -93,20 +92,13 @@ export async function getProducts({
     per_page: limit,
   };
 
-  // search toàn văn
-  if (search) {
-    params.search = search;
-  }
+  if (search) params.search = search;
 
   // giá
-  if (filters.price?.min != null) {
-    params.min_price = filters.price.min;
-  }
-  if (filters.price?.max != null) {
-    params.max_price = filters.price.max;
-  }
+  if (filters.price?.min != null) params.min_price = filters.price.min;
+  if (filters.price?.max != null) params.max_price = filters.price.max;
 
-  // lọc theo thương hiệu / danh mục / cấp độ
+  // lọc theo các bảng phụ
   if (
     Array.isArray(filters.thuong_hieu_ids) &&
     filters.thuong_hieu_ids.length
@@ -120,51 +112,45 @@ export async function getProducts({
     params.cap_do_ids = filters.cap_do_ids;
   }
 
-  // sort: backend bạn đang dùng 1 tham số sort_by
-  if (sort) {
-    // vd: "price_asc" | "price_desc" | "name_asc" | "name_desc"
-    params.sort_by = sort;
+  // sort: backend của bạn dùng 2 param riêng (sort_by_price, sort_by_name)
+  // nhưng bạn từng gom thành 1 "sort" → mình map lại:
+  if (sort?.startsWith("price_")) {
+    params.sort_by_price = sort; // "price_asc" | "price_desc"
+  } else if (sort?.startsWith("name_")) {
+    params.sort_by_name = sort; // "name_asc" | "name_desc"
   }
 
-  // ⚠️ ĐIỂM QUAN TRỌNG: gọi đúng /san-pham (KHÔNG phải /api/san-pham)
-  const res = await api.get("/san-pham", { params });
-
-  // backend của bạn đã trả kiểu {data: [...], pagination: {...}}
+  const res = await apiClient.get("/san-pham", { params });
   const raw = res.data;
-  const arr = raw.data || raw.items || [];
+  const arr = raw.data || [];
   const pagination = raw.pagination || {};
-
-  const total = pagination.total ?? arr.length;
-  const pages = pagination.pages ?? 1;
 
   return {
     items: arr.map((p) => normalizeProduct(p)),
-    total,
+    total: pagination.total ?? arr.length,
     page: pagination.page ?? page,
-    totalPages: pages,
+    totalPages: pagination.pages ?? 1,
   };
 }
 
-// ============================================================
-// API: LẤY CHI TIẾT SẢN PHẨM
-// khớp route Flask: GET /san-pham/:id
-// ============================================================
+// ----------------------------------------------
+// LẤY CHI TIẾT SẢN PHẨM
+// GET /api/san-pham/:id
+// ----------------------------------------------
 export async function getProduct(id) {
-  // ⚠️ Cũng sửa chỗ này thành /san-pham
-  const res = await api.get(`/san-pham/${id}`);
+  const res = await apiClient.get(`/san-pham/${id}`);
   return normalizeProduct(res.data);
 }
 
-// ============================================================
-// API: QUICK SEARCH CHO HEADER
-// Tận dụng luôn /san-pham?search=...&per_page=6
-// ============================================================
+// ----------------------------------------------
+// QUICK SEARCH ở header
+// GET /api/san-pham?search=...&per_page=6
+// ----------------------------------------------
 export async function quickSearch(term, limit = 6) {
   const q = String(term || "").trim();
   if (!q) return [];
 
-  // ⚠️ gọi /san-pham
-  const res = await api.get("/san-pham", {
+  const res = await apiClient.get("/san-pham", {
     params: {
       search: q,
       per_page: limit,
@@ -183,4 +169,14 @@ export async function quickSearch(term, limit = 6) {
       primaryImage: norm.primaryImage,
     };
   });
+}
+
+// ----------------------------------------------
+// LẤY DANH SÁCH SẢN PHẨM CƠ BẢN (cho Phiếu Thu)
+// GET /api/san-pham/danh-sach-co-ban
+// ----------------------------------------------
+export async function getProductsBasic() {
+  const res = await apiClient.get("/san-pham/danh-sach-co-ban");
+  // để nguyên để modal phiếu thu map trực tiếp
+  return res.data;
 }

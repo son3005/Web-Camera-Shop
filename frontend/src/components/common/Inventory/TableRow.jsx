@@ -3,6 +3,18 @@ import React, { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import ActionMenu from "./ActionMenu";
 
+// ✅ format tiền VNĐ gọn: 333333.00 -> 333.333 VNĐ
+const formatVnd = (value) => {
+  const n = Number(value);
+  if (!n || Number.isNaN(n)) return "N/A";
+  return (
+    n.toLocaleString("vi-VN", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }) + " VNĐ"
+  );
+};
+
 const StockStatusBadge = ({ quantity }) => {
   if (typeof quantity !== "number" || isNaN(quantity)) {
     return (
@@ -30,16 +42,32 @@ const StockStatusBadge = ({ quantity }) => {
   );
 };
 
-const SellingStatusBadge = ({ trang_thai }) => {
-  return trang_thai === "dang_ban" ? (
+// chip nhỏ hiển thị “Đang bán/Ngừng bán”
+const SellingStatusBadge = ({ isActive }) => {
+  return isActive ? (
     <span className="px-2 py-1 text-xs font-semibold text-cyan-800 bg-cyan-200 rounded-full dark:bg-cyan-500/20 dark:text-cyan-300">
-      Còn bán
+      Đang bán
     </span>
   ) : (
     <span className="px-2 py-1 text-xs font-semibold text-slate-800 bg-slate-300 rounded-full dark:bg-slate-600 dark:text-slate-300">
       Ngừng bán
     </span>
   );
+};
+
+// ✅ hàm chuẩn hoá mọi kiểu trạng thái từ BE thành boolean
+// BE của cậu đang có: "DANG_BAN" | "AN"
+// FE trước đây có: "dang_ban" | "ngung_ban" | true | false
+const toActiveBool = (raw) => {
+  if (typeof raw === "boolean") return raw;
+  if (typeof raw === "string") {
+    const v = raw.trim().toLowerCase();
+    if (v === "dang_ban") return true;
+    if (v === "dang ban") return true;
+    if (v === "dang_ban".toLowerCase()) return true;
+    return false;
+  }
+  return false;
 };
 
 const TableRow = ({ item, onDelete, onView, onEdit }) => {
@@ -64,6 +92,22 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
       return price > 0 && price < min ? price : min;
     }, Infinity) || 0;
 
+  // ✅ lấy trạng thái ở cấp sản phẩm trước
+  // backend có thể trả: item.trang_thai_kich_hoat = "DANG_BAN"
+  // hoặc item.trang_thai = "DANG_BAN"
+  let isActive = false;
+  if (
+    item.trang_thai_kich_hoat !== undefined &&
+    item.trang_thai_kich_hoat !== null
+  ) {
+    isActive = toActiveBool(item.trang_thai_kich_hoat);
+  } else if (item.trang_thai !== undefined && item.trang_thai !== null) {
+    isActive = toActiveBool(item.trang_thai);
+  } else if (Array.isArray(variants) && variants.length > 0) {
+    // nếu sản phẩm không có field thì nhìn xuống biến thể
+    isActive = variants.some((v) => toActiveBool(v.trang_thai_kich_hoat));
+  }
+
   return (
     <tr className="border-b border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors h-[61px]">
       <td className="px-4 py-3 font-semibold text-sky-600 dark:text-sky-400">
@@ -75,16 +119,20 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
       </td>
       <td className="px-4 py-3 text-center">
         {minPrice > 0 && minPrice < Infinity
-          ? `Từ ${minPrice.toLocaleString()} VNĐ`
+          ? `Từ ${formatVnd(minPrice)}`
           : "N/A"}
       </td>
       <td className="px-4 py-3 text-center font-medium">{totalStock}</td>
+      {/* trạng thái sản phẩm (còn/sắp hết/hết) */}
       <td className="px-4 py-3 text-center">
         <StockStatusBadge quantity={totalStock} />
       </td>
+
+      {/* trạng thái kinh doanh */}
       <td className="px-4 py-3 text-center">
-        <SellingStatusBadge trang_thai={item.trang_thai} />
+        <SellingStatusBadge isActive={isActive} />
       </td>
+
       <td className="px-4 py-3 text-center">
         <div className="relative flex justify-center">
           <button

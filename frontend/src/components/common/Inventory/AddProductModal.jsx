@@ -9,35 +9,6 @@ import { useProducts } from "../../../hooks/useProducts";
 import { useCatalogs } from "../../../hooks/useCatalogs";
 import { useToast } from "../../../hooks/useToast";
 
-const StatusToggle = ({ label, enabled, onChange, readOnly }) => (
-  <div>
-    <label className="block text-sm font-medium mb-2">{label}</label>
-    <div className="flex items-center gap-4">
-      <button
-        type="button"
-        onClick={() => !readOnly && onChange(!enabled)}
-        disabled={readOnly}
-        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${
-          enabled ? "bg-emerald-500" : "bg-slate-300"
-        }`}
-      >
-        <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition ${
-            enabled ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </button>
-      <span
-        className={`text-sm font-medium ${
-          enabled ? "text-emerald-600" : "text-slate-500"
-        }`}
-      >
-        {enabled ? "Đang bán" : "Ngừng bán"}
-      </span>
-    </div>
-  </div>
-);
-
 const AddProductModal = ({ mode, productId, onClose }) => {
   const { useGetSanPhamById, useCreateSanPham, useUpdateSanPham } =
     useProducts();
@@ -75,6 +46,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
       thuong_hieu_id: "",
       cap_do_id: "",
       mo_ta: "",
+      // vẫn giữ để backend không thiếu, nhưng không render ra UI nữa
       trang_thai: "dang_ban",
       thong_so_ky_thuat: {},
       bien_the_san_phams: [
@@ -83,6 +55,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
           gia_ban: 0,
           mau: "",
           so_luong: 0,
+          // trạng thái sẽ hiển thị trong từng biến thể (VariantManager)
           trang_thai_kich_hoat: "dang_ban",
           hinh_anhs: [],
         },
@@ -101,7 +74,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
   // fill data khi edit
   useEffect(() => {
     if (mode === "edit" && productDetail) {
-      // đang edit sản phẩm mới → clear list id xoá
       setDeletedVariantIds([]);
 
       reset({
@@ -110,6 +82,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
         thuong_hieu_id: productDetail.thuong_hieu_id?.toString() || "",
         cap_do_id: productDetail.cap_do_id?.toString() || "",
         mo_ta: productDetail.mo_ta || "",
+        // giữ lại trạng thái của sản phẩm nhưng không cho sửa
         trang_thai: productDetail.trang_thai || "dang_ban",
         thong_so_ky_thuat:
           typeof productDetail.thong_so_ky_thuat === "string"
@@ -122,8 +95,8 @@ const AddProductModal = ({ mode, productId, onClose }) => {
               })()
             : productDetail.thong_so_ky_thuat || {},
         bien_the_san_phams: (productDetail.cac_bien_the || []).map((v) => ({
-          id: v.id, // id hiện tại trong DB
-          id_in_db: v.id, // để VariantManager nhận ra đây là biến thể cũ
+          id: v.id,
+          id_in_db: v.id,
           ten_bien_the: v.ten_bien_the,
           gia_ban: v.gia_ban,
           mau: v.mau || "",
@@ -131,6 +104,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
             typeof v.so_luong_ton === "number"
               ? v.so_luong_ton
               : v.so_luong || 0,
+          // ✅ trạng thái nằm ở từng biến thể
           trang_thai_kich_hoat: v.trang_thai_kich_hoat
             ? "dang_ban"
             : "ngung_ban",
@@ -161,11 +135,10 @@ const AddProductModal = ({ mode, productId, onClose }) => {
       cap_do_id: formData.cap_do_id ? Number(formData.cap_do_id) : undefined,
       ten_san_pham: formData.ten_san_pham?.trim(),
       mo_ta: formData.mo_ta || "",
+      // vẫn gửi lên nếu backend cần
       trang_thai: formData.trang_thai || "dang_ban",
       thong_so_ky_thuat: thongSoObj,
-      // ✅ GỬI THÊM mảng id biến thể cần xoá
       bien_the_xoa_ids: deletedVariantIds,
-      // backend muốn cac_bien_the
       cac_bien_the: (formData.bien_the_san_phams || []).map((v, i) => {
         const trangThai =
           v.trang_thai_kich_hoat === "dang_ban" ||
@@ -319,25 +292,12 @@ const AddProductModal = ({ mode, productId, onClose }) => {
                 </div>
               </div>
 
-              <Controller
-                name="trang_thai"
-                control={control}
-                render={({ field }) => (
-                  <StatusToggle
-                    label="Tình trạng kinh doanh"
-                    enabled={field.value === "dang_ban"}
-                    onChange={(enabled) =>
-                      field.onChange(enabled ? "dang_ban" : "ngung_ban")
-                    }
-                  />
-                )}
-              />
+              {/* ✅ KHÔNG render toggle trạng thái sản phẩm ở đây nữa */}
 
               <VariantManager
                 control={control}
                 register={register}
                 errors={errors}
-                // khi xoá biến thể cũ từ UI
                 onDeleteExistingVariant={(id) =>
                   setDeletedVariantIds((prev) =>
                     prev.includes(id) ? prev : [...prev, id]

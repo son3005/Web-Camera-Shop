@@ -1,7 +1,7 @@
 // frontend/src/pages/Admin/Inventory.jsx
-// Trang quản lý kho – đã dọn lại cho gọn, map chuẩn backend
+// Trang quản lý sản phẩm – có lọc FE cho trạng thái & tồn kho
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Search,
   Plus,
@@ -126,15 +126,18 @@ const Inventory = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // state bộ lọc đang áp dụng thực sự
+  // ====== 2 state filter ======
+  // state đang áp dụng thật
   const [appliedFilters, setAppliedFilters] = useState({
     sortBy: { name: null, price: null },
     danh_muc_ids: [],
     thuong_hieu_ids: [],
     priceRange: { min: "", max: "" },
+    status: [], // "dang_ban" | "ngung_ban"
+    stockStatus: [], // "in_stock" | "low_stock" | "out_of_stock"
   });
 
-  // state hiển thị trong popup (để sửa tạm)
+  // state hiển thị trong popup
   const [localFilters, setLocalFilters] = useState(appliedFilters);
 
   // 2. lấy dữ liệu danh mục + thương hiệu cho popup
@@ -148,7 +151,7 @@ const Inventory = () => {
   // 3. gọi API sản phẩm
   const { useGetAllSanPham, useDeleteSanPham } = useProducts();
 
-  // map filter UI -> param backend
+  // map filter gửi được cho backend
   const apiParams = {
     page,
     per_page: perPage,
@@ -159,6 +162,7 @@ const Inventory = () => {
     sort_by_name: appliedFilters.sortBy.name || undefined,
     thuong_hieu_ids: appliedFilters.thuong_hieu_ids,
     danh_muc_ids: appliedFilters.danh_muc_ids,
+    // ❌ không gửi status / stockStatus vì mình lọc FE
   };
 
   const {
@@ -171,10 +175,89 @@ const Inventory = () => {
 
   const deleteMutation = useDeleteSanPham();
 
-  const products = productsData?.data || [];
+  const productsFromApi = productsData?.data || [];
   const pagination = productsData?.pagination || {};
   const totalPages = pagination.pages || 0;
   const totalItems = pagination.total || 0;
+
+  // ===== FE FILTER ở đây =====
+  const feFilteredProducts = useMemo(() => {
+    const list = productsFromApi;
+
+    // helper: tính tổng tồn
+    const getTotalStock = (item) => {
+      const variants =
+        item?.cac_bien_the || item?.bien_the_san_phams || item?.variants || [];
+      return (
+        variants.reduce((total, v) => {
+          const qty =
+            typeof v.so_luong === "number"
+              ? v.so_luong
+              : typeof v.so_luong_ton === "number"
+              ? v.so_luong_ton
+              : 0;
+          return total + qty;
+        }, 0) || 0
+      );
+    };
+
+    // helper: coi sản phẩm đang bán không
+    const isProductActive = (item) => {
+      // nếu sản phẩm có field boolean
+      if (typeof item.trang_thai_kich_hoat === "boolean") {
+        return item.trang_thai_kich_hoat;
+      }
+      // nếu sản phẩm có field string
+      if (
+        typeof item.trang_thai_kich_hoat === "string" &&
+        item.trang_thai_kich_hoat.toUpperCase() === "DANG_BAN"
+      ) {
+        return true;
+      }
+
+      // nếu không có, nhìn xuống biến thể
+      const variants =
+        item?.cac_bien_the || item?.bien_the_san_phams || item?.variants || [];
+      if (!variants.length) return false;
+
+      return variants.some((v) => {
+        if (typeof v.trang_thai_kich_hoat === "boolean")
+          return v.trang_thai_kich_hoat;
+        if (typeof v.trang_thai_kich_hoat === "string")
+          return v.trang_thai_kich_hoat.toUpperCase() === "DANG_BAN";
+        return false;
+      });
+    };
+
+    return list.filter((item) => {
+      // 1. lọc trạng thái kinh doanh nếu có chọn
+      if (appliedFilters.status && appliedFilters.status.length > 0) {
+        const active = isProductActive(item);
+        const needDangBan = appliedFilters.status.includes("dang_ban");
+        const needNgung = appliedFilters.status.includes("ngung_ban");
+
+        if (active && !needDangBan) return false;
+        if (!active && !needNgung) return false;
+      }
+
+      // 2. lọc tồn kho nếu có chọn
+      if (appliedFilters.stockStatus && appliedFilters.stockStatus.length > 0) {
+        const totalStock = getTotalStock(item);
+        const wantIn = appliedFilters.stockStatus.includes("in_stock");
+        const wantLow = appliedFilters.stockStatus.includes("low_stock");
+        const wantOut = appliedFilters.stockStatus.includes("out_of_stock");
+
+        let match = false;
+        if (wantIn && totalStock > 10) match = true;
+        if (wantLow && totalStock > 0 && totalStock <= 10) match = true;
+        if (wantOut && totalStock === 0) match = true;
+
+        if (!match) return false;
+      }
+
+      return true;
+    });
+  }, [productsFromApi, appliedFilters]);
 
   // 4. handler mở / đóng modal
   const openModal = (type, id = null) => {
@@ -206,6 +289,8 @@ const Inventory = () => {
       danh_muc_ids: [],
       thuong_hieu_ids: [],
       priceRange: { min: "", max: "" },
+      status: [],
+      stockStatus: [],
     };
     setLocalFilters(empty);
     setAppliedFilters(empty);
@@ -288,7 +373,7 @@ const Inventory = () => {
     }
 
     // 3. có dữ liệu
-    if (products.length === 0) {
+    if (feFilteredProducts.length === 0) {
       return (
         <tbody>
           <tr>
@@ -304,11 +389,11 @@ const Inventory = () => {
       );
     }
 
-    const emptyRows = perPage - products.length;
+    const emptyRows = perPage - feFilteredProducts.length;
 
     return (
       <tbody>
-        {products.map((item) => (
+        {feFilteredProducts.map((item) => (
           <TableRow
             key={item.id}
             item={item}
@@ -345,7 +430,7 @@ const Inventory = () => {
       <div className="w-full max-w-7xl mx-auto rounded-2xl shadow-xl bg-slate-200/80 dark:bg-slate-800/70 backdrop-blur-lg border border-white/20 dark:border-slate-700/50 p-6">
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Quản lý Kho hàng</h1>
+          <h1 className="text-3xl font-bold">Quản lý Sản phẩm</h1>
           {isFetching && (
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -383,7 +468,6 @@ const Inventory = () => {
                 <FilterPopup
                   onClose={() => setIsFilterOpen(false)}
                   localFilters={localFilters}
-                  // 3 handler dưới đây giữ tên giống file cũ
                   handleSortChange={(groupKey, direction) =>
                     setLocalFilters((prev) => ({
                       ...prev,
@@ -399,9 +483,11 @@ const Inventory = () => {
                   handleMultiSelectChange={(key, value) =>
                     setLocalFilters((prev) => ({
                       ...prev,
-                      [key]: prev[key].includes(value)
-                        ? prev[key].filter((v) => v !== value)
-                        : [...prev[key], value],
+                      [key]: Array.isArray(prev[key])
+                        ? prev[key].includes(value)
+                          ? prev[key].filter((v) => v !== value)
+                          : [...prev[key], value]
+                        : [value],
                     }))
                   }
                   handleRangeChange={(filterKey, rangeKey, value) =>
@@ -452,10 +538,10 @@ const Inventory = () => {
                   SL
                 </th>
                 <th className="px-4 py-3 text-center text-sm font-semibold uppercase w-[12%]">
-                  Tồn kho
+                  Trạng thái Sản phẩm
                 </th>
                 <th className="px-4 py-3 text-center text-sm font-semibold uppercase w-[13%]">
-                  Kinh doanh
+                  Trạng thái Kinh doanh
                 </th>
                 <th className="px-4 py-3 text-center text-sm font-semibold uppercase w-[9%]">
                   Hành động
@@ -472,7 +558,7 @@ const Inventory = () => {
           pages={totalPages}
           setPage={setPage}
           isLoading={isLoading}
-          showing={products.length}
+          showing={feFilteredProducts.length}
           total={totalItems}
         />
       </div>
