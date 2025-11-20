@@ -42,7 +42,8 @@ class BienTheSanPhamDelete(BaseModel):
 
 class BienTheSanPhamResponse(BienTheSanPhamBase):
     id: int
-    so_luong: int
+    so_luong_nhap: int
+    so_luong_ban: int
     hinh_anhs: List[HinhAnhResponse] = Field(
         default_factory=list,
         description="Danh sách ảnh của biến thể"

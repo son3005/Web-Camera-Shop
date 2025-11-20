@@ -10,7 +10,7 @@ from ..models import DonHang, ChiTietDonHang, ThanhToan, NguoiDung
 from ..schemas.giohang_dathang import (
     DonHangResponse, DonHangUpdate, DonHangFilter
 )
-from ..extensions import db
+from ..extensions import db, redis
 from ..models.enums import TrangThaiDonHangEnum, TrangThaiThanhToanEnum
 from ..services.email_service import send_email
 
@@ -96,59 +96,6 @@ def get_don_hang_detail(don_hang_id):
     except Exception as e:
         return jsonify({"msg": "Lỗi server"}), 500
 
-@admin_don_hang_api.route('/<int:don_hang_id>/trang-thai', methods=['PUT'])
-@admin_required
-def cap_nhat_trang_thai(don_hang_id):
-    """Cập nhật trạng thái đơn hàng"""    
-    data = request.get_json()
-
-    if not data or not data.get('trang_thai'):
-        return jsonify({"msg": "Thiếu thông tin"}), 400
-    try:
-        don_hang = DonHang.query.get(don_hang_id)
-        if not don_hang:
-            return jsonify({"msg": "Đơn hàng không tồn tại"}), 404
-        
-        new_status = TrangThaiDonHangEnum(data['trang_thai'])
-        allowed_transitions = chuyen_trang_thai_don_hang.get(don_hang.trang_thai, [])
-        if new_status not in allowed_transitions:
-            return jsonify({"msg": "Không thể chuyển trạng thái đơn hàng này"}), 400
-        
-        # Logic chuyển trạng thái
-        if new_status == TrangThaiDonHangEnum.DA_HUY:
-            if not data.get('ly_do'):
-                return jsonify({"msg": "Vui lòng nhập lý do huỷ"}), 400
-            don_hang.ly_do = data['ly_do']
-            
-            # Gửi email thông báo huỷ đơn
-            if don_hang.nguoi_dung:
-                send_email(
-                    to_email=don_hang.nguoi_dung.email,
-                    subject="Thông báo huỷ đơn hàng",
-                    template="email/huy_don_hang.html",
-                    data={
-                        "ma_don_hang": don_hang.ma_don_hang,
-                        "ly_do": data['ly_do']
-                    }
-                )
-        
-        elif new_status == TrangThaiDonHangEnum.CHAP_NHAN_DOI_TRA:
-            if not data.get('ly_do'):
-                return jsonify({"msg": "Vui lòng nhập lý do chấp nhận đổi trả"}), 400
-            don_hang.ly_do = data['ly_do']
-        
-        elif new_status == TrangThaiDonHangEnum.TU_CHOI_DOI_TRA:
-            if not data.get('ly_do'):
-                return jsonify({"msg": "Vui lòng nhập lý do từ chối đổi trả"}), 400
-            don_hang.ly_do = data['ly_do']
-        
-        don_hang.trang_thai = new_status
-        db.session.commit()
-        
-        return jsonify({"msg": "Cập nhật trạng thái thành công"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"msg": "Lỗi server"}), 500
 
 @admin_don_hang_api.route('/<int:don_hang_id>/thanh-toan', methods=['PUT'])
 @admin_required
@@ -187,44 +134,71 @@ def cap_nhat_trang_thai_thanh_toan(don_hang_id):
         db.session.rollback()
         return jsonify({"msg": "Lỗi server"}), 500
 
-@admin_don_hang_api.route('/<int:don_hang_id>', methods=['DELETE'])
-@jwt_required
-def huy_don_hang_admin(don_hang_id):
-    """Admin huỷ đơn hàng"""
-    current_user_id = get_jwt_identity()
-    
-    # Kiểm tra quyền admin
-    user = NguoiDung.query.get(current_user_id)
-    if not user or not user.is_admin:
-        return jsonify({"msg": "Không có quyền truy cập"}), 403
-    
+@admin_don_hang_api.route('/<int:don_hang_id>/trang-thai', methods=['PUT'])
+@admin_required
+def cap_nhat_trang_thai(don_hang_id):
+    """Cập nhật trạng thái đơn hàng"""    
     data = request.get_json()
-    if not data or not data.get('ly_do'):
-        return jsonify({"msg": "Vui lòng nhập lý do huỷ"}), 400
-    
+
+    if not data or not data.get('trang_thai'):
+        return jsonify({"msg": "Thiếu thông tin"}), 400
     try:
         don_hang = DonHang.query.get(don_hang_id)
         if not don_hang:
             return jsonify({"msg": "Đơn hàng không tồn tại"}), 404
         
-        don_hang.trang_thai = TrangThaiDonHangEnum.DA_HUY
-        don_hang.ly_do = data['ly_do']
+        new_status = TrangThaiDonHangEnum(data['trang_thai'])
+        allowed_transitions = chuyen_trang_thai_don_hang.get(don_hang.trang_thai, [])
+        if new_status not in allowed_transitions:
+            return jsonify({"msg": "Không thể chuyển trạng thái đơn hàng này"}), 400
         
-        # Gửi email thông báo
-        if don_hang.nguoi_dung:
-            send_email(
-                to_email=don_hang.nguoi_dung.email,
-                subject="Thông báo huỷ đơn hàng",
-                template="email/huy_don_hang.html",
-                data={
-                    "ma_don_hang": don_hang.ma_don_hang,
-                    "ly_do": data['ly_do']
-                }
-            )
+        # Logic chuyển trạng thái
+        if new_status == TrangThaiDonHangEnum.DA_HUY:
+            if not data.get('ly_do'):
+                return jsonify({"msg": "Vui lòng nhập lý do huỷ"}), 400
+            don_hang.ly_do = data['ly_do']
+            
+            # THÊM: Cập nhật số lượng kho khi hủy đơn
+            from ..services.kho_service import KhoService
+            kho_service = KhoService(redis, db)
+            
+            # Lấy thông tin items từ chi tiết đơn hàng
+            items_for_kho = []
+            for chi_tiet in don_hang.items:
+                items_for_kho.append({
+                    'id_bien_the': chi_tiet.bien_the_san_pham_id,
+                    'so_luong': chi_tiet.so_luong
+                })
+            
+            # Cập nhật số lượng bán (giảm)
+            kho_service.cap_nhat_so_luong_khi_huy_don(items_for_kho)
+            
+            # Gửi email thông báo huỷ đơn
+            if don_hang.nguoi_dung:
+                send_email(
+                    to_email=don_hang.nguoi_dung.email,
+                    subject="Thông báo huỷ đơn hàng",
+                    template="email/huy_don_hang.html",
+                    data={
+                        "ma_don_hang": don_hang.ma_don_hang,
+                        "ly_do": data['ly_do']
+                    }
+                )
         
+        elif new_status == TrangThaiDonHangEnum.CHAP_NHAN_DOI_TRA:
+            if not data.get('ly_do'):
+                return jsonify({"msg": "Vui lòng nhập lý do chấp nhận đổi trả"}), 400
+            don_hang.ly_do = data['ly_do']
+        
+        elif new_status == TrangThaiDonHangEnum.TU_CHOI_DOI_TRA:
+            if not data.get('ly_do'):
+                return jsonify({"msg": "Vui lòng nhập lý do từ chối đổi trả"}), 400
+            don_hang.ly_do = data['ly_do']
+        
+        don_hang.trang_thai = new_status
         db.session.commit()
         
-        return jsonify({"msg": "Huỷ đơn hàng thành công"}), 200
+        return jsonify({"msg": "Cập nhật trạng thái thành công"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Lỗi server"}), 500

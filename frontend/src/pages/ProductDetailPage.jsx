@@ -121,7 +121,21 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleBuyNow = () => navigate("/checkout");
+  const handleBuyNow = () => {
+    const variant = selectedVariant || variants[0];
+    if (!variant) {
+      alert("Vui lòng chọn biến thể trước khi mua!");
+      return;
+    }
+
+    navigate("/checkout", {
+      state: {
+        productId: product.id,
+        variantId: variant.id,
+        soLuong: 1
+      },
+    });
+  };
 
   const currentImage = activeImage || gallery[0] || product.primaryImage || "";
 

@@ -28,7 +28,7 @@ product_api = APIBlueprint('product_api', __name__, url_prefix='/api/san-pham')
 # ==============================================================
 @product_api.get('', responses={"200": SanPhamListResponse})
 def get_all_san_pham():
-    """Lấy danh sách sản phẩm với tìm kiếm cải tiến"""
+    """Lấy danh sách sản phẩm với tìm kiếm cải tiến""" 
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)

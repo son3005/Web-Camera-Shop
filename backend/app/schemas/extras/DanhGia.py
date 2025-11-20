@@ -54,11 +54,17 @@ class DanhGiaUpdate(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class DanhGiaAdminUpdate(BaseModel):
+    """Dùng cho admin duyệt đánh giá"""
+    trang_thai: TrangThaiDanhGiaEnum = Field(..., description="Trạng thái duyệt đánh giá")
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class DanhGiaResponse(DanhGiaBase):
     id: int
-    ngay_tao: datetime
-    ngay_cap_nhat: datetime
+    ngay_tao: Optional[datetime] = None
+    ngay_cap_nhat: Optional[datetime] = None
     nguoi_dung: NguoiDungCoBanResponse
     # san_pham: Optional[SanPhamPublic] = None  # Nếu cần trả thêm
 

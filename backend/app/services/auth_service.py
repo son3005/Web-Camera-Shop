@@ -1,7 +1,7 @@
 # backend/app/services/auth_service.py
 from flask_jwt_extended import create_access_token
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from datetime import timedelta
+from datetime import datetime, timedelta
 from flask_mailman import EmailMessage
 from flask import current_app, url_for
 from typing import Dict, Any
@@ -68,7 +68,8 @@ class AuthService:
             expires_delta=timedelta(days=7),
             additional_claims=claims
         )
-
+        user.lan_cuoi_dang_nhap = datetime.utcnow()
+        db.session.commit()
         user_resp = NguoiDungResponse.model_validate(user).model_dump()
         logger.info(f"Login thành công - user_id: {user.id}, vai_tro: {user.vai_tro.value}")  # THÊM: Log thành công
         return {"user": user_resp, "token": token}

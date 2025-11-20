@@ -48,6 +48,7 @@ class DonHangResponse(DonHangBase):
     ngay_cap_nhat: Optional[datetime] = Field(None, description="Ngày cập nhật") 
     items: List[ChiTietDonHangResponse] = Field(default_factory=list, description="Danh sách sản phẩm trong đơn")
     thanh_toan: Optional[ThanhToanResponse] = Field(None, description="Thông tin thanh toán")
+    ly_do: Optional[str] = Field(None, description="Lý do thay đổi trạng thái")
 
     model_config = ConfigDict(from_attributes=True)
 

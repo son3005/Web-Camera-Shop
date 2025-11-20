@@ -1,116 +1,301 @@
-import { useSelector, useDispatch } from "react-redux";
-import { useState } from "react";
-import { xoaTatCa } from "../redux/slices/gioHangSlice"; // ✅ Đúng tên export
-import { useNavigate } from "react-router-dom";
+// ==========================
+// CheckoutPage.jsx (COD = đơn thật – PayOS = đơn ảo)
+// ==========================
 
-const vnd = (n) => new Intl.NumberFormat("vi-VN").format(Number(n || 0)) + "đ";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { getProduct } from "../api/productApi";
+import { taoDonHangAo } from "../api/paymentApi"; // 🚀 CHỈ DÙNG MỘT API NÀY
 
 export default function CheckoutPage() {
-  // ✅ Khớp shape của slice: items = [{ productId, name, image, price, color, quantity }]
-  const { items, tongTien } = useSelector((s) => s.gioHang);
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    note: "",
-    method: "cod",
-  });
-  const dispatch = useDispatch();
-  const nav = useNavigate();
+  const navigate = useNavigate();
+  const { state } = useLocation();
 
-  const placeOrder = async () => {
-    if (!items.length) return;
-    // (Tuỳ bạn) TODO: gọi API /orders ở backend
-    alert("Đặt hàng thành công! 🎉");
-    dispatch(xoaTatCa()); // ✅ làm trống giỏ
-    nav("/"); // về trang chủ
+  // ================================
+  // 1) MULTI CHECKOUT (từ giỏ hàng)
+  // ================================
+  const itemsFromCart = state?.items || null;
+  const isCartCheckout = Array.isArray(itemsFromCart);
+
+  // ================================
+  // 2) SINGLE CHECKOUT (mua ngay)
+  // ================================
+  const productId = state?.productId || null;
+  const variantId = state?.variantId || null;
+  const soLuongInitial = state?.soLuong || 1;
+
+  const { data: product, isLoading } = useQuery({
+    queryKey: ["checkout-product", productId],
+    queryFn: () => getProduct(productId),
+    enabled: !isCartCheckout && !!productId,
+  });
+
+  const [soLuong, setSoLuong] = useState(soLuongInitial);
+
+  const [form, setForm] = useState({
+    ten_nguoi_nhan: "",
+    so_dien_thoai_nguoi_nhan: "",
+    dia_chi_giao: "",
+    ghi_chu: "",
+    phuong_thuc_thanh_toan: "cod",
+  });
+
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  // ================================
+  // LẤY VARIANT (SINGLE)
+  // ================================
+  const variant = useMemo(() => {
+    if (!product || isCartCheckout) return null;
+    return product.variants.find((v) => v.id === variantId) || null;
+  }, [product, variantId, isCartCheckout]);
+
+  // ================================
+  // VALIDATION CHO SINGLE
+  // ================================
+  if (!isCartCheckout && (!productId || !variantId))
+    return <div className="p-6">❌ Thiếu dữ liệu sản phẩm.</div>;
+
+  if (!isCartCheckout && isLoading)
+    return <div className="p-6">Đang tải sản phẩm...</div>;
+
+  if (!isCartCheckout && (!product || !variant))
+    return <div className="p-6">❌ Không tìm thấy sản phẩm.</div>;
+
+  // ================================
+  // 3) TÍNH TỔNG
+  // ================================
+  const phiShip = 2000;
+
+  let tongTien = 0;
+
+  if (isCartCheckout) {
+    tongTien =
+      itemsFromCart.reduce(
+        (total, it) => total + Number(it.don_gia) * it.so_luong,
+        0
+      ) + phiShip;
+  } else {
+    tongTien = Number(variant.gia_ban) * soLuong + phiShip;
+  }
+
+  // ================================
+  // HÀM LẤY MESSAGE LỖI
+  // ================================
+  const getErrorMessage = (err) =>
+    err?.response?.data?.error ||
+    err?.response?.data?.message ||
+    err?.message ||
+    "Có lỗi xảy ra, vui lòng thử lại";
+
+  // ================================
+  // MUTATION DUY NHẤT — COD & PAYOS
+  // ================================
+  const orderMutation = useMutation({
+    mutationFn: taoDonHangAo, // luôn dùng /thanh-toan/tao-don-hang-ao
+    onSuccess: (res) => {
+      const data = res.data || res;
+
+      if (form.phuong_thuc_thanh_toan === "payos_qr") {
+        // PAYOS → Redirect sang link thanh toán
+        window.location.href =
+          data.payment_url || data.data?.payment_url || "";
+      } else {
+        // COD → Backend trả trực tiếp ID đơn thật
+        const id = data.id || data.data?.id;
+        navigate(`/payment-result/${id}?status=cod_thanhcong`);
+      }
+    },
+    onError: (err) => {
+      alert(getErrorMessage(err));
+      console.error("❌ Lỗi tạo đơn hàng:", err);
+    },
+  });
+
+  const isSubmitting = orderMutation.isLoading;
+
+  // ================================
+  // PAYLOAD
+  // ================================
+  const handleSubmit = () => {
+    if (
+      !form.ten_nguoi_nhan ||
+      !form.so_dien_thoai_nguoi_nhan ||
+      !form.dia_chi_giao
+    ) {
+      alert("Vui lòng nhập đầy đủ thông tin giao hàng!");
+      return;
+    }
+
+    let itemsPayload = [];
+
+    if (isCartCheckout) {
+      // SỬA ĐÚNG KEY → PHẢI LÀ id_bien_the
+      itemsPayload = itemsFromCart.map((it) => ({
+        id_bien_the: it.bien_the_san_pham_id, // <-- FIX CHUẨN
+        so_luong: it.so_luong,
+      }));
+    } else {
+      itemsPayload = [
+        {
+          id_bien_the: variantId,
+          so_luong: soLuong,
+        },
+      ];
+    }
+
+    const payload = {
+      ten_nguoi_nhan: form.ten_nguoi_nhan,
+      so_dien_thoai_nguoi_nhan: form.so_dien_thoai_nguoi_nhan,
+      id_dia_chi: null,
+      dia_chi_giao: form.dia_chi_giao,
+      phuong_thuc_thanh_toan: form.phuong_thuc_thanh_toan,
+      phi_van_chuyen: phiShip,
+      ghi_chu: form.ghi_chu,
+      url_success: "http://localhost:5173/payment-result/success",
+      url_cancel: "http://localhost:5173/payment-result/cancel",
+      items: itemsPayload,
+    };
+
+    console.log("PAYLOAD SUBMIT:", payload);
+
+    orderMutation.mutate(payload);
   };
 
+  // ================================
+  // UI — GIỮ NGUYÊN 100%
+  // ================================
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form thông tin */}
-        <div className="lg:col-span-2 surface-panel p-4 md:p-6">
-          <h1 className="text-xl font-bold mb-4">Thông tin thanh toán</h1>
+    <div className="w-full min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-8">
+      <h1 className="text-3xl font-bold text-slate-800 mb-10">Thanh toán</h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              className="ui-input"
-              placeholder="Họ tên"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <input
-              className="ui-input"
-              placeholder="Số điện thoại"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        
+        {/* Cột trái */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 space-y-6">
+          <h2 className="text-xl font-semibold text-slate-900 mb-4">Sản phẩm</h2>
 
-          <textarea
-            className="ui-input mt-3"
-            placeholder="Địa chỉ giao hàng"
-            value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
-          />
-          <textarea
-            className="ui-input mt-3"
-            placeholder="Ghi chú"
-            value={form.note}
-            onChange={(e) => setForm({ ...form, note: e.target.value })}
-          />
-
-          <div className="mt-3">
-            <div className="font-semibold mb-1">Phương thức thanh toán</div>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="method"
-                checked={form.method === "cod"}
-                onChange={() => setForm({ ...form, method: "cod" })}
-              />
-              COD
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="method"
-                checked={form.method === "bank"}
-                onChange={() => setForm({ ...form, method: "bank" })}
-              />
-              Chuyển khoản
-            </label>
-          </div>
-
-          <button className="btn-emerald mt-4" onClick={placeOrder}>
-            Xác nhận đặt hàng
-          </button>
-        </div>
-
-        {/* Tóm tắt đơn hàng */}
-        <div className="surface-panel p-4 md:p-6 h-fit">
-          <h2 className="font-semibold mb-3">Đơn hàng</h2>
-
-          <div className="space-y-2">
-            {items.map((it) => (
-              <div
-                key={`${it.productId}-${it.color}`}
-                className="text-sm flex justify-between"
-              >
-                <span>
-                  {it.name}
-                  {it.color ? ` • ${it.color}` : ""} × {it.quantity}
-                </span>
-                <span>{vnd(it.quantity * it.price)}</span>
+          {isCartCheckout &&
+            itemsFromCart.map((it) => (
+              <div key={it.id} className="flex items-center gap-4 border-b pb-4">
+                <img src={it.hinh_anh} className="w-20 h-20 rounded-lg object-cover" />
+                <div className="flex-1">
+                  <div className="font-semibold text-lg">{it.ten_san_pham}</div>
+                  <div className="text-sm text-slate-500">Biến thể: {it.ten_bien_the}</div>
+                  <div className="mt-2 text-emerald-600 font-bold">
+                    {Number(it.don_gia).toLocaleString("vi-VN")}₫ × {it.so_luong}
+                  </div>
+                </div>
               </div>
             ))}
+
+          {!isCartCheckout && (
+            <div className="flex items-center gap-4">
+              <img src={product.primaryImage} className="w-20 h-20 rounded-lg object-cover" />
+              <div className="flex-1">
+                <div className="font-semibold text-lg">{product.name}</div>
+                <div className="text-sm text-slate-500">Biến thể: {variant.ten_bien_the}</div>
+
+                <div className="flex items-center gap-3 mt-3">
+                  <button
+                    onClick={() => setSoLuong((v) => Math.max(1, v - 1))}
+                    className="px-3 py-1 bg-slate-200 rounded-lg font-bold"
+                  >
+                    -
+                  </button>
+                  <span className="font-semibold text-lg">{soLuong}</span>
+                  <button
+                    onClick={() => setSoLuong((v) => v + 1)}
+                    className="px-3 py-1 bg-slate-200 rounded-lg font-bold"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <div className="text-emerald-600 font-bold mt-2">
+                  {Number(variant.gia_ban).toLocaleString("vi-VN")}₫ × {soLuong}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 text-slate-700 border-t pt-4">
+            <div>Phí ship: {phiShip.toLocaleString("vi-VN")}₫</div>
+            <div className="text-2xl font-bold text-emerald-600 mt-2">
+              Tổng tiền: {tongTien.toLocaleString("vi-VN")}₫
+            </div>
           </div>
 
-          <div className="mt-3 flex justify-between font-semibold">
-            <span>Tổng:</span>
-            <span>{vnd(tongTien)}</span>
-          </div>
+          {/* Phương thức thanh toán */}
+          <h2 className="text-xl font-semibold mt-4">Phương thức thanh toán</h2>
+
+          <label className="flex items-center gap-3">
+            <input
+              type="radio"
+              name="pm"
+              checked={form.phuong_thuc_thanh_toan === "cod"}
+              onChange={() => setForm((f) => ({ ...f, phuong_thuc_thanh_toan: "cod" }))}
+            />
+            COD — Thanh toán khi nhận hàng
+          </label>
+
+          <label className="flex items-center gap-3 mt-3">
+            <input
+              type="radio"
+              name="pm"
+              checked={form.phuong_thuc_thanh_toan === "payos_qr"}
+              onChange={() => setForm((f) => ({ ...f, phuong_thuc_thanh_toan: "payos_qr" }))}
+            />
+            QR PayOS — Thanh toán online
+          </label>
+        </div>
+
+        {/* Cột phải */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Thông tin giao hàng</h2>
+
+          <input
+            className="w-full bg-slate-100 px-4 py-3 rounded-lg border"
+            name="ten_nguoi_nhan"
+            placeholder="Tên người nhận"
+            value={form.ten_nguoi_nhan}
+            onChange={handleChange}
+          />
+
+          <input
+            className="w-full bg-slate-100 px-4 py-3 rounded-lg border"
+            name="so_dien_thoai_nguoi_nhan"
+            placeholder="Số điện thoại"
+            value={form.so_dien_thoai_nguoi_nhan}
+            onChange={handleChange}
+          />
+
+          <input
+            className="w-full bg-slate-100 px-4 py-3 rounded-lg border"
+            name="dia_chi_giao"
+            placeholder="Địa chỉ giao hàng"
+            value={form.dia_chi_giao}
+            onChange={handleChange}
+          />
+
+          <textarea
+            className="w-full bg-slate-100 px-4 py-3 rounded-lg border"
+            name="ghi_chu"
+            placeholder="Ghi chú (không bắt buộc)"
+            value={form.ghi_chu}
+            onChange={handleChange}
+          ></textarea>
+
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-lg"
+          >
+            {isSubmitting ? "Đang xử lý..." : "Xác nhận thanh toán"}
+          </button>
         </div>
       </div>
     </div>
