@@ -61,3 +61,6 @@ Thumbs.db
 # Docker / runtime
 # =========================
 *.sock
+
+# clerybeat schedule file
+backend/celerybeat-schedule

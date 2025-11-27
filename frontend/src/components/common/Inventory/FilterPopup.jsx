@@ -9,11 +9,11 @@ const SortButton = ({ onClick, isActive, children }) => (
       e.stopPropagation();
       onClick();
     }}
-    className={`w-full py-2 px-3 text-sm font-medium rounded-lg border backdrop-blur-md transition-all duration-300
+    className={`w-full py-2 px-3 text-sm font-medium rounded-lg border backdrop-blur-md transition-all duration-300 cursor-pointer
       ${
         isActive
           ? "bg-gradient-to-r from-emerald-500 to-slate-600 text-white shadow-md shadow-emerald-500/30 border-transparent scale-[1.02]"
-          : "bg-white/50 dark:bg-slate-700/40 text-slate-700 dark:text-slate-200 border-slate-200/30 dark:border-slate-600/40 hover:bg-white/70 dark:hover:bg-slate-700/60"
+          : "bg-white/80 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200 border-slate-200/60 dark:border-slate-600/60 hover:bg-slate-50 dark:hover:bg-slate-700"
       }`}
   >
     {children}
@@ -21,10 +21,10 @@ const SortButton = ({ onClick, isActive, children }) => (
 );
 
 const CheckboxOption = ({ label, checked, onChange }) => (
-  <label className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-white/40 dark:bg-slate-700/40 hover:bg-white/80 dark:hover:bg-slate-700/80 transition">
+  <label className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-slate-50/80 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
     <input
       type="checkbox"
-      className="h-4 w-4 rounded accent-emerald-500"
+      className="h-4 w-4 rounded accent-emerald-500 cursor-pointer"
       checked={checked}
       onChange={onChange}
     />
@@ -43,7 +43,6 @@ const FilterPopup = ({
   danhMucList = [],
   thuongHieuList = [],
 }) => {
-  // luôn có object để destructure
   const {
     sortBy = { name: null, price: null },
     status = [],
@@ -55,7 +54,6 @@ const FilterPopup = ({
 
   const popupRef = useRef(null);
 
-  // chặn click bên trong để không đóng popup
   useEffect(() => {
     const handleClick = (e) => {
       if (popupRef.current && popupRef.current.contains(e.target)) {
@@ -69,19 +67,19 @@ const FilterPopup = ({
   return (
     <div
       ref={popupRef}
-      className="absolute top-full right-0 mt-2 w-[320px] rounded-2xl border border-white/20 dark:border-slate-700/40
-                bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-2xl shadow-emerald-500/10
+      className="absolute top-full right-0 mt-2 w-[320px] rounded-2xl border border-slate-200/60 dark:border-slate-700/60
+                bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl shadow-emerald-500/10
                 transition-all z-50 flex flex-col"
     >
       {/* Header */}
-      <div className="p-4 border-b border-white/20 dark:border-slate-700/40 flex items-center justify-between">
+      <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
         <h3 className="text-base font-semibold flex items-center gap-2 text-slate-800 dark:text-slate-200">
           <SlidersHorizontal size={18} /> Bộ lọc & Sắp xếp
         </h3>
         <button
           type="button"
           onClick={onClose}
-          className="p-2 rounded-full hover:bg-white/40 dark:hover:bg-slate-700/60 transition"
+          className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
         >
           <X size={18} />
         </button>
@@ -234,8 +232,8 @@ const FilterPopup = ({
               onChange={(e) =>
                 handleRangeChange("priceRange", "min", e.target.value || "")
               }
-              className="w-[100px] px-2 py-1.5 rounded-lg border border-white/30 dark:border-slate-600/40
-                        bg-white/50 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200
+              className="w-[100px] px-2 py-1.5 rounded-lg border border-slate-200/60 dark:border-slate-600/60
+                        bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-slate-200
                         placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
             <span className="text-slate-500">-</span>
@@ -246,8 +244,8 @@ const FilterPopup = ({
               onChange={(e) =>
                 handleRangeChange("priceRange", "max", e.target.value || "")
               }
-              className="w-[100px] px-2 py-1.5 rounded-lg border border-white/30 dark:border-slate-600/40
-                        bg-white/50 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200
+              className="w-[100px] px-2 py-1.5 rounded-lg border border-slate-200/60 dark:border-slate-600/60
+                        bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-slate-200
                         placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
           </div>
@@ -255,18 +253,18 @@ const FilterPopup = ({
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-white/20 dark:border-slate-700/40 bg-gradient-to-r from-emerald-500/20 to-slate-600/20 backdrop-blur-lg flex gap-3 rounded-b-2xl">
+      <div className="p-4 border-t border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-emerald-500/15 to-slate-600/15 backdrop-blur-lg flex gap-3 rounded-b-2xl">
         <button
           type="button"
           onClick={onReset}
-          className="flex-1 py-2 rounded-lg font-medium bg-white/50 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60 transition"
+          className="flex-1 py-2 rounded-lg font-medium bg-white/90 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
         >
           Xóa lọc
         </button>
         <button
           type="button"
           onClick={onApply}
-          className="flex-1 py-2 rounded-lg font-medium bg-gradient-to-r from-emerald-500 to-slate-600 text-white shadow-lg hover:scale-110 hover:shadow-emerald-500/30 transition"
+          className="flex-1 py-2 rounded-lg font-medium bg-gradient-to-r from-emerald-500 to-slate-600 text-white shadow-lg hover:scale-110 hover:shadow-emerald-500/30 transition cursor-pointer"
         >
           Áp dụng
         </button>

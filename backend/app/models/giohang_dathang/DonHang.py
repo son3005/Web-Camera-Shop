@@ -6,8 +6,13 @@ from..enums import TrangThaiDonHangEnum
 import uuid
 
 class DonHang(db.Model):
+<<<<<<< HEAD
     """
     Lớp DonHang đại diện cho bảng 'don_hang' trong cơ sở dữ liệu, lưu trữ thông tin về các đơn hàng của người dùng.
+=======
+        """
+        Lớp DonHang đại diện cho bảng 'don_hang' trong cơ sở dữ liệu, lưu trữ thông tin về các đơn hàng của người dùng.
+>>>>>>> ae233e154393e28987587abe65a674b31fc3aa93
 
     Thuộc tính:
         id (int): Khóa chính, định danh duy nhất cho mỗi đơn hàng.

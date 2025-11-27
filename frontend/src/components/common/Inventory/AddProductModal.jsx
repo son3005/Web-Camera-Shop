@@ -198,21 +198,21 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     createMutation.isPending || updateMutation.isPending || false;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <FormProvider {...methods}>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="relative w-full max-w-7xl max-h-[95vh] flex flex-col rounded-3xl bg-slate-200/60 dark:bg-slate-800/70"
+          className="relative w-full max-w-7xl max-h-[95vh] flex flex-col rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/60 dark:border-slate-700/60 shadow-2xl"
         >
           {/* header */}
-          <div className="flex justify-between items-center p-5 border-b border-black/10 dark:border-white/10">
-            <h2 className="text-2xl font-bold">
+          <div className="flex justify-between items-center p-5 bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200/60 dark:border-slate-700/60">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50">
               {mode === "add" ? "Thêm Sản Phẩm Mới" : "Cập Nhật Sản Phẩm"}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-black/10"
+              className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               <X size={24} />
             </button>
@@ -224,13 +224,13 @@ const AddProductModal = ({ mode, productId, onClose }) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* tên */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                     Tên sản phẩm *
                   </label>
                   <input
                     type="text"
                     {...register("ten_san_pham")}
-                    className="w-full rounded-lg px-3 py-2 bg-white/50"
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/80 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
                   />
                   <p className="text-red-500 text-xs h-4">
                     {errors.ten_san_pham?.message}
@@ -239,12 +239,12 @@ const AddProductModal = ({ mode, productId, onClose }) => {
 
                 {/* danh mục */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                     Danh mục *
                   </label>
                   <select
                     {...register("danh_muc_id")}
-                    className="w-full rounded-lg px-3 py-2 bg-white/50"
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/80 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-700/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                   >
                     <option value="">Chọn danh mục</option>
                     {(danhMucData?.data || []).map((dm) => (
@@ -257,12 +257,12 @@ const AddProductModal = ({ mode, productId, onClose }) => {
 
                 {/* thương hiệu */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                     Thương hiệu *
                   </label>
                   <select
                     {...register("thuong_hieu_id")}
-                    className="w-full rounded-lg px-3 py-2 bg-white/50"
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/80 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-700/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                   >
                     <option value="">Chọn thương hiệu</option>
                     {(thuongHieuData?.data || []).map((th) => (
@@ -275,12 +275,12 @@ const AddProductModal = ({ mode, productId, onClose }) => {
 
                 {/* cấp độ */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                     Cấp độ
                   </label>
                   <select
                     {...register("cap_do_id")}
-                    className="w-full rounded-lg px-3 py-2 bg-white/50"
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/80 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-700/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                   >
                     <option value="">Chọn cấp độ</option>
                     {(capDoData?.data || []).map((cd) => (
@@ -291,8 +291,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
                   </select>
                 </div>
               </div>
-
-              {/* ✅ KHÔNG render toggle trạng thái sản phẩm ở đây nữa */}
 
               <VariantManager
                 control={control}
@@ -311,7 +309,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 pt-0">
             <Controller
               name="mo_ta"
               control={control}
@@ -325,18 +323,18 @@ const AddProductModal = ({ mode, productId, onClose }) => {
           </div>
 
           {/* footer */}
-          <div className="flex justify-end gap-4 p-5 border-t border-black/10 dark:border-white/10">
+          <div className="flex justify-end gap-4 p-5 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/80 dark:bg-slate-900/80">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 rounded-lg bg-slate-900/5"
+              className="px-6 py-2 rounded-lg text-sm font-medium bg-white/90 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center gap-2 px-6 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600"
+              className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-500/90 hover:to-slate-600/90 disabled:opacity-70 transition cursor-pointer"
             >
               {isSaving ? (
                 <>

@@ -6,7 +6,6 @@ const VariantImageUpload = ({ images = [], onChange }) => {
   const fileInputRef = useRef(null);
   const [localImages, setLocalImages] = useState([]);
 
-  // đồng bộ props -> state
   useEffect(() => {
     const valid = (images || []).filter((img) => img && (img.url || img.file));
     setLocalImages(valid);
@@ -34,7 +33,6 @@ const VariantImageUpload = ({ images = [], onChange }) => {
     if (img?.previewUrl) URL.revokeObjectURL(img.previewUrl);
 
     const updated = localImages.filter((_, i) => i !== idx);
-    // nếu xóa cái đang là ảnh chính thì set cái đầu tiên là chính
     if (img.la_anh_dai_dien && updated[0]) {
       updated[0].la_anh_dai_dien = true;
     }
@@ -65,7 +63,7 @@ const VariantImageUpload = ({ images = [], onChange }) => {
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="flex items-center justify-center px-4 py-2 font-semibold rounded-lg bg-gray-200 text-slate-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-slate-200 dark:hover:bg-gray-500 transition-colors duration-300 shadow"
+        className="flex items-center justify-center px-4 py-2 font-semibold rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60 transition-colors duration-300 shadow-sm cursor-pointer"
       >
         <UploadCloud className="h-5 w-5 mr-2" />
         Chọn ảnh
@@ -92,7 +90,7 @@ const VariantImageUpload = ({ images = [], onChange }) => {
                 <button
                   type="button"
                   onClick={() => handleRemove(idx)}
-                  className="absolute -top-2 -right-2 p-0.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition"
+                  className="absolute -top-2 -right-2 p-0.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition cursor-pointer"
                 >
                   <XCircle className="h-6 w-6" />
                 </button>
@@ -100,7 +98,7 @@ const VariantImageUpload = ({ images = [], onChange }) => {
                   <button
                     type="button"
                     onClick={() => setAsMain(idx)}
-                    className="absolute bottom-1 left-1 right-1 bg-blue-500 text-white text-xs py-1 rounded opacity-0 group-hover:opacity-100 transition"
+                    className="absolute bottom-1 left-1 right-1 bg-blue-500 text-white text-xs py-1 rounded opacity-0 group-hover:opacity-100 transition cursor-pointer"
                   >
                     Đặt làm chính
                   </button>
@@ -110,7 +108,7 @@ const VariantImageUpload = ({ images = [], onChange }) => {
           })}
         </div>
       ) : (
-        <div className="text-center py-6 text-slate-500 dark:text-slate-400 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+        <div className="text-center py-6 text-slate-500 dark:text-slate-400 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50/60 dark:bg-slate-900/40">
           <UploadCloud className="h-10 w-10 mx-auto mb-2 opacity-50" />
           <p>Chưa có ảnh nào được chọn</p>
           <p className="text-sm mt-1">

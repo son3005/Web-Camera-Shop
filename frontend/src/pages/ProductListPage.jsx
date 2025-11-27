@@ -1,11 +1,13 @@
 // src/pages/ProductListPage.jsx
 // ============================================================
-// Trang liệt kê sản phẩm
+// Trang liệt kê sản phẩm + Filter theo Thương hiệu / Danh mục / Cấp độ
 // - Đọc filter từ URL
-// - Gửi đúng tham số mà backend đang nhận
-// - Render list + phân trang
-// - ĐÃ BỎ ô tìm kiếm ở góc phải phía trên (vì header đã có search)
-//   chỉ giữ phần chọn "Sắp xếp"
+// - Gọi API sản phẩm thật (san-pham)
+// - Lọc theo:
+//    + khoảng giá (min_price / max_price)
+//    + thuong_hieu_ids
+//    + danh_muc_ids
+//    + cap_do_ids
 // ============================================================
 
 import { useMemo } from "react";
@@ -16,21 +18,10 @@ import ProductCard from "../components/common/ProductCard";
 import PriceSlider from "../components/filters/PriceSlider";
 import CheckboxGroup from "../components/filters/CheckboxGroup";
 
-// Các option tạm (có thể thay bằng API danh mục / thương hiệu sau)
-const BRAND_OPTIONS = [
-  { value: 1, label: "Canon" },
-  { value: 2, label: "Sony" },
-  { value: 3, label: "Nikon" },
-  { value: 4, label: "Fujifilm" },
-  { value: 5, label: "DJI" },
-  { value: 6, label: "GoPro" },
-];
-
-const LEVEL_OPTIONS = [
-  { value: 1, label: "Entry / cơ bản" },
-  { value: 2, label: "Enthusiast / bán chuyên" },
-  { value: 3, label: "Pro / chuyên nghiệp" },
-];
+// lấy list brand / category / level từ backend
+import { useBrands } from "../hooks/useBrands";
+import { useCategories } from "../hooks/useCategories";
+import { useLevelsList } from "../hooks/useLevels";
 
 const SORT_OPTIONS = [
   { value: "", label: "Mặc định" },
@@ -51,25 +42,30 @@ export default function ProductListPage() {
   const sort = searchParams.get("sort") || "";
   const min_price = searchParams.get("min_price");
   const max_price = searchParams.get("max_price");
+
+  // nhiều ID cùng tên param → dùng getAll
   const thuong_hieu_ids = searchParams.getAll("thuong_hieu_ids").map(Number);
   const cap_do_ids = searchParams.getAll("cap_do_ids").map(Number);
+  const danh_muc_ids = searchParams.getAll("danh_muc_ids").map(Number);
 
   // ------------------------------------------------------------
-  // 2. Gom lại thành object filters để truyền xuống API
+  // 2. Gom filter truyền xuống productApi
   // ------------------------------------------------------------
-  const filters = useMemo(() => {
-    return {
+  const filters = useMemo(
+    () => ({
       price: {
         min: min_price ? Number(min_price) : undefined,
         max: max_price ? Number(max_price) : undefined,
       },
       thuong_hieu_ids: thuong_hieu_ids.length ? thuong_hieu_ids : undefined,
       cap_do_ids: cap_do_ids.length ? cap_do_ids : undefined,
-    };
-  }, [min_price, max_price, thuong_hieu_ids, cap_do_ids]);
+      danh_muc_ids: danh_muc_ids.length ? danh_muc_ids : undefined,
+    }),
+    [min_price, max_price, thuong_hieu_ids, cap_do_ids, danh_muc_ids]
+  );
 
   // ------------------------------------------------------------
-  // 3. Gọi API thật để lấy danh sách sản phẩm
+  // 3. Gọi API sản phẩm (đã mapping đúng trong productApi.js)
   // ------------------------------------------------------------
   const { data, isLoading } = useQuery({
     queryKey: ["products", page, q, sort, filters],
@@ -88,12 +84,41 @@ export default function ProductListPage() {
   const totalPages = data?.totalPages || 1;
 
   // ------------------------------------------------------------
-  // 4. Hàm tiện để cập nhật lại URL khi đổi filter / trang
+  // 4. Gọi API lấy options filter (brand / category / level)
+  // ------------------------------------------------------------
+
+  // Thương hiệu
+  const { useListBrands } = useBrands();
+  const { data: brandRes } = useListBrands(1, 100); // lấy max 100 brand
+  const brandOptions =
+    brandRes?.data?.map((b) => ({
+      value: b.id,
+      label: b.ten_thuong_hieu,
+    })) || [];
+
+  // Danh mục
+  const { useGetCategories } = useCategories();
+  const { data: categoryRes } = useGetCategories({ page: 1, per_page: 100 });
+  const categoryOptions =
+    categoryRes?.data?.map((c) => ({
+      value: c.id,
+      label: c.ten_danh_muc,
+    })) || [];
+
+  // Cấp độ
+  const { data: levelRes } = useLevelsList(1, 100);
+  const levelOptions =
+    levelRes?.data?.map((l) => ({
+      value: l.id,
+      label: l.ten_cap_do,
+    })) || [];
+
+  // ------------------------------------------------------------
+  // 5. Hàm update URL khi đổi filter / trang
   // ------------------------------------------------------------
   const updateParams = (obj, keepPage = false) => {
     const next = new URLSearchParams(searchParams);
     for (const [k, v] of Object.entries(obj)) {
-      // xoá key nếu giá trị rỗng
       if (v === undefined || v === null || v === "" || v?.length === 0) {
         next.delete(k);
       } else if (Array.isArray(v)) {
@@ -103,25 +128,21 @@ export default function ProductListPage() {
         next.set(k, String(v));
       }
     }
-    // mỗi lần đổi filter thì đưa về trang 1
-    if (!keepPage) {
-      next.set("page", "1");
-    }
+    if (!keepPage) next.set("page", "1");
     setSearchParams(next);
   };
 
   // ------------------------------------------------------------
-  // 5. Render
+  // 6. Render
   // ------------------------------------------------------------
   return (
     <div className="container mx-auto px-4 py-5">
-      {/* thanh tiêu đề + chỉ giữ dropdown sắp xếp */}
+      {/* Header: tiêu đề + sort */}
       <div className="flex items-center justify-between mb-5 gap-3">
         <h1 className="text-lg md:text-xl font-semibold text-slate-100">
           Danh sách sản phẩm
         </h1>
 
-        {/* BỎ ô input tìm kiếm ở đây, chỉ còn chọn sắp xếp */}
         <select
           value={sort}
           onChange={(e) => updateParams({ sort: e.target.value })}
@@ -135,17 +156,17 @@ export default function ProductListPage() {
         </select>
       </div>
 
-      {/* layout 2 cột: trái filter, phải danh sách */}
+      {/* layout 2 cột: trái filter – phải list */}
       <div className="grid grid-cols-12 gap-5">
-        {/* cột trái: filter */}
+        {/* FILTER PANEL */}
         <aside className="col-span-12 md:col-span-3 space-y-5">
-          {/* khoảng giá */}
+          {/* Khoảng giá */}
           <div className="surface-panel p-4 rounded-2xl bg-slate-900/40 border border-slate-800">
             <h2 className="text-sm font-semibold mb-3">Khoảng giá</h2>
             <PriceSlider
               value={{
                 min: Number(min_price) || 0,
-                max: Number(max_price) || 70_000_000,
+                max: Number(max_price) || 66_000_000,
               }}
               onChange={({ min, max }) =>
                 updateParams({ min_price: min, max_price: max })
@@ -153,43 +174,53 @@ export default function ProductListPage() {
             />
           </div>
 
-          {/* thương hiệu */}
+          {/* Danh mục */}
           <div className="surface-panel p-4 rounded-2xl bg-slate-900/40 border border-slate-800">
-            <h2 className="text-sm font-semibold mb-3">Thương hiệu</h2>
+            <h2 className="text-sm font-semibold mb-3">Danh mục</h2>
             <CheckboxGroup
-              options={BRAND_OPTIONS}
-              values={thuong_hieu_ids}
-              onChange={(vals) => updateParams({ thuong_hieu_ids: vals })}
+              options={categoryOptions}
+              values={danh_muc_ids}
+              onChange={(vals) => updateParams({ danh_muc_ids: vals })}
+              collapsible={false}
             />
           </div>
 
-          {/* cấp độ */}
+          {/* Thương hiệu */}
+          <div className="surface-panel p-4 rounded-2xl bg-slate-900/40 border border-slate-800">
+            <h2 className="text-sm font-semibold mb-3">Thương hiệu</h2>
+            <CheckboxGroup
+              options={brandOptions}
+              values={thuong_hieu_ids}
+              onChange={(vals) => updateParams({ thuong_hieu_ids: vals })}
+              collapsible={false}
+            />
+          </div>
+
+          {/* Cấp độ */}
           <div className="surface-panel p-4 rounded-2xl bg-slate-900/40 border border-slate-800">
             <h2 className="text-sm font-semibold mb-3">Cấp độ</h2>
             <CheckboxGroup
-              options={LEVEL_OPTIONS}
+              options={levelOptions}
               values={cap_do_ids}
               onChange={(vals) => updateParams({ cap_do_ids: vals })}
+              collapsible={false}
             />
           </div>
         </aside>
 
-        {/* cột phải: danh sách sản phẩm */}
+        {/* PRODUCT LIST */}
         <main className="col-span-12 md:col-span-9">
           {isLoading ? (
-            // trạng thái loading → hiển thị skeleton
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="skeleton h-64 rounded-2xl" />
               ))}
             </div>
           ) : items.length === 0 ? (
-            // không có dữ liệu
             <div className="p-6 text-slate-300 bg-slate-900/30 rounded-2xl">
               Không có sản phẩm phù hợp.
             </div>
           ) : (
-            // có dữ liệu → render card
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
               {items.map((p) => (
                 <ProductCard key={p.id} p={p} />
@@ -197,7 +228,7 @@ export default function ProductListPage() {
             </div>
           )}
 
-          {/* phân trang */}
+          {/* Phân trang */}
           <div className="flex justify-center gap-2 mt-6">
             {Array.from({ length: totalPages }).map((_, i) => {
               const current = i + 1;
