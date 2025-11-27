@@ -60,7 +60,6 @@ const SettingsCategories = () => {
   };
 
   React.useEffect(() => {
-    // phòng khi route / dính strict_slashes backend khác nhau
     refetch();
   }, [page, refetch]);
 
@@ -68,25 +67,35 @@ const SettingsCategories = () => {
   const pag = data?.pagination ?? { page: 1, pages: 1 };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Quản lý Danh mục</h2>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Quản lý Danh mục
+        </h2>
         <button
           onClick={() => setOpen(true)}
-          className="px-4 py-2 rounded-lg bg-emerald-600 text-white flex items-center gap-2"
+          className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-400 hover:to-slate-500 flex items-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
         >
           <Plus size={16} /> Thêm danh mục
         </button>
       </div>
 
-      <div className="rounded-xl overflow-hidden border border-white/10 bg-white/5">
-        <table className="w-full">
-          <thead className="bg-slate-900/20">
+      <div className="rounded-3xl overflow-hidden border border-slate-200/60 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-lg">
+        <table className="w-full text-sm text-slate-800 dark:text-slate-100">
+          <thead className="bg-slate-100/80 dark:bg-slate-900/70">
             <tr>
-              <th className="px-4 py-3 text-left">ID</th>
-              <th className="px-4 py-3 text-left">Mã</th>
-              <th className="px-4 py-3 text-left">Tên danh mục</th>
-              <th className="px-4 py-3 text-right">Hành động</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                ID
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Mã
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Tên danh mục
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Hành động
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -98,27 +107,35 @@ const SettingsCategories = () => {
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center">
+                <td
+                  colSpan={4}
+                  className="px-4 py-6 text-center text-slate-500 dark:text-slate-400"
+                >
                   Chưa có dữ liệu.
                 </td>
               </tr>
             ) : (
               rows.map((cat) => (
-                <tr key={cat.id} className="border-t border-white/10">
+                <tr
+                  key={cat.id}
+                  className="border-t border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors"
+                >
                   <td className="px-4 py-3">{cat.id}</td>
                   <td className="px-4 py-3">{cat.ma_danh_muc}</td>
                   <td className="px-4 py-3">{cat.ten_danh_muc}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2 justify-end">
                       <button
-                        className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600"
+                        className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer
+                                   dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
                         onClick={() => setEditing(cat)}
                         title="Sửa"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
-                        className="p-2 rounded-lg bg-red-600 hover:bg-red-500"
+                        className="p-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer
+                                   dark:bg-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-800/70"
                         onClick={() => handleDelete(cat)}
                         title="Xóa"
                       >
@@ -134,21 +151,23 @@ const SettingsCategories = () => {
       </div>
 
       {/* Pagination đơn giản */}
-      <div className="flex justify-end items-center gap-2 mt-3">
+      <div className="flex justify-end items-center gap-2 mt-3 text-slate-700 dark:text-slate-200">
         <button
           disabled={pag.page <= 1}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="px-3 py-1 rounded-lg bg-slate-700 disabled:opacity-50"
+          className="px-3 py-1 rounded-lg border border-slate-300 bg-white/80 hover:bg-slate-50 disabled:opacity-50 cursor-pointer
+                     dark:bg-slate-900/70 dark:border-slate-700 dark:hover:bg-slate-800"
         >
           Trước
         </button>
-        <span>
+        <span className="text-sm">
           Trang {pag.page}/{pag.pages || 1}
         </span>
         <button
           disabled={pag.page >= (pag.pages || 1)}
           onClick={() => setPage((p) => p + 1)}
-          className="px-3 py-1 rounded-lg bg-slate-700 disabled:opacity-50"
+          className="px-3 py-1 rounded-lg border border-slate-300 bg-white/80 hover:bg-slate-50 disabled:opacity-50 cursor-pointer
+                     dark:bg-slate-900/70 dark:border-slate-700 dark:hover:bg-slate-800"
         >
           Sau
         </button>

@@ -109,20 +109,24 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
   }
 
   return (
-    <tr className="border-b border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors h-[61px]">
+    <tr className="border-b border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/70 transition-colors h-[61px]">
       <td className="px-4 py-3 font-semibold text-sky-600 dark:text-sky-400">
         {item.id}
       </td>
-      <td className="px-4 py-3 font-semibold">{item.ten_san_pham}</td>
-      <td className="px-4 py-3 capitalize">
+      <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">
+        {item.ten_san_pham}
+      </td>
+      <td className="px-4 py-3 capitalize text-slate-700 dark:text-slate-200">
         {item.thuong_hieu?.ten_thuong_hieu || item.ten_thuong_hieu || "—"}
       </td>
-      <td className="px-4 py-3 text-center">
+      <td className="px-4 py-3 text-center text-slate-800 dark:text-slate-100">
         {minPrice > 0 && minPrice < Infinity
           ? `Từ ${formatVnd(minPrice)}`
           : "N/A"}
       </td>
-      <td className="px-4 py-3 text-center font-medium">{totalStock}</td>
+      <td className="px-4 py-3 text-center font-medium text-slate-800 dark:text-slate-100">
+        {totalStock}
+      </td>
       {/* trạng thái sản phẩm (còn/sắp hết/hết) */}
       <td className="px-4 py-3 text-center">
         <StockStatusBadge quantity={totalStock} />
@@ -137,7 +141,7 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
         <div className="relative flex justify-center">
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="p-2 rounded-full hover:bg-slate-500/10"
+            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <MoreHorizontal size={20} />
           </button>

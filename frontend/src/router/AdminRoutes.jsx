@@ -11,8 +11,11 @@ const PhieuThu = lazy(() => import("../pages/Admin/PhieuThuPage"));
 const SettingsBrands = lazy(() => import("../pages/Admin/SettingsBrands"));
 const SettingsCategories = lazy(() =>
   import("../pages/Admin/SettingsCategories")
-); // nếu đã làm
-const SettingsLevels = lazy(() => import("../pages/Admin/SettingsLevels")); // ⬅️ thêm dòng này
+);
+const SettingsLevels = lazy(() => import("../pages/Admin/SettingsLevels"));
+
+// 🔥 Trang quản lý đánh giá
+const AdminReviews = lazy(() => import("../pages/Admin/AdminReviewsPage"));
 
 const AdminLayoutWrapper = () => (
   <ProtectedRoute adminOnly={true}>
@@ -32,9 +35,13 @@ const AdminRoutes = {
     { path: "inventory", element: <Inventory /> },
     { path: "orders", element: <Orders /> },
     { path: "phieu-thu", element: <PhieuThu /> },
+
+    // 🔥 Trang đánh giá
+    { path: "reviews", element: <AdminReviews /> },
+
     { path: "settings/brands", element: <SettingsBrands /> },
-    { path: "settings/categories", element: <SettingsCategories /> }, // nếu đã làm
-    { path: "settings/levels", element: <SettingsLevels /> }, // ⬅️ thêm route
+    { path: "settings/categories", element: <SettingsCategories /> },
+    { path: "settings/levels", element: <SettingsLevels /> },
   ],
 };
 

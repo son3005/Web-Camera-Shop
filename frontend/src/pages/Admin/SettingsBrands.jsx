@@ -52,26 +52,40 @@ export default function SettingsBrands() {
   const pg = data?.pagination || { page: 1, pages: 1 };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 space-y-6">
+      {/* header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Quản lý Thương hiệu</h2>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Quản lý Thương hiệu
+        </h2>
         <button
           onClick={onAdd}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-emerald-600"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-400 hover:to-slate-500 shadow-md hover:shadow-lg cursor-pointer"
         >
           <Plus size={18} /> Thêm thương hiệu
         </button>
       </div>
 
-      <div className="rounded-xl overflow-hidden border border-black/10 dark:border-white/10">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-100 dark:bg-slate-800/50">
+      {/* bảng */}
+      <div className="rounded-3xl overflow-hidden border border-slate-200/60 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-lg">
+        <table className="w-full text-sm text-slate-800 dark:text-slate-100">
+          <thead className="bg-slate-100/80 dark:bg-slate-900/70">
             <tr>
-              <th className="text-left p-3">ID</th>
-              <th className="text-left p-3">Mã</th>
-              <th className="text-left p-3">Tên thương hiệu</th>
-              <th className="text-left p-3">Logo</th>
-              <th className="text-right p-3">Hành động</th>
+              <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                ID
+              </th>
+              <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Mã
+              </th>
+              <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Tên thương hiệu
+              </th>
+              <th className="text-left p-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Logo
+              </th>
+              <th className="text-right p-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Hành động
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -86,7 +100,7 @@ export default function SettingsBrands() {
             {rows.map((b) => (
               <tr
                 key={b.id}
-                className="border-t border-black/5 dark:border-white/5"
+                className="border-t border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors"
               >
                 <td className="p-3">{b.id}</td>
                 <td className="p-3 font-mono">{b.ma_thuong_hieu}</td>
@@ -102,16 +116,18 @@ export default function SettingsBrands() {
                     <span className="text-slate-400">—</span>
                   )}
                 </td>
-                <td className="p-3 text-right">
+                <td className="p-3 text-right space-x-1">
                   <button
                     onClick={() => onEdit(b)}
-                    className="p-2 rounded hover:bg-black/5"
+                    className="inline-flex items-center justify-center p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    title="Sửa"
                   >
                     <Pencil size={16} />
                   </button>
                   <button
                     onClick={() => onDelete(b)}
-                    className="p-2 rounded text-red-600 hover:bg-red-600/10"
+                    className="inline-flex items-center justify-center p-2 rounded-full text-red-600 hover:bg-red-50 dark:text-rose-400 dark:hover:bg-slate-800 cursor-pointer"
+                    title="Xóa"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -121,7 +137,10 @@ export default function SettingsBrands() {
 
             {!isLoading && rows.length === 0 && (
               <tr>
-                <td colSpan="5" className="p-6 text-center text-slate-500">
+                <td
+                  colSpan="5"
+                  className="p-6 text-center text-slate-500 dark:text-slate-400"
+                >
                   Chưa có thương hiệu
                 </td>
               </tr>
@@ -130,9 +149,11 @@ export default function SettingsBrands() {
         </table>
       </div>
 
-      <div className="flex justify-end items-center gap-2">
+      {/* pagination */}
+      <div className="flex justify-end items-center gap-2 text-slate-700 dark:text-slate-200">
         <button
-          className="px-3 py-1 rounded border"
+          className="px-3 py-1 rounded-lg border border-slate-300 bg-white/80 hover:bg-slate-50 disabled:opacity-50 cursor-pointer
+                     dark:bg-slate-900/70 dark:border-slate-700 dark:hover:bg-slate-800"
           disabled={(pg.page || 1) <= 1}
           onClick={() => setPage((p) => p - 1)}
         >
@@ -142,7 +163,8 @@ export default function SettingsBrands() {
           Trang {pg.page || 1}/{pg.pages || 1}
         </span>
         <button
-          className="px-3 py-1 rounded border"
+          className="px-3 py-1 rounded-lg border border-slate-300 bg-white/80 hover:bg-slate-50 disabled:opacity-50 cursor-pointer
+                     dark:bg-slate-900/70 dark:border-slate-700 dark:hover:bg-slate-800"
           disabled={(pg.page || 1) >= (pg.pages || 1)}
           onClick={() => setPage((p) => p + 1)}
         >

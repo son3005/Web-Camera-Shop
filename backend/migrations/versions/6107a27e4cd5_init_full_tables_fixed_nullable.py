@@ -1,8 +1,8 @@
 """init full tables - fixed nullable
 
-Revision ID: b7dab35fe02b
+Revision ID: 6107a27e4cd5
 Revises: 
-Create Date: 2025-11-12 15:29:10.288250
+Create Date: 2025-11-20 02:13:43.029754
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b7dab35fe02b'
+revision = '6107a27e4cd5'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -119,6 +119,8 @@ def upgrade():
     sa.Column('ten_san_pham', sa.String(length=100), nullable=False),
     sa.Column('mo_ta', sa.Text(), nullable=True),
     sa.Column('thong_so_ky_thuat', sa.JSON(), nullable=True),
+    sa.Column('so_sao_trung_binh', sa.Numeric(precision=2, scale=1), nullable=True),
+    sa.Column('so_luong_danh_gia', sa.Integer(), nullable=False),
     sa.Column('ngay_tao', sa.DateTime(), nullable=True),
     sa.Column('ngay_cap_nhat', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['cap_do_id'], ['cap_do.id'], ),
@@ -142,9 +144,11 @@ def upgrade():
     sa.Column('trang_thai_kich_hoat', sa.Enum('DANG_BAN', 'SAP_BAN', 'NGUNG_BAN', name='trangthaisanphamenum'), nullable=False),
     sa.Column('gia_ban', sa.Numeric(precision=12), nullable=False),
     sa.Column('mau', sa.String(length=20), nullable=True),
-    sa.Column('so_luong', sa.Integer(), nullable=False),
+    sa.Column('so_luong_nhap', sa.Integer(), nullable=False),
+    sa.Column('so_luong_ban', sa.Integer(), nullable=False),
     sa.CheckConstraint('gia_ban > 0', name='check_gia_positive'),
-    sa.CheckConstraint('so_luong >= 0', name='check_so_luong_positive'),
+    sa.CheckConstraint('so_luong_ban >= 0', name='check_so_luong_ban_positive'),
+    sa.CheckConstraint('so_luong_nhap >= 0', name='check_so_luong_nhap_positive'),
     sa.ForeignKeyConstraint(['san_pham_id'], ['san_pham.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -271,8 +275,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['nguoi_dung_id'], ['nguoi_dung.id'], ),
     sa.ForeignKeyConstraint(['san_pham_id'], ['san_pham.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('chi_tiet_don_hang_id'),
-    sa.UniqueConstraint('san_pham_id', 'nguoi_dung_id', name='uq_user_sanpham_danhgia')
+    sa.UniqueConstraint('chi_tiet_don_hang_id')
     )
     with op.batch_alter_table('danh_gia', schema=None) as batch_op:
         batch_op.create_index('idx_trang_thai_danhgia', ['trang_thai'], unique=False)

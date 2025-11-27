@@ -16,21 +16,16 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
     queryFn: () => getPhieuThu(phieuThuId),
   });
 
-  // ptRaw có thể là undefined nếu chưa load
   const pt = ptRaw || {};
 
-  // ngày: ưu tiên ngay_thu, rồi mới tới ngay_tao, rồi ngay_cap_nhat
   const ngayNhap = pt.ngay_thu || pt.ngay_tao || pt.ngay_cap_nhat || null;
 
-  // mảng chi tiết: backend của bạn có lúc ghi "cac_chi_tiet_phieu_thu"
-  // còn trong code cũ mình dùng "phieu_thu_chi_tiets"
   const chiTiet =
     pt.cac_chi_tiet_phieu_thu ||
     pt.phieu_thu_chi_tiets ||
     pt.chi_tiet_phieu_thu ||
     [];
 
-  // tổng tiền: ưu tiên field có sẵn, nếu không thì tự tính
   const tongTien =
     pt.tong_gia_tri ??
     chiTiet.reduce((sum, item) => {
@@ -45,23 +40,23 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
     }) + "₫";
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-      <div className="bg-slate-950 text-slate-50 w-[720px] max-h-[90vh] rounded-xl border border-emerald-500/30 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] rounded-2xl border border-slate-200/70 dark:border-emerald-500/40 bg-white/95 dark:bg-slate-950/95 text-slate-900 dark:text-slate-50 shadow-2xl flex flex-col overflow-hidden">
         {/* header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/70 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/90">
           <div>
             <h2 className="text-lg font-semibold">
               Chi tiết phiếu thu {pt.ma_phieu_thu ? `– ${pt.ma_phieu_thu}` : ""}
             </h2>
             {ngayNhap && (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Ngày nhập: {new Date(ngayNhap).toLocaleString("vi-VN")}
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white text-xl"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 text-xl cursor-pointer"
           >
             ✕
           </button>
@@ -69,9 +64,13 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
 
         {/* body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {isLoading && <div>Đang tải chi tiết...</div>}
+          {isLoading && (
+            <div className="text-sm text-slate-600 dark:text-slate-300">
+              Đang tải chi tiết...
+            </div>
+          )}
           {isError && (
-            <div className="text-red-400">
+            <div className="text-sm text-red-500 dark:text-red-400">
               Không tải được chi tiết phiếu thu
             </div>
           )}
@@ -81,15 +80,19 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
               {/* info chung */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="space-y-1">
-                  <p className="text-slate-400">Mã phiếu</p>
+                  <p className="text-slate-500 dark:text-slate-400">Mã phiếu</p>
                   <p className="font-medium">{pt.ma_phieu_thu || "-"}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-slate-400">Nhà cung cấp</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    Nhà cung cấp
+                  </p>
                   <p className="font-medium">{pt.ten_nha_cung_cap || "-"}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-slate-400">Ngày nhập</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    Ngày nhập
+                  </p>
                   <p className="font-medium">
                     {ngayNhap
                       ? new Date(ngayNhap).toLocaleString("vi-VN")
@@ -97,17 +100,19 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-slate-400">Tổng giá trị</p>
-                  <p className="font-semibold text-emerald-300">
+                  <p className="text-slate-500 dark:text-slate-400">
+                    Tổng giá trị
+                  </p>
+                  <p className="font-semibold text-emerald-600 dark:text-emerald-300">
                     {formatVnd(tongTien)}
                   </p>
                 </div>
               </div>
 
               {/* bảng chi tiết */}
-              <div className="border border-slate-800 rounded-lg overflow-hidden">
+              <div className="rounded-xl overflow-hidden border border-slate-200/70 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/60">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-900">
+                  <thead className="bg-slate-50/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200">
                     <tr>
                       <th className="p-2 text-left">#</th>
                       <th className="p-2 text-left">Biến thể</th>
@@ -122,7 +127,6 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
                       const gia = Number(ct.gia_nhap_tung_vat || 0);
                       const thanhTien = sl * gia;
 
-                      // tên biến thể có thể nằm ở nhiều chỗ khác nhau
                       const tenBienThe =
                         ct.ten_bien_the ||
                         ct.ten_san_pham?.concat(
@@ -134,7 +138,7 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
                       return (
                         <tr
                           key={ct.id || idx}
-                          className="border-t border-slate-800"
+                          className="border-t border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/80 dark:hover:bg-slate-900/60 transition-colors"
                         >
                           <td className="p-2">{idx + 1}</td>
                           <td className="p-2">{tenBienThe}</td>
@@ -151,7 +155,7 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
                       <tr>
                         <td
                           colSpan={5}
-                          className="p-4 text-center text-slate-500"
+                          className="p-4 text-center text-slate-500 dark:text-slate-400"
                         >
                           Phiếu chưa có dòng chi tiết
                         </td>
@@ -160,7 +164,7 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
                   </tbody>
 
                   {chiTiet.length > 0 && (
-                    <tfoot className="bg-slate-900">
+                    <tfoot className="bg-slate-50/90 dark:bg-slate-900/90">
                       <tr>
                         <td
                           colSpan={4}
@@ -168,7 +172,7 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
                         >
                           Tổng
                         </td>
-                        <td className="p-2 text-right font-bold text-emerald-300">
+                        <td className="p-2 text-right font-bold text-emerald-600 dark:text-emerald-300">
                           {formatVnd(tongTien)}
                         </td>
                       </tr>
@@ -181,10 +185,10 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
         </div>
 
         {/* footer */}
-        <div className="px-6 py-3 border-t border-slate-800 text-right">
+        <div className="px-6 py-3 border-t border-slate-200/70 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/90 text-right">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-md border border-slate-600"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white/60 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition"
           >
             Đóng
           </button>

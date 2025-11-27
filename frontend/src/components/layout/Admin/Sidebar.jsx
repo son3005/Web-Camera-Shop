@@ -37,6 +37,8 @@ const menuItems = [
     submenu: [
       { id: "orders", path: "/admin/orders", label: "Đặt hàng" },
       { id: "customers", path: "/admin/customers", label: "Khách hàng" },
+      // 🔥 Thêm menu Đánh giá
+      { id: "reviews", path: "/admin/reviews", label: "Đánh giá sản phẩm" },
     ],
   },
 
@@ -60,7 +62,7 @@ const menuItems = [
         id: "settings-levels",
         path: "/admin/settings/levels",
         label: "Cấp độ",
-      }, // (để dùng sau)
+      },
     ],
   },
 

@@ -1,11 +1,11 @@
     # app/models/don_hang.py
 
-    from datetime import datetime
-    from ...extensions import db
-    from..enums import TrangThaiDonHangEnum
-    import uuid
+from datetime import datetime
+from ...extensions import db
+from..enums import TrangThaiDonHangEnum
+import uuid
 
-    class DonHang(db.Model):
+class DonHang(db.Model):
         """
         Lớp DonHang đại diện cho bảng 'don_hang' trong cơ sở dữ liệu, lưu trữ thông tin về các đơn hàng của người dùng.
 

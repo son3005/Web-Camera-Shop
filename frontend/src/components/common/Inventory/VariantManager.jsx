@@ -24,12 +24,12 @@ const FormInput = ({
       readOnly={readOnly}
       defaultValue={readOnly ? defaultValue : undefined}
       {...(register ? register(name) : {})}
-      className={`w-full rounded-lg px-3 py-2 text-sm transition-all bg-white/50 dark:bg-slate-700/50 border ${
+      className={`w-full rounded-lg px-3 py-2 text-sm transition-all bg-white/80 dark:bg-slate-900/60 border ${
         errors
           ? "border-red-500 focus:ring-red-500"
-          : "border-black/10 dark:border-white/10 focus:ring-cyan-500"
+          : "border-slate-200/60 dark:border-slate-700/60 focus:ring-emerald-500"
       } focus:outline-none focus:ring-2 placeholder:text-slate-500 dark:placeholder:text-slate-400 ${
-        readOnly ? "cursor-not-allowed bg-slate-200 dark:bg-slate-700/30" : ""
+        readOnly ? "cursor-not-allowed bg-slate-100 dark:bg-slate-800/60" : ""
       }`}
     />
     {errors && (
@@ -70,7 +70,7 @@ const VariantManager = ({
           {(defaultVariants || []).map((variant, index) => (
             <div
               key={variant.id || index}
-              className="p-4 rounded-2xl bg-white/20 dark:bg-slate-700/30 backdrop-blur-sm border border-white/20 dark:border-slate-600/50 space-y-4"
+              className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 space-y-4 shadow-sm"
             >
               <h4 className="font-bold text-slate-700 dark:text-cyan-300">
                 Biến thể #{index + 1}
@@ -150,7 +150,7 @@ const VariantManager = ({
         {fields.map((field, index) => (
           <div
             key={field.id}
-            className="p-4 rounded-2xl bg-white/20 dark:bg-slate-700/30 backdrop-blur-sm border border-white/20 dark:border-slate-600/50 space-y-4"
+            className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 space-y-4 shadow-sm"
           >
             <div className="flex justify-between items-center">
               <h4 className="font-bold text-slate-700 dark:text-cyan-300">
@@ -224,10 +224,10 @@ const VariantManager = ({
                         onClick={() =>
                           stField.onChange(isOn ? "ngung_ban" : "dang_ban")
                         }
-                        className={`px-3 py-1 rounded-lg text-sm font-semibold w-fit ${
+                        className={`px-3 py-1 rounded-lg text-sm font-semibold w-fit transition-colors ${
                           isOn
                             ? "bg-emerald-500 text-white"
-                            : "bg-slate-600/40 text-slate-100"
+                            : "bg-slate-200/80 text-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
                         }`}
                       >
                         {isOn ? "Đang bán" : "Ngừng bán"}
