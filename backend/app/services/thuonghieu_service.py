@@ -2,7 +2,6 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from ..models.sanpham import ThuongHieu, SanPham  # Thêm import SanPham
 from ..schemas.sanpham import ThuongHieuCreate, ThuongHieuUpdate
-from .cloudinary_service import delete_image_task
 
 class ThuongHieuService:
     def __init__(self, db: Session):
@@ -29,9 +28,7 @@ class ThuongHieuService:
 
         db_thuong_hieu = ThuongHieu(
             ma_thuong_hieu=thuong_hieu_data.ma_thuong_hieu,
-            ten_thuong_hieu=thuong_hieu_data.ten_thuong_hieu,
-            logo_url=thuong_hieu_data.logo_url,
-            public_id=thuong_hieu_data.public_id
+            ten_thuong_hieu=thuong_hieu_data.ten_thuong_hieu
         )
         
         self.db.add(db_thuong_hieu)
@@ -76,10 +73,6 @@ class ThuongHieuService:
                 f"Không thể xóa thương hiệu '{db_thuong_hieu.ten_thuong_hieu}' vì có {san_pham_count} sản phẩm đang sử dụng. "
                 f"Hãy chuyển các sản phẩm sang thương hiệu khác trước khi xóa."
             )
-
-        # Xóa logo trên Cloudinary nếu có
-        if db_thuong_hieu.public_id:
-            delete_image_task.delay(db_thuong_hieu.public_id)
 
         self.db.delete(db_thuong_hieu)
         self.db.commit()

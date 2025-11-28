@@ -1,8 +1,8 @@
 """init full tables - fixed nullable
 
-Revision ID: 6107a27e4cd5
+Revision ID: 1cd32b1d7a1e
 Revises: 
-Create Date: 2025-11-20 02:13:43.029754
+Create Date: 2025-11-28 02:10:07.785738
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '6107a27e4cd5'
+revision = '1cd32b1d7a1e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -120,7 +120,7 @@ def upgrade():
     sa.Column('mo_ta', sa.Text(), nullable=True),
     sa.Column('thong_so_ky_thuat', sa.JSON(), nullable=True),
     sa.Column('so_sao_trung_binh', sa.Numeric(precision=2, scale=1), nullable=True),
-    sa.Column('so_luong_danh_gia', sa.Integer(), nullable=False),
+    sa.Column('so_luong_danh_gia', sa.Integer(), nullable=True),
     sa.Column('ngay_tao', sa.DateTime(), nullable=True),
     sa.Column('ngay_cap_nhat', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['cap_do_id'], ['cap_do.id'], ),

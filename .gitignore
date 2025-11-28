@@ -64,3 +64,5 @@ Thumbs.db
 
 # clerybeat schedule file
 backend/celerybeat-schedule
+
+*.log.*

@@ -169,15 +169,17 @@ class SanPhamService:
         elif sort_by_price == 'price_desc':
             logger.debug("Sắp xếp giá giảm dần")
             query = query.order_by(price_subquery.c.min_effective_price.desc())
-        elif sort_by_name == 'name_asc':
+        else:
+            # Mặc định sắp xếp theo ngày tạo mới nhất
+            query = query.order_by(SanPham.ngay_tao.desc())
+            
+        if sort_by_name == 'name_asc':
             logger.debug("Sắp xếp tên A→Z")
             query = query.order_by(SanPham.ten_san_pham.asc())
         elif sort_by_name == 'name_desc':
             logger.debug("Sắp xếp tên Z→A")
             query = query.order_by(SanPham.ten_san_pham.desc())
-        else:
-            # Mặc định sắp xếp theo ngày tạo mới nhất
-            query = query.order_by(SanPham.ngay_tao.desc())
+        
 
         logger.debug(f"Phân trang: page={page}, per_page={per_page}")
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
