@@ -85,6 +85,3 @@ class PhuongThucThanhToanEnum(str, enum.Enum):
     """
     COD = 'cod' 
     PAYOS_QR = 'payos_qr'
-    VNPAY_QR = 'vnpay_qr'
-    VNPAY_EWALLET = 'vnpay_ewallet'
-    KHAC = 'khac'

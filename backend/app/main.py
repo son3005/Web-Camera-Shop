@@ -135,6 +135,7 @@ def create_app(config_class=None):
         from .routes.nguoidung_routes import nguoidung_api
         from .routes.khachhang_routes import khach_hang_api
         from .routes.thongke_routes import thong_ke_api
+        from .routes.anhtrinhchieu_routes import anhtrinhchieu_api
 
         # ĐĂNG KÝ BLUEPRINTS
         app.register_blueprint(auth_api, url_prefix='/api/auth')
@@ -154,6 +155,7 @@ def create_app(config_class=None):
         app.register_blueprint(nguoidung_api, url_prefix='/api/nguoi-dung')
         app.register_blueprint(khach_hang_api, url_prefix='/api/khach-hang')
         app.register_blueprint(thong_ke_api, url_prefix='/api/thong-ke')
+        app.register_blueprint(anhtrinhchieu_api, url_prefix='/api/anh-trinh-chieu')
 
         logger.info("All blueprints registered successfully")
 

@@ -35,7 +35,7 @@ class DonHang(db.Model):
     Phương thức:
         __repr__(): Trả về chuỗi biểu diễn đối tượng đơn hàng với mã đơn hàng và trạng thái.
     """
-    __tablename__ = 'don_hang'
+    __tablename__ = 'don_hang' 
 
     # --- Các thuộc tính ---
     id = db.Column(db.Integer, primary_key=True)
@@ -46,7 +46,7 @@ class DonHang(db.Model):
     so_dien_thoai_nguoi_nhan = db.Column(db.String(15),nullable= False)
     dia_chi_giao = db.Column(db.String(500),nullable= False)
     trang_thai = db.Column(db.Enum(TrangThaiDonHangEnum), default=TrangThaiDonHangEnum.CHO_XAC_NHAN, nullable=False)
-    phi_van_chuyen = db.Column(db.Numeric(14), default=0)
+    phi_van_chuyen = db.Column(db.Numeric(10), default=0)
     ghi_chu = db.Column(db.Text, nullable=True)
     ly_do = db.Column(db.Text, nullable=True)
     ngay_tao = db.Column(db.DateTime,  server_default=db.func.now())

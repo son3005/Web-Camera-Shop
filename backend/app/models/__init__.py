@@ -14,3 +14,5 @@ from .enums import *
 
 
 from .phieuthu import *
+
+from .khac import *

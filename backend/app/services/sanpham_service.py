@@ -15,6 +15,8 @@ from ..schemas.sanpham import (
 )
 from ..utils.taoMa import generate_ma_san_pham
 from .cloudinary_service import delete_image_task
+from sqlalchemy import desc
+from ..schemas.sanpham import BienTheBasicListResponse
 
 logger = logging.getLogger(__name__)
 
@@ -634,3 +636,207 @@ class SanPhamService:
         except Exception as e:
             logger.error(f"Lỗi khi lấy danh sách biến thể cơ bản: {e}", exc_info=True)
             raise BadRequest(f"Lỗi khi lấy danh sách biến thể: {str(e)}")
+        
+    @staticmethod
+    def get_all_san_pham_noi_bat(limit=10):
+        """
+        Lấy danh sách sản phẩm nổi bật (bán chạy nhất) trong tháng hiện tại.
+        Nếu không đủ limit, lấy thêm sản phẩm nổi bật tổng thể.
+        """
+        logger.info(f"Lấy danh sách sản phẩm nổi bật (bán chạy nhất), giới hạn: {limit}")
+
+        try:
+            now = datetime.utcnow()
+            first_day = datetime(now.year, now.month, 1)
+            # Subquery: tổng số lượng bán trong tháng hiện tại
+            subquery_month = (
+                db.session.query(
+                    BienTheSanPham.san_pham_id.label("san_pham_id"),
+                    func.coalesce(func.sum(ChiTietDonHang.so_luong), 0).label("tong_so_luong_ban")
+                )
+                .join(ChiTietDonHang, ChiTietDonHang.bien_the_san_pham_id == BienTheSanPham.id)
+                .filter(ChiTietDonHang.ngay_tao >= first_day)
+                .group_by(BienTheSanPham.san_pham_id)
+                .subquery()
+            )
+
+            # Query sản phẩm nổi bật trong tháng
+            query_month = (
+                SanPham.query
+                .options(
+                    joinedload(SanPham.danh_muc),
+                    joinedload(SanPham.thuong_hieu),
+                    joinedload(SanPham.cap_do),
+                    selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
+                )
+                .join(subquery_month, SanPham.id == subquery_month.c.san_pham_id)
+                .order_by(desc(subquery_month.c.tong_so_luong_ban))
+                .limit(limit)
+            )
+            san_phams_month = query_month.all()
+            san_pham_ids = {sp.id for sp in san_phams_month}
+
+            # Nếu chưa đủ limit, lấy thêm sản phẩm nổi bật tổng thể (không trùng)
+            if len(san_phams_month) < limit:
+                subquery_all = (
+                    db.session.query(
+                        BienTheSanPham.san_pham_id.label("san_pham_id"),
+                        func.coalesce(func.sum(ChiTietDonHang.so_luong), 0).label("tong_so_luong_ban")
+                    )
+                    .outerjoin(ChiTietDonHang, ChiTietDonHang.bien_the_san_pham_id == BienTheSanPham.id)
+                    .group_by(BienTheSanPham.san_pham_id)
+                    .subquery()
+                )
+                query_all = (
+                    SanPham.query
+                    .options(
+                        joinedload(SanPham.danh_muc),
+                        joinedload(SanPham.thuong_hieu),
+                        joinedload(SanPham.cap_do),
+                        selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
+                    )
+                    .join(subquery_all, SanPham.id == subquery_all.c.san_pham_id)
+                    .filter(SanPham.id.in_(san_pham_ids))
+                    .order_by(desc(subquery_all.c.tong_so_luong_ban))
+                    .limit(limit - len(san_phams_month))
+                )
+                san_phams_all = query_all.all()
+            else:
+                san_phams_all = []
+
+            san_phams = san_phams_month + san_phams_all
+            data = [SanPhamResponse.model_validate(p).model_dump() for p in san_phams]
+
+            logger.info(f"Lấy danh sách sản phẩm nổi bật thành công: {len(data)} sản phẩm")
+            return {"data": data}
+
+        except Exception as e:
+            logger.error(f"Lỗi khi lấy danh sách sản phẩm nổi bật: {e}", exc_info=True)
+            raise BadRequest(f"Lỗi khi lấy danh sách sản phẩm nổi bật: {str(e)}")
+        
+    @staticmethod
+    def get_san_pham_moi_nhat(limit=10):
+        """
+        Lấy danh sách sản phẩm mới nhất dựa vào ngày tạo, giới hạn theo limit.
+        """
+        logger.info(f"Lấy danh sách sản phẩm mới nhất, giới hạn: {limit}")
+        try:
+            san_phams = (
+                SanPham.query
+                .options(
+                    joinedload(SanPham.danh_muc),
+                    joinedload(SanPham.thuong_hieu),
+                    joinedload(SanPham.cap_do),
+                    selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
+                )
+                .order_by(SanPham.ngay_tao.desc())
+                .limit(limit)
+                .all()
+            )
+            data = [SanPhamResponse.model_validate(p).model_dump() for p in san_phams]
+            logger.info(f"Lấy danh sách sản phẩm mới nhất thành công: {len(data)} sản phẩm")
+            return {"data": data}
+        except Exception as e:
+            logger.error(f"Lỗi khi lấy danh sách sản phẩm mới nhất: {e}", exc_info=True)
+            raise BadRequest(f"Lỗi khi lấy danh sách sản phẩm mới nhất: {str(e)}")
+        
+
+    @staticmethod
+    def get_san_pham_lien_quan(san_pham_id: int, limit=8):
+        """
+        Lấy danh sách sản phẩm liên quan dựa trên cùng danh mục hoặc thương hiệu, loại trừ chính nó.
+        """
+        logger.info(f"Lấy danh sách sản phẩm liên quan cho sản phẩm ID: {san_pham_id}, limit={limit}")
+        try:
+            san_pham = SanPham.query.get(san_pham_id)
+            if not san_pham:
+                logger.warning(f"Sản phẩm không tồn tại: {san_pham_id}")
+                raise NotFound("Sản phẩm không tồn tại")
+
+            query = (
+                SanPham.query
+                .options(
+                    joinedload(SanPham.danh_muc),
+                    joinedload(SanPham.thuong_hieu),
+                    joinedload(SanPham.cap_do),
+                    selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
+                )
+                .filter(
+                    or_(
+                        SanPham.danh_muc_id == san_pham.danh_muc_id,
+                        SanPham.thuong_hieu_id == san_pham.thuong_hieu_id
+                    ),
+                    SanPham.id != san_pham_id
+                )
+                .order_by(SanPham.ngay_tao.desc())
+                .limit(limit)
+            )
+            san_phams = query.all()
+            data = [SanPhamResponse.model_validate(p).model_dump() for p in san_phams]
+            logger.info(f"Lấy sản phẩm liên quan thành công: {len(data)} sản phẩm")
+            return {"data": data}
+        except Exception as e:
+            logger.error(f"Lỗi khi lấy sản phẩm liên quan: {e}", exc_info=True)
+            raise BadRequest(f"Lỗi khi lấy sản phẩm liên quan: {str(e)}")
+        
+    @staticmethod
+    def search_bien_the_by_ten_san_pham(search: str, limit=20):
+        """
+        Tìm kiếm biến thể theo tên sản phẩm (autocomplete) với tìm kiếm cải tiến.
+        Trả về danh sách biến thể với thông tin sản phẩm.
+        Tên biến thể sẽ là: tên + màu.
+        """
+        logger.info(f"Tìm kiếm biến thể theo tên sản phẩm: '{search}', limit={limit}")
+        try:
+            if not search or not search.strip():
+                return {"data": []}
+
+            # Chuẩn hóa từ khóa tìm kiếm
+            search_normalized = SanPhamService.remove_accents(search).lower().strip()
+
+            query = (
+                db.session.query(BienTheSanPham, SanPham)
+                .join(SanPham, BienTheSanPham.san_pham_id == SanPham.id)
+                .join(ThuongHieu, SanPham.thuong_hieu_id == ThuongHieu.id)
+                .join(DanhMuc, SanPham.danh_muc_id == DanhMuc.id)
+            )
+
+            # Cho phép tìm kiếm từ 1 ký tự trở lên
+            if len(search_normalized) >= 1:
+                search_terms = search_normalized.split()
+                search_conditions = []
+
+                for term in search_terms:
+                    if len(term) >= 1:
+                        term_pattern = f"%{term}%"
+                        like_condition = or_(
+                            func.lower(func.replace(SanPham.ten_san_pham, ' ', '')).ilike(f"%{term}%"),
+                            func.lower(func.replace(SanPham.mo_ta, ' ', '')).ilike(f"%{term}%"),
+                            func.lower(func.replace(ThuongHieu.ten_thuong_hieu, ' ', '')).ilike(f"%{term}%"),
+                            func.lower(func.replace(DanhMuc.ten_danh_muc, ' ', '')).ilike(f"%{term}%"),
+                            SanPham.ma_san_pham.ilike(term_pattern)
+                        )
+                        search_conditions.append(like_condition)
+
+                if search_conditions:
+                    final_search_condition = and_(*search_conditions)
+                    query = query.filter(final_search_condition)
+                    logger.debug(f"Áp dụng điều kiện tìm kiếm với {len(search_terms)} từ")
+            else:
+                logger.debug("Từ khóa tìm kiếm quá ngắn, bỏ qua tìm kiếm")
+                return {"data": []}
+
+            query = query.order_by(SanPham.ten_san_pham.asc()).limit(limit)
+            results = query.all()
+            data = [
+                {
+                    "id": bien_the.id,
+                    "ten_bien_the": f"{bien_the.ten_bien_the} {bien_the.mau}".strip()
+                }
+                for bien_the, san_pham in results
+            ]
+            logger.info(f"Tìm thấy {len(data)} biến thể phù hợp")
+            return {"data": data}
+        except Exception as e:
+            logger.error(f"Lỗi khi tìm kiếm biến thể theo tên sản phẩm: {e}", exc_info=True)
+            raise BadRequest(f"Lỗi khi tìm kiếm biến thể: {str(e)}")

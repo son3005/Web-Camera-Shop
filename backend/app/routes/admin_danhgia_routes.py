@@ -75,7 +75,7 @@ def get_all_danh_gia():
         
         current_app.logger.info(f"Tham số: page={page}, per_page={per_page}, diem_danh_gia={diem_danh_gia}")
         
-        # Gọi service
+        # Gọi service 
         danh_gias, pagination = DanhGiaService.get_all_danh_gia_admin(
             page=page,
             per_page=per_page,

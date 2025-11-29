@@ -2,7 +2,7 @@
 from sqlalchemy import CheckConstraint, ForeignKey, Index
 from ...extensions import db
 from ..enums import TrangThaiSanPhamEnum
-
+ 
 class BienTheSanPham(db.Model):
     """
     Biến thể sản phẩm
@@ -14,7 +14,7 @@ class BienTheSanPham(db.Model):
     san_pham_id = db.Column(db.Integer, ForeignKey('san_pham.id'), nullable=False, index=True)
     ten_bien_the = db.Column(db.String(100), nullable=False)
     trang_thai_kich_hoat = db.Column(db.Enum(TrangThaiSanPhamEnum), default=TrangThaiSanPhamEnum.DANG_BAN, nullable=False)
-    gia_ban = db.Column(db.Numeric(12), nullable=False)
+    gia_ban = db.Column(db.Numeric(12), nullable=False, default=0)
     mau = db.Column(db.String(20), nullable=True)
     so_luong_nhap = db.Column(db.Integer, nullable=False, default=0)
     so_luong_ban = db.Column(db.Integer, nullable=False, default=0)
