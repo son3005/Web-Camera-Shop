@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from "react";
 import MainLayout from "../layouts/MainLayout";
-import ProtectedRoute from "./ProtectedRoute"; // bảo vệ route cần đăng nhập
+import ProtectedRoute from "./ProtectedRoute";
 
 // === Lazy load các trang ===
 const HomePage = lazy(() => import("../pages/HomePage"));
@@ -9,12 +9,11 @@ const ProductDetailPage = lazy(() => import("../pages/ProductDetailPage"));
 const CartPage = lazy(() => import("../pages/CartPage"));
 const CheckoutPage = lazy(() => import("../pages/CheckoutPage"));
 const AccountPage = lazy(() => import("../pages/AccountPage"));
-
-// === 3 TRANG MỚI THEO BACKEND ĐÃ CÓ ===
 const PaymentResultPage = lazy(() => import("../pages/PaymentResultPage"));
 
-// fallback khi đang lazy-load
-const Fallback = <div className="p-6 text-center text-slate-300">Đang tải...</div>;
+const Fallback = (
+  <div className="p-6 text-center text-slate-300">Đang tải...</div>
+);
 
 const MainRoutes = {
   path: "/",
@@ -28,6 +27,7 @@ const MainRoutes = {
         </Suspense>
       ),
     },
+
     {
       path: "products",
       element: (
@@ -36,6 +36,7 @@ const MainRoutes = {
         </Suspense>
       ),
     },
+
     {
       path: "products/:productId",
       element: (
@@ -44,6 +45,7 @@ const MainRoutes = {
         </Suspense>
       ),
     },
+
     {
       path: "cart",
       element: (
@@ -52,7 +54,8 @@ const MainRoutes = {
         </Suspense>
       ),
     },
-    // === TRANG THANH TOÁN (PayOS/COD) ===
+
+    // === CHECKOUT ===
     {
       path: "checkout",
       element: (
@@ -63,7 +66,8 @@ const MainRoutes = {
         </ProtectedRoute>
       ),
     },
-    // === TRANG KẾT QUẢ THANH TOÁN (PayOS) ===
+
+    // === PAYOS RESULT ===
     {
       path: "payment-result/:id",
       element: (
@@ -75,7 +79,7 @@ const MainRoutes = {
       ),
     },
 
-    // === TRANG TÀI KHOẢN ===
+    // === ACCOUNT PAGE (tất cả con: profile, address, orders, review) ===
     {
       path: "tai-khoan",
       element: (

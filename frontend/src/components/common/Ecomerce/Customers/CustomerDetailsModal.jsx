@@ -47,6 +47,42 @@ export default function CustomerDetailsModal({ customerId, onClose }) {
     }
   };
 
+  const renderAvatar = () => {
+    if (c?.avatar) {
+      return (
+        <img
+          src={c.avatar}
+          alt={c.name}
+          className="w-20 h-20 rounded-full object-cover"
+        />
+      );
+    }
+    const initial = (c?.name || c?.email || "?")[0]?.toUpperCase() || "?";
+    return (
+      <div className="w-20 h-20 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center text-2xl font-bold text-slate-800 dark:text-white">
+        {initial}
+      </div>
+    );
+  };
+
+  const renderProductImage = (pb) => {
+    if (pb.image) {
+      return (
+        <img
+          src={pb.image}
+          alt={pb.name}
+          className="w-14 h-14 rounded-md object-cover"
+        />
+      );
+    }
+    const initial = (pb.name || "?")[0]?.toUpperCase() || "?";
+    return (
+      <div className="w-14 h-14 rounded-md bg-slate-300 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-800 dark:text-white">
+        {initial}
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
       <div
@@ -76,11 +112,7 @@ export default function CustomerDetailsModal({ customerId, onClose }) {
             c && (
               <>
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <img
-                    src={c.avatar}
-                    alt={c.name}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
+                  {renderAvatar()}
                   <div className="flex-1">
                     <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
                       {c.name}
@@ -90,10 +122,10 @@ export default function CustomerDetailsModal({ customerId, onClose }) {
                         <Mail size={14} /> {c.email}
                       </span>
                       <span className="inline-flex items-center gap-1">
-                        <Phone size={14} /> {c.phone}
+                        <Phone size={14} /> {c.phone || "-"}
                       </span>
                       <span className="inline-flex items-center gap-1">
-                        <CalendarDays size={14} /> Tạo: {c.createdAt}
+                        <CalendarDays size={14} /> Tạo: {c.createdAt || "-"}
                       </span>
                       {c.lastPurchase && (
                         <span className="inline-flex items-center gap-1">
@@ -125,7 +157,7 @@ export default function CustomerDetailsModal({ customerId, onClose }) {
                     <div className="space-y-2 text-sm text-slate-800 dark:text-slate-200">
                       <div className="flex items-start gap-2">
                         <MapPin size={14} className="mt-0.5 text-slate-400" />{" "}
-                        {c.address}
+                        {c.address || "Chưa có địa chỉ"}
                       </div>
                       <div className="flex items-center gap-2">
                         {c.status === "Active" ? (
@@ -205,11 +237,7 @@ export default function CustomerDetailsModal({ customerId, onClose }) {
                           key={pb.id}
                           className="flex items-center gap-3 bg-white/70 dark:bg-slate-800/70 rounded-lg p-3 border border-slate-200/50 dark:border-slate-700/50"
                         >
-                          <img
-                            src={pb.image}
-                            alt={pb.name}
-                            className="w-14 h-14 rounded-md object-cover"
-                          />
+                          {renderProductImage(pb)}
                           <div className="flex-1">
                             <div className="font-semibold text-slate-900 dark:text-white">
                               {pb.name}

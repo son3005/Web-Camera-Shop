@@ -1,222 +1,274 @@
 // src/api/customerApi.js
-// ✅ Mock API KHÔNG cần faker, khớp tên hàm với components hiện tại
+// ======================================================
+// API Quản lý Khách hàng (Admin)
+// Map với backend /api/khach-hang theo tài liệu PDF
+// ======================================================
 
-export const USE_MOCK_CUSTOMER_API = true;
+import apiClient from "./apiClient";
 
-// ---------------- Helpers ----------------
-const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-const toDateStr = (d) => new Date(d).toISOString().slice(0, 10);
-const vnd = (n) => Number(n || 0).toLocaleString("vi-VN") + "đ";
+// ------------------ Helper ------------------
 
-const BRANDS = ["Sony", "Canon", "Nikon", "Fujifilm", "Panasonic", "Leica"];
-const FIRST_NAMES = [
-  "Linh",
-  "Hà",
-  "Minh",
-  "Phúc",
-  "Dũng",
-  "Oanh",
-  "Giang",
-  "An",
-  "Tú",
-  "Ngọc",
-];
-const LAST_NAMES = [
-  "Trần",
-  "Nguyễn",
-  "Lê",
-  "Võ",
-  "Phan",
-  "Hoàng",
-  "Đặng",
-  "Đỗ",
-  "Huỳnh",
-  "Bùi",
-];
-const CITIES = [
-  "Cần Thơ",
-  "Hà Nội",
-  "Đà Nẵng",
-  "TP.HCM",
-  "Hải Phòng",
-  "Nha Trang",
-];
+// Backend trả enum 'trang_thai': 'kich_hoat' | 'khoa'
+// Frontend đang dùng: "Active" | "Blocked"
+const mapBackendStatusToLabel = (trang_thai) => {
+  if (!trang_thai) return "Active";
+  const v = String(trang_thai).toLowerCase();
+  if (v.includes("khoa")) return "Blocked";
+  // 'kich_hoat' hoặc bất kỳ giá trị nào khác coi như Active
+  return "Active";
+};
 
-// ---------------- Generate Mock ----------------
-// Giảm độ "ảo": số đơn 0..5; mỗi đơn 300k..4m
-const CUSTOMERS = Array.from({ length: 150 }, (_, i) => {
-  const first = FIRST_NAMES[randInt(0, FIRST_NAMES.length - 1)];
-  const last = LAST_NAMES[randInt(0, LAST_NAMES.length - 1)];
-  const fullName = `${last} ${first}`;
+const mapLabelToBackendStatus = (status) => {
+  if (!status) return null;
+  const v = String(status).toLowerCase();
+  if (v === "blocked") return "KHOA";
+  if (v === "active") return "KICH_HOAT";
+  return null;
+};
 
-  const id = `C${String(i + 1).padStart(5, "0")}`;
-  const createdAt = new Date(Date.now() - randInt(5, 150) * 86400000);
+// Gom logic gọi backend tại 1 chỗ
+async function fetchCustomersFromApi(params = {}) {
+  const {
+    page = 1,
+    limit = 10,
+    q = "",
+    statuses = [],
+    // Các filter/sort khác hiện CHƯA được backend hỗ trợ
+    // nhưng vẫn nhận để không vỡ API
+    priceSort,
+    dateSort,
+    priceRange,
+    dateRange,
+  } = params;
 
-  const orderCount = randInt(0, 5);
-  let totalSpend = 0;
-  for (let j = 0; j < orderCount; j++)
-    totalSpend += randInt(300_000, 4_000_000);
+  const backendParams = {
+    page,
+    per_page: limit,
+  };
 
-  const statusPool = ["Active", "Returning", "Blocked"];
-  const status =
-    orderCount === 0 ? "Active" : statusPool[randInt(0, statusPool.length - 1)];
-  const isVip = totalSpend >= 30_000_000;
+  // Tạm thời: dùng q để tìm theo họ tên
+  if (q && q.trim()) {
+    backendParams.ho_ten = q.trim();
+  }
 
-  // Sản phẩm đã mua (gộp theo sản phẩm)
-  const itemsLen = randInt(0, Math.min(3, orderCount));
-  const productsBought = Array.from({ length: itemsLen }).map((_, j) => {
-    const brand = BRANDS[randInt(0, BRANDS.length - 1)];
-    const price = randInt(1_000_000, 6_000_000);
-    const qty = randInt(1, 3);
+  // Map filter trạng thái:
+  // - Nếu chỉ chọn Active -> KICH_HOAT
+  // - Nếu chỉ chọn Blocked -> KHOA
+  // - Nếu chọn cả 2 hoặc để trống thì không gửi filter trạng_thai
+  if (Array.isArray(statuses) && statuses.length === 1) {
+    const st = mapLabelToBackendStatus(statuses[0]);
+    if (st) backendParams.trang_thai = st;
+  }
+
+  const res = await apiClient.get("/khach-hang/", { params: backendParams });
+  const payload = res.data;
+
+  if (payload && payload.success === false) {
+    throw new Error(payload.message || "Không thể tải danh sách khách hàng");
+  }
+
+  const list = payload?.data || [];
+  const pagination = payload?.pagination || {};
+
+  const items = list.map((u) => {
+    const totalSpend = Number(u.tong_tien_da_mua || 0);
+    const orderCount = Number(u.so_luong_don_hang || 0);
+
     return {
-      id: `${id}-PB${j + 1}`,
-      name: `${brand} XM-${100 + randInt(0, 80)}`,
-      image: `https://picsum.photos/seed/${brand}-${i}-${j}/140/140`,
-      price,
-      totalQuantity: qty,
-      totalSpend: qty * price,
+      id: u.id,
+      ma_nguoi_dung: u.ma_nguoi_dung,
+      name: u.ho_ten,
+      email: u.email,
+      phone: u.so_dien_thoai,
+      joinedAt: u.ngay_tao,
+      joinedDate: u.ngay_tao
+        ? new Date(u.ngay_tao).toLocaleDateString("vi-VN")
+        : "",
+      statusRaw: u.trang_thai,
+      status: mapBackendStatusToLabel(u.trang_thai),
+      orderCount,
+      totalSpend,
+      avatar: null, // backend chưa có avatar
     };
   });
 
-  const lastPurchase =
-    orderCount > 0 ? toDateStr(Date.now() - randInt(1, 60) * 86400000) : null;
-  const averageOrderValue =
-    orderCount > 0 ? Math.round(totalSpend / orderCount) : 0;
+  const total = pagination.total ?? items.length;
+  const pages = pagination.pages ?? Math.max(1, Math.ceil(total / limit));
+
+  // Tính stats cho CustomerOverview (theo dữ liệu đang có)
+  const activeCount = items.filter((c) => c.status === "Active").length;
+  const blockedCount = items.filter((c) => c.status === "Blocked").length;
+  const returningCount = items.filter((c) => (c.orderCount || 0) > 1).length;
+  // Tạm coi VIP là khách chi >= 10 triệu
+  const vipCount = items.filter(
+    (c) => (c.totalSpend || 0) >= 10_000_000
+  ).length;
+  const totalSpend = items.reduce(
+    (sum, c) => sum + Number(c.totalSpend || 0),
+    0
+  );
+
+  const stats = {
+    total,
+    active: activeCount,
+    returning: returningCount,
+    blocked: blockedCount,
+    vip: vipCount,
+    totalSpend,
+  };
 
   return {
-    id,
-    code: `#${id}`,
-    name: fullName,
-    email: `${first.toLowerCase()}.${last.toLowerCase()}@gmail.com`,
-    phone: "0" + randInt(900000000, 999999999),
-    createdAt: toDateStr(createdAt),
-    avatar: `https://i.pravatar.cc/100?img=${(i % 70) + 1}`,
-    address: `${randInt(10, 200)} Đường ${randInt(1, 99)}, ${
-      CITIES[randInt(0, CITIES.length - 1)]
-    }`,
-    note: "Khách hàng thân thiết.",
-    status,
-    isVip,
+    items,
+    total,
+    pages,
+    stats,
+  };
+}
 
+// ======================================================
+// 1) getCustomers — dùng cho trang /admin/customers
+//    Trả về: { data, totalCount, stats }
+// ======================================================
+export async function getCustomers(params) {
+  const { items, total, pages, stats } = await fetchCustomersFromApi(params);
+  return {
+    data: items,
+    totalCount: total,
+    totalPages: pages,
+    stats,
+  };
+}
+
+// ======================================================
+// 2) fetchCustomers — cho CustomerTable cũ
+//    Trả về: { items, total, totalPages }
+// ======================================================
+export async function fetchCustomers(params) {
+  const { items, total, pages } = await fetchCustomersFromApi(params);
+  return {
+    items,
+    total,
+    totalPages: pages,
+  };
+}
+
+// ======================================================
+// 3) Lấy chi tiết 1 khách hàng (GET /api/khach-hang/{id})
+// ======================================================
+export async function fetchCustomerById(customerId) {
+  if (!customerId) throw new Error("Thiếu customerId");
+
+  const res = await apiClient.get(`/khach-hang/${customerId}`);
+  const payload = res.data;
+
+  if (!payload?.success) {
+    throw new Error(payload?.message || "Không thể tải chi tiết khách hàng");
+  }
+
+  const d = payload.data || {};
+  const basic = d.thong_tin_co_ban || {};
+  const tk = d.thong_ke || {};
+  const diaChiList = d.dia_chi || [];
+  const recentOrders = d.don_hang_gan_day || [];
+
+  // Lấy địa chỉ mặc định (hoặc địa chỉ đầu tiên)
+  const defaultAddr =
+    diaChiList.find((dc) => dc.mac_dinh || dc.la_mac_dinh) || diaChiList[0];
+
+  const address = defaultAddr
+    ? [
+        defaultAddr.dia_chi_cu_the,
+        defaultAddr.phuong_xa,
+        defaultAddr.tinh_thanh,
+      ]
+        .filter(Boolean)
+        .join(", ")
+    : "";
+
+  const orderCount = Number(tk.so_luong_don_hang || 0);
+  const totalSpend = Number(tk.tong_tien_da_mua || 0);
+
+  // Gom sản phẩm đã mua từ 5 đơn gần nhất
+  const productMap = new Map();
+
+  for (const dh of recentOrders) {
+    const items = dh.chi_tiet_don_hang || [];
+    for (const it of items) {
+      const key = it.ten_san_pham_luc_mua || `SP-${it.id}`;
+      const price = Number(it.don_gia_luc_mua || 0);
+      const qty = Number(it.so_luong || 0);
+      const total = price * qty;
+
+      if (!productMap.has(key)) {
+        productMap.set(key, {
+          id: key,
+          name: key,
+          price,
+          totalQuantity: qty,
+          totalSpend: total,
+          image: null, // backend chưa có ảnh tại đây
+        });
+      } else {
+        const cur = productMap.get(key);
+        cur.totalQuantity += qty;
+        cur.totalSpend += total;
+      }
+    }
+  }
+
+  const productsBought = Array.from(productMap.values()).sort(
+    (a, b) => b.totalSpend - a.totalSpend
+  );
+
+  const firstOrder = recentOrders[0];
+  const lastPurchase = firstOrder?.ngay_tao
+    ? new Date(firstOrder.ngay_tao).toLocaleString("vi-VN")
+    : "";
+
+  return {
+    id: basic.id,
+    code: basic.ma_nguoi_dung,
+    name: basic.ho_ten,
+    email: basic.email,
+    phone: basic.so_dien_thoai,
+    statusRaw: basic.trang_thai,
+    status: mapBackendStatusToLabel(basic.trang_thai),
+    createdAt: basic.ngay_tao
+      ? new Date(basic.ngay_tao).toLocaleString("vi-VN")
+      : "",
+    lastPurchase,
+    address,
     orderCount,
     totalSpend,
-
-    // Cho modal:
-    lastPurchase,
-    averageOrderValue,
+    averageOrderValue: orderCount > 0 ? totalSpend / orderCount : 0,
     productsBought,
+    avatar: null,
+    // giữ raw phòng khi cần thêm sau
+    raw: d,
   };
-});
-
-// ---------------- Stats ----------------
-function buildStats(list = CUSTOMERS) {
-  const total = list.length;
-  const active = list.filter((c) => c.status === "Active").length;
-  const blocked = list.filter((c) => c.status === "Blocked").length;
-  const vip = list.filter((c) => c.isVip).length;
-  const totalSpend = list.reduce((s, c) => s + (c.totalSpend || 0), 0);
-  return { total, active, blocked, vip, totalSpend };
 }
 
-// ---------------- API ----------------
-export async function getCustomers({
-  page = 1,
-  limit = 10,
-  q = "",
-  statuses = [],
-  priceSort = "default",
-  dateSort = "default",
-  priceRange = { min: "", max: "" },
-  dateRange = { start: "", end: "" },
-} = {}) {
-  if (!USE_MOCK_CUSTOMER_API) throw new Error("Chưa kết nối backend thật");
-  await delay(200);
-
-  let data = [...CUSTOMERS];
-
-  // Search
-  if (q) {
-    const k = q.toLowerCase();
-    data = data.filter(
-      (c) =>
-        c.name.toLowerCase().includes(k) ||
-        c.email.toLowerCase().includes(k) ||
-        c.phone.includes(k) ||
-        c.code.toLowerCase().includes(k)
-    );
-  }
-
-  // Filter: statuses
-  if (Array.isArray(statuses) && statuses.length > 0) {
-    const set = new Set(statuses);
-    data = data.filter((c) => set.has(c.status));
-  }
-
-  // Filter: price range (totalSpend)
-  const minP = Number(priceRange?.min || "");
-  const maxP = Number(priceRange?.max || "");
-  if (!Number.isNaN(minP))
-    data = data.filter((c) => c.totalSpend >= (minP || 0));
-  if (!Number.isNaN(maxP) && maxP > 0)
-    data = data.filter((c) => c.totalSpend <= maxP);
-
-  // Filter: date range (createdAt)
-  const start = dateRange?.start ? new Date(dateRange.start) : null;
-  const end = dateRange?.end ? new Date(dateRange.end) : null;
-  if (start) data = data.filter((c) => new Date(c.createdAt) >= start);
-  if (end) data = data.filter((c) => new Date(c.createdAt) <= end);
-
-  // Sorts
-  if (dateSort === "asc" || dateSort === "desc") {
-    data.sort((a, b) =>
-      dateSort === "asc"
-        ? new Date(a.createdAt) - new Date(b.createdAt)
-        : new Date(b.createdAt) - new Date(a.createdAt)
-    );
-  }
-  if (priceSort === "asc" || priceSort === "desc") {
-    data.sort((a, b) =>
-      priceSort === "asc"
-        ? a.totalSpend - b.totalSpend
-        : b.totalSpend - a.totalSpend
-    );
-  }
-
-  const totalCount = data.length;
-  const startIdx = (page - 1) * limit;
-  const items = data.slice(startIdx, startIdx + limit);
-
-  return { data: items, totalCount, stats: buildStats(data) };
-}
-
-export async function getCustomerById(id) {
-  await delay(150);
-  const found = CUSTOMERS.find((c) => c.id === id || c.code === id);
-  if (!found) throw new Error("Không tìm thấy khách hàng");
-  return found;
-}
-
-// API kiểu toggle (giữ lại cho nơi khác có thể dùng)
-export async function toggleLockCustomer(id, lock = true) {
-  await delay(120);
-  const idx = CUSTOMERS.findIndex((c) => c.id === id);
-  if (idx >= 0) CUSTOMERS[idx].status = lock ? "Blocked" : "Active";
-  return { success: true, status: CUSTOMERS[idx]?.status || "Active" };
-}
-
-// API đúng chữ ký mà components đang gọi
+// ======================================================
+// 4) Cập nhật trạng thái khách hàng
+//    PATCH /api/khach-hang/{id}/trang-thai
+//    body: { trang_thai: "KICH_HOAT" | "KHOA" }
+// ======================================================
 export async function updateCustomerStatus({ customerId, status }) {
-  await delay(120);
-  const c = CUSTOMERS.find((x) => x.id === customerId);
-  if (!c) throw new Error("Không tìm thấy khách hàng");
-  c.status = status;
-  return { success: true, status: c.status };
+  if (!customerId) throw new Error("Thiếu customerId");
+  const backendStatus = mapLabelToBackendStatus(status);
+
+  if (!backendStatus) {
+    throw new Error("Trạng thái không hợp lệ");
+  }
+
+  const res = await apiClient.patch(`/khach-hang/${customerId}/trang-thai`, {
+    trang_thai: backendStatus,
+  });
+
+  const payload = res.data;
+  if (!payload?.success) {
+    throw new Error(payload?.message || "Cập nhật trạng thái thất bại");
+  }
+
+  return payload.data; // NguoiDungResponse (nếu cần dùng thêm)
 }
-
-// Aliases để KHÔNG phải đổi code ở component
-export { getCustomers as fetchCustomers };
-export { getCustomerById as fetchCustomerById };
-
-// Xuất formatter nếu cần dùng ở chỗ khác
-export const formatVND = vnd;

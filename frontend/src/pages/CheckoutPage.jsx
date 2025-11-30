@@ -100,8 +100,7 @@ export default function CheckoutPage() {
 
       if (form.phuong_thuc_thanh_toan === "payos_qr") {
         // PAYOS → Redirect sang link thanh toán
-        window.location.href =
-          data.payment_url || data.data?.payment_url || "";
+        window.location.href = data.payment_url || data.data?.payment_url || "";
       } else {
         // COD → Backend trả trực tiếp ID đơn thật
         const id = data.id || data.data?.id;
@@ -173,20 +172,30 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold text-slate-800 mb-10">Thanh toán</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        
         {/* Cột trái */}
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 space-y-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Sản phẩm</h2>
+          <h2 className="text-xl font-semibold text-slate-900 mb-4">
+            Sản phẩm
+          </h2>
 
           {isCartCheckout &&
             itemsFromCart.map((it) => (
-              <div key={it.id} className="flex items-center gap-4 border-b pb-4">
-                <img src={it.hinh_anh} className="w-20 h-20 rounded-lg object-cover" />
+              <div
+                key={it.id}
+                className="flex items-center gap-4 border-b pb-4"
+              >
+                <img
+                  src={it.hinh_anh}
+                  className="w-20 h-20 rounded-lg object-cover"
+                />
                 <div className="flex-1">
                   <div className="font-semibold text-lg">{it.ten_san_pham}</div>
-                  <div className="text-sm text-slate-500">Biến thể: {it.ten_bien_the}</div>
+                  <div className="text-sm text-slate-500">
+                    Biến thể: {it.ten_bien_the}
+                  </div>
                   <div className="mt-2 text-emerald-600 font-bold">
-                    {Number(it.don_gia).toLocaleString("vi-VN")}₫ × {it.so_luong}
+                    {Number(it.don_gia).toLocaleString("vi-VN")}₫ ×{" "}
+                    {it.so_luong}
                   </div>
                 </div>
               </div>
@@ -194,10 +203,15 @@ export default function CheckoutPage() {
 
           {!isCartCheckout && (
             <div className="flex items-center gap-4">
-              <img src={product.primaryImage} className="w-20 h-20 rounded-lg object-cover" />
+              <img
+                src={product.primaryImage}
+                className="w-20 h-20 rounded-lg object-cover"
+              />
               <div className="flex-1">
                 <div className="font-semibold text-lg">{product.name}</div>
-                <div className="text-sm text-slate-500">Biến thể: {variant.ten_bien_the}</div>
+                <div className="text-sm text-slate-500">
+                  Biến thể: {variant.ten_bien_the}
+                </div>
 
                 <div className="flex items-center gap-3 mt-3">
                   <button
@@ -237,7 +251,9 @@ export default function CheckoutPage() {
               type="radio"
               name="pm"
               checked={form.phuong_thuc_thanh_toan === "cod"}
-              onChange={() => setForm((f) => ({ ...f, phuong_thuc_thanh_toan: "cod" }))}
+              onChange={() =>
+                setForm((f) => ({ ...f, phuong_thuc_thanh_toan: "cod" }))
+              }
             />
             COD — Thanh toán khi nhận hàng
           </label>
@@ -247,7 +263,9 @@ export default function CheckoutPage() {
               type="radio"
               name="pm"
               checked={form.phuong_thuc_thanh_toan === "payos_qr"}
-              onChange={() => setForm((f) => ({ ...f, phuong_thuc_thanh_toan: "payos_qr" }))}
+              onChange={() =>
+                setForm((f) => ({ ...f, phuong_thuc_thanh_toan: "payos_qr" }))
+              }
             />
             QR PayOS — Thanh toán online
           </label>

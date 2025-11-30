@@ -2,7 +2,12 @@
 import React, { useRef, useState, useEffect } from "react";
 import { UploadCloud, XCircle } from "lucide-react";
 
-const VariantImageUpload = ({ images = [], onChange }) => {
+const VariantImageUpload = ({
+  images = [],
+  onChange,
+  readOnly = false,
+  placeholderImage,
+}) => {
   const fileInputRef = useRef(null);
   const [localImages, setLocalImages] = useState([]);
 
@@ -12,6 +17,7 @@ const VariantImageUpload = ({ images = [], onChange }) => {
   }, [images]);
 
   const handleFileChange = (e) => {
+    if (readOnly) return;
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
@@ -29,6 +35,7 @@ const VariantImageUpload = ({ images = [], onChange }) => {
   };
 
   const handleRemove = (idx) => {
+    if (readOnly) return;
     const img = localImages[idx];
     if (img?.previewUrl) URL.revokeObjectURL(img.previewUrl);
 
@@ -41,6 +48,7 @@ const VariantImageUpload = ({ images = [], onChange }) => {
   };
 
   const setAsMain = (idx) => {
+    if (readOnly) return;
     const updated = localImages.map((img, i) => ({
       ...img,
       la_anh_dai_dien: i === idx,
@@ -51,28 +59,32 @@ const VariantImageUpload = ({ images = [], onChange }) => {
 
   return (
     <div className="space-y-4">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={handleFileChange}
-        className="hidden"
-      />
+      {!readOnly && (
+        <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="flex items-center justify-center px-4 py-2 font-semibold rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60 transition-colors duration-300 shadow-sm cursor-pointer"
-      >
-        <UploadCloud className="h-5 w-5 mr-2" />
-        Chọn ảnh
-      </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center justify-center px-4 py-2 font-semibold rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60 transition-colors duration-300 shadow-sm cursor-pointer"
+          >
+            <UploadCloud className="h-5 w-5 mr-2" />
+            Chọn ảnh
+          </button>
+        </>
+      )}
 
       {localImages.length > 0 ? (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
           {localImages.map((img, idx) => {
-            const src = img.previewUrl || img.url;
+            const src = img.previewUrl || img.url || placeholderImage;
             return (
               <div key={idx} className="relative group aspect-square">
                 <img
@@ -87,21 +99,25 @@ const VariantImageUpload = ({ images = [], onChange }) => {
                     Chính
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => handleRemove(idx)}
-                  className="absolute -top-2 -right-2 p-0.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition cursor-pointer"
-                >
-                  <XCircle className="h-6 w-6" />
-                </button>
-                {!img.la_anh_dai_dien && (
-                  <button
-                    type="button"
-                    onClick={() => setAsMain(idx)}
-                    className="absolute bottom-1 left-1 right-1 bg-blue-500 text-white text-xs py-1 rounded opacity-0 group-hover:opacity-100 transition cursor-pointer"
-                  >
-                    Đặt làm chính
-                  </button>
+                {!readOnly && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(idx)}
+                      className="absolute -top-2 -right-2 p-0.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                    >
+                      <XCircle className="h-6 w-6" />
+                    </button>
+                    {!img.la_anh_dai_dien && (
+                      <button
+                        type="button"
+                        onClick={() => setAsMain(idx)}
+                        className="absolute bottom-1 left-1 right-1 bg-blue-500 text-white text-xs py-1 rounded opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                      >
+                        Đặt làm chính
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             );
@@ -110,10 +126,12 @@ const VariantImageUpload = ({ images = [], onChange }) => {
       ) : (
         <div className="text-center py-6 text-slate-500 dark:text-slate-400 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50/60 dark:bg-slate-900/40">
           <UploadCloud className="h-10 w-10 mx-auto mb-2 opacity-50" />
-          <p>Chưa có ảnh nào được chọn</p>
-          <p className="text-sm mt-1">
-            Ảnh sẽ được upload khi bạn lưu sản phẩm
-          </p>
+          <p>Chưa có ảnh nào</p>
+          {!readOnly && (
+            <p className="text-sm mt-1">
+              Ảnh sẽ được upload khi bạn lưu sản phẩm
+            </p>
+          )}
         </div>
       )}
     </div>

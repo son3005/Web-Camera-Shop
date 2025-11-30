@@ -25,12 +25,6 @@ function formatDate(dt) {
   return d.toLocaleString("vi-VN");
 }
 
-function vnd(n) {
-  return (
-    Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + "₫"
-  );
-}
-
 function StatusBadge({ value }) {
   const map = {
     da_duyet: {
@@ -92,7 +86,7 @@ export default function AdminReviewsPage() {
     nguoi_dung_id: "",
     tu_ngay: "",
     den_ngay: "",
-    co_binh_luan: "", // "", "co", "khong"
+    co_binh_luan: "",
   });
 
   const buildParams = () => {
@@ -453,80 +447,99 @@ export default function AdminReviewsPage() {
 
             {!isLoading &&
               !isError &&
-              rows.map((dg) => (
-                <tr
-                  key={dg.id}
-                  className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/70 dark:hover:bg-slate-800/60"
-                >
-                  <td className="px-3 py-2 align-top font-mono text-xs">
-                    #{dg.id}
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <div className="font-semibold text-slate-900 dark:text-slate-50">
-                      {dg.san_pham?.ten_san_pham || `SP #${dg.san_pham_id}`}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      ID SP: {dg.san_pham_id} • CTDH: {dg.chi_tiet_don_hang_id}
-                    </div>
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <div className="font-medium text-slate-900 dark:text-slate-50">
-                      {dg.nguoi_dung?.ten || `User #${dg.nguoi_dung_id}`}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      ID: {dg.nguoi_dung_id}
-                      {dg.nguoi_dung?.email ? ` • ${dg.nguoi_dung.email}` : ""}
-                    </div>
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <div className="flex items-center gap-1">
-                      <span className="font-semibold text-amber-500">
-                        {dg.diem_danh_gia}
-                      </span>
-                      <span className="text-xs text-slate-500">/ 5</span>
-                    </div>
-                    <StarsRow value={dg.diem_danh_gia} />
-                  </td>
-                  <td className="px-3 py-2 align-top max-w-xs">
-                    {dg.binh_luan ? (
-                      <p className="text-xs text-slate-800 dark:text-slate-100 line-clamp-3">
-                        {dg.binh_luan}
-                      </p>
-                    ) : (
-                      <span className="text-xs text-slate-400">
-                        (Không có bình luận)
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 align-top text-xs text-slate-600 dark:text-slate-300">
-                    <div>Tạo: {formatDate(dg.ngay_tao)}</div>
-                    <div>Cập nhật: {formatDate(dg.ngay_cap_nhat)}</div>
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <StatusBadge value={dg.trang_thai} />
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        disabled={isMutating}
-                        onClick={() => moKhoaMut.mutate(dg.id)}
-                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-emerald-600 text-white text-xs hover:bg-emerald-500 disabled:opacity-50"
-                      >
-                        <CheckCircle2 size={14} />
-                        Duyệt
-                      </button>
-                      <button
-                        disabled={isMutating}
-                        onClick={() => khoaMut.mutate(dg.id)}
-                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-red-600 text-white text-xs hover:bg-red-500 disabled:opacity-50"
-                      >
-                        <XCircle size={14} />
-                        Khóa
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              rows.map((dg) => {
+                const productName =
+                  dg.san_pham?.ten_san_pham ||
+                  dg.ten_san_pham ||
+                  `SP #${dg.san_pham_id}`;
+
+                const productId = dg.san_pham?.id || dg.san_pham_id;
+
+                const userName =
+                  dg.nguoi_dung?.ten ||
+                  dg.nguoi_dung?.ho_ten ||
+                  dg.nguoi_dung?.ten_nguoi_dung ||
+                  `User #${dg.nguoi_dung_id}`;
+
+                const userId = dg.nguoi_dung?.id || dg.nguoi_dung_id;
+
+                return (
+                  <tr
+                    key={dg.id}
+                    className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/70 dark:hover:bg-slate-800/60"
+                  >
+                    <td className="px-3 py-2 align-top font-mono text-xs">
+                      #{dg.id}
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="font-semibold text-slate-900 dark:text-slate-50">
+                        {productName}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        ID SP: {productId} • CTDH: {dg.chi_tiet_don_hang_id}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="font-medium text-slate-900 dark:text-slate-50">
+                        {userName}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        ID: {userId}
+                        {dg.nguoi_dung?.email
+                          ? ` • ${dg.nguoi_dung.email}`
+                          : ""}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-amber-500">
+                          {dg.diem_danh_gia}
+                        </span>
+                        <span className="text-xs text-slate-500">/ 5</span>
+                      </div>
+                      <StarsRow value={dg.diem_danh_gia} />
+                    </td>
+                    <td className="px-3 py-2 align-top max-w-xs">
+                      {dg.binh_luan ? (
+                        <p className="text-xs text-slate-800 dark:text-slate-100 line-clamp-3">
+                          {dg.binh_luan}
+                        </p>
+                      ) : (
+                        <span className="text-xs text-slate-400">
+                          (Không có bình luận)
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 align-top text-xs text-slate-600 dark:text-slate-300">
+                      <div>Tạo: {formatDate(dg.ngay_tao)}</div>
+                      <div>Cập nhật: {formatDate(dg.ngay_cap_nhat)}</div>
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <StatusBadge value={dg.trang_thai} />
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          disabled={isMutating}
+                          onClick={() => moKhoaMut.mutate(dg.id)}
+                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-emerald-600 text-white text-xs hover:bg-emerald-500 disabled:opacity-50"
+                        >
+                          <CheckCircle2 size={14} />
+                          Duyệt
+                        </button>
+                        <button
+                          disabled={isMutating}
+                          onClick={() => khoaMut.mutate(dg.id)}
+                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-red-600 text-white text-xs hover:bg-red-500 disabled:opacity-50"
+                        >
+                          <XCircle size={14} />
+                          Khóa
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
 

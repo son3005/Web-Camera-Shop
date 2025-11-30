@@ -38,15 +38,17 @@ const FormInput = ({
   </div>
 );
 
-const toActiveBool = (raw) => {
-  if (typeof raw === "boolean") return raw;
+// map status raw -> nhãn
+const getStatusLabel = (raw) => {
+  if (typeof raw === "boolean") return raw ? "Đang bán" : "Ngừng bán";
   if (typeof raw === "string") {
-    const v = raw.trim().toLowerCase();
-    // nhận cả "dang_ban" và "dang_ban" từ "DANG_BAN"
-    if (v === "dang_ban") return true;
-    return false; // "an", "ngung_ban", ...
+    const v = raw.trim().toUpperCase();
+    if (["DANG_BAN", "DANGBAN", "ACTIVE", "DANG_BAN"].includes(v))
+      return "Đang bán";
+    if (["SAP_BAN", "SAPBAN", "COMING_SOON"].includes(v)) return "Sắp bán";
+    if (["NGUNG_BAN", "AN", "INACTIVE"].includes(v)) return "Ngừng bán";
   }
-  return false;
+  return "Ngừng bán";
 };
 
 const VariantManager = ({
@@ -84,9 +86,7 @@ const VariantManager = ({
                 <FormInput
                   label="Trạng thái"
                   readOnly={true}
-                  defaultValue={
-                    variant.trang_thai_kich_hoat ? "Đang bán" : "Ngừng bán"
-                  }
+                  defaultValue={getStatusLabel(variant.trang_thai_kich_hoat)}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -189,7 +189,7 @@ const VariantManager = ({
               />
             </div>
 
-            {/* Hàng 2: giá + số lượng */}
+            {/* Hàng 2: giá + số lượng + trạng thái (select) */}
             <div className="grid grid-cols-3 gap-4">
               <FormInput
                 label="Giá bán"
@@ -206,7 +206,7 @@ const VariantManager = ({
                 errors={errors?.bien_the_san_phams?.[index]?.so_luong}
               />
 
-              {/* ✅ Trạng thái biến thể */}
+              {/* ✅ Trạng thái biến thể: 3 lựa chọn, không nhập số */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
                   Trạng thái
@@ -215,25 +215,16 @@ const VariantManager = ({
                   name={`bien_the_san_phams.${index}.trang_thai_kich_hoat`}
                   control={control}
                   defaultValue={field.trang_thai_kich_hoat || "dang_ban"}
-                  render={({ field: stField }) => {
-                    const isOn =
-                      stField.value === "dang_ban" || stField.value === true;
-                    return (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          stField.onChange(isOn ? "ngung_ban" : "dang_ban")
-                        }
-                        className={`px-3 py-1 rounded-lg text-sm font-semibold w-fit transition-colors ${
-                          isOn
-                            ? "bg-emerald-500 text-white"
-                            : "bg-slate-200/80 text-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
-                        }`}
-                      >
-                        {isOn ? "Đang bán" : "Ngừng bán"}
-                      </button>
-                    );
-                  }}
+                  render={({ field: stField }) => (
+                    <select
+                      {...stField}
+                      className="w-full px-3 py-2 rounded-lg text-sm bg-white/80 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 cursor-pointer"
+                    >
+                      <option value="dang_ban">Đang bán</option>
+                      <option value="sap_ban">Sắp bán</option>
+                      <option value="ngung_ban">Ngừng bán</option>
+                    </select>
+                  )}
                 />
               </div>
             </div>

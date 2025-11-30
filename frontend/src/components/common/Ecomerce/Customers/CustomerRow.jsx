@@ -49,6 +49,24 @@ export default function CustomerRow({ item, onOpenDetail }) {
     }[item.status] ||
     "bg-slate-100 text-slate-800 dark:bg-slate-900/40 dark:text-slate-300";
 
+  const renderAvatar = () => {
+    if (item?.avatar) {
+      return (
+        <img
+          src={item.avatar}
+          alt={item.name}
+          className="w-9 h-9 rounded-full object-cover"
+        />
+      );
+    }
+    const initial = (item?.name || item?.email || "?")[0]?.toUpperCase() || "?";
+    return (
+      <div className="w-9 h-9 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-800 dark:text-white">
+        {initial}
+      </div>
+    );
+  };
+
   return (
     <tr className="border-b border-black/5 dark:border-white/5 hover:bg-slate-200/40 dark:hover:bg-white/5">
       <td className="px-4 py-3 font-bold text-slate-800 dark:text-slate-200 text-center">
@@ -57,17 +75,13 @@ export default function CustomerRow({ item, onOpenDetail }) {
 
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <img
-            src={item?.avatar}
-            alt={item?.name}
-            className="w-9 h-9 rounded-full object-cover"
-          />
+          {renderAvatar()}
           <div>
             <div className="font-semibold text-slate-900 dark:text-white">
               {item?.name || "-"}
             </div>
             <div className="text-xs text-slate-500">
-              {item?.createdAt || "-"}
+              {item?.createdAt || item?.joinedDate || "-"}
             </div>
           </div>
         </div>
@@ -81,7 +95,6 @@ export default function CustomerRow({ item, onOpenDetail }) {
       </td>
 
       <td className="px-4 py-3 text-center">{Number(item?.orderCount || 0)}</td>
-      {/* >>> Sửa tại đây: dùng helper vnd() để tránh lỗi toLocaleString khi undefined */}
       <td className="px-4 py-3 text-center">{vnd(item?.totalSpend)}</td>
 
       <td className="px-4 py-3 text-center">

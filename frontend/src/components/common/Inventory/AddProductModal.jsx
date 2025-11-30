@@ -9,6 +9,24 @@ import { useProducts } from "../../../hooks/useProducts";
 import { useCatalogs } from "../../../hooks/useCatalogs";
 import { useToast } from "../../../hooks/useToast";
 
+const mapBackendStatusToForm = (raw) => {
+  if (typeof raw === "boolean") return raw ? "dang_ban" : "ngung_ban";
+  if (typeof raw === "string") {
+    const v = raw.trim().toUpperCase();
+    if (["DANG_BAN", "DANGBAN", "ACTIVE", "DANG_BAN"].includes(v))
+      return "dang_ban";
+    if (["SAP_BAN", "SAPBAN", "COMING_SOON"].includes(v)) return "sap_ban";
+    if (["NGUNG_BAN", "AN", "INACTIVE"].includes(v)) return "ngung_ban";
+  }
+  return "ngung_ban";
+};
+
+const mapFormStatusToBackend = (raw) => {
+  if (raw === "sap_ban") return "sap_ban";
+  if (raw === "ngung_ban" || raw === false) return "ngung_ban";
+  return "dang_ban";
+};
+
 const AddProductModal = ({ mode, productId, onClose }) => {
   const { useGetSanPhamById, useCreateSanPham, useUpdateSanPham } =
     useProducts();
@@ -20,10 +38,8 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     toastHook?.success || toastHook?.toast?.success || (() => {});
   const showError = toastHook?.error || toastHook?.toast?.error || (() => {});
 
-  // để gom id biến thể cũ bị xoá
   const [deletedVariantIds, setDeletedVariantIds] = useState([]);
 
-  // dropdown data
   const { data: danhMucData } = useGetAllDanhMuc({ page: 1, per_page: 100 });
   const { data: thuongHieuData } = useGetAllThuongHieu({
     page: 1,
@@ -31,7 +47,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
   });
   const { data: capDoData } = useGetAllCapDo({ page: 1, per_page: 100 });
 
-  // detail khi edit
   const { data: productDetail } = useGetSanPhamById(productId, {
     enabled: mode === "edit" && !!productId,
   });
@@ -46,7 +61,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
       thuong_hieu_id: "",
       cap_do_id: "",
       mo_ta: "",
-      // vẫn giữ để backend không thiếu, nhưng không render ra UI nữa
       trang_thai: "dang_ban",
       thong_so_ky_thuat: {},
       bien_the_san_phams: [
@@ -55,7 +69,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
           gia_ban: 0,
           mau: "",
           so_luong: 0,
-          // trạng thái sẽ hiển thị trong từng biến thể (VariantManager)
           trang_thai_kich_hoat: "dang_ban",
           hinh_anhs: [],
         },
@@ -82,8 +95,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
         thuong_hieu_id: productDetail.thuong_hieu_id?.toString() || "",
         cap_do_id: productDetail.cap_do_id?.toString() || "",
         mo_ta: productDetail.mo_ta || "",
-        // giữ lại trạng thái của sản phẩm nhưng không cho sửa
-        trang_thai: productDetail.trang_thai || "dang_ban",
+        trang_thai: mapBackendStatusToForm(productDetail.trang_thai),
         thong_so_ky_thuat:
           typeof productDetail.thong_so_ky_thuat === "string"
             ? (() => {
@@ -104,10 +116,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
             typeof v.so_luong_ton === "number"
               ? v.so_luong_ton
               : v.so_luong || 0,
-          // ✅ trạng thái nằm ở từng biến thể
-          trang_thai_kich_hoat: v.trang_thai_kich_hoat
-            ? "dang_ban"
-            : "ngung_ban",
+          trang_thai_kich_hoat: mapBackendStatusToForm(v.trang_thai_kich_hoat),
           hinh_anhs: (v.hinh_anhs || []).map((img, idx) => ({
             id: img.id,
             url: img.url,
@@ -121,7 +130,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     }
   }, [mode, productDetail, reset]);
 
-  // chuẩn hóa để đưa thẳng cho backend
   const normalizeForBackend = (formData) => {
     const thongSoObj = formData.thong_so_ky_thuat || {};
 
@@ -135,38 +143,29 @@ const AddProductModal = ({ mode, productId, onClose }) => {
       cap_do_id: formData.cap_do_id ? Number(formData.cap_do_id) : undefined,
       ten_san_pham: formData.ten_san_pham?.trim(),
       mo_ta: formData.mo_ta || "",
-      // vẫn gửi lên nếu backend cần
-      trang_thai: formData.trang_thai || "dang_ban",
+      trang_thai: mapFormStatusToBackend(formData.trang_thai),
       thong_so_ky_thuat: thongSoObj,
       bien_the_xoa_ids: deletedVariantIds,
-      cac_bien_the: (formData.bien_the_san_phams || []).map((v, i) => {
-        const trangThai =
-          v.trang_thai_kich_hoat === "dang_ban" ||
-          v.trang_thai_kich_hoat === true
-            ? "dang_ban"
-            : "ngung_ban";
-
-        return {
-          ...(v.id ? { id: v.id } : {}),
-          ten_bien_the: v.ten_bien_the?.trim(),
-          mau: v.mau || "",
-          gia_ban: v.gia_ban ? Number(v.gia_ban) : 0,
-          trang_thai_kich_hoat: trangThai,
-          so_luong: v.so_luong ? Number(v.so_luong) : 0,
-          hinh_anhs: (v.hinh_anhs || []).map((img, j) => ({
-            ...(img.id ? { id: img.id } : {}),
-            alt_text: img.alt_text || img?.file?.name || `Ảnh ${j + 1}`,
-            thu_tu: typeof img.thu_tu === "number" ? img.thu_tu : j + 1,
-            la_anh_dai_dien:
-              typeof img.la_anh_dai_dien === "boolean"
-                ? img.la_anh_dai_dien
-                : j === 0,
-            ...(img.url ? { url: img.url } : {}),
-            ...(img.public_id ? { public_id: img.public_id } : {}),
-            ...(img.file ? { file: img.file } : {}),
-          })),
-        };
-      }),
+      cac_bien_the: (formData.bien_the_san_phams || []).map((v, i) => ({
+        ...(v.id ? { id: v.id } : {}),
+        ten_bien_the: v.ten_bien_the?.trim(),
+        mau: v.mau || "",
+        gia_ban: v.gia_ban ? Number(v.gia_ban) : 0,
+        trang_thai_kich_hoat: mapFormStatusToBackend(v.trang_thai_kich_hoat),
+        so_luong: v.so_luong ? Number(v.so_luong) : 0,
+        hinh_anhs: (v.hinh_anhs || []).map((img, j) => ({
+          ...(img.id ? { id: img.id } : {}),
+          alt_text: img.alt_text || img?.file?.name || `Ảnh ${j + 1}`,
+          thu_tu: typeof img.thu_tu === "number" ? img.thu_tu : j + 1,
+          la_anh_dai_dien:
+            typeof img.la_anh_dai_dien === "boolean"
+              ? img.la_anh_dai_dien
+              : j === 0,
+          ...(img.url ? { url: img.url } : {}),
+          ...(img.public_id ? { public_id: img.public_id } : {}),
+          ...(img.file ? { file: img.file } : {}),
+        })),
+      })),
     };
   };
 
