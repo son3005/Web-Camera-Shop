@@ -14,14 +14,14 @@ class ThongKeService:
         try:
             # Subquery để lấy giá nhập gần nhất cho mỗi biến thể tại thời điểm đơn hàng
             subquery_gia_nhap = db.session.query(
-                ChiTietPhieuThu.bien_the_san_pham_id,
-                ChiTietPhieuThu.gia_nhap_tung_vat,
-                PhieuThu.ngay_thu,
+                ChiTietPhieuNhap.bien_the_san_pham_id,
+                ChiTietPhieuNhap.gia_nhap_tung_vat,
+                PhieuNhap.ngay_thu,
                 func.row_number().over(
-                    partition_by=ChiTietPhieuThu.bien_the_san_pham_id,
-                    order_by=desc(PhieuThu.ngay_thu)
+                    partition_by=ChiTietPhieuNhap.bien_the_san_pham_id,
+                    order_by=desc(PhieuNhap.ngay_thu)
                 ).label('row_num')
-            ).join(PhieuThu, ChiTietPhieuThu.phieu_thu_id == PhieuThu.id
+            ).join(PhieuNhap, ChiTietPhieuNhap.phieu_thu_id == PhieuNhap.id
             ).subquery()
 
             # Query chính để tính doanh thu và lợi nhuận

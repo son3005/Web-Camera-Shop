@@ -71,8 +71,8 @@ class AnhTrinhChieuService:
         return AnhTrinhChieuResponsePrivate.from_orm(anh_trinh_chieu)
     
     @staticmethod
-    def delete_anh_trinh_chieu(data: AnhTrinhChieuDelete) -> bool:
-        anh_trinh_chieu = AnhTrinhChieu.query.get(data.anh_trinh_chieu_id)
+    def delete_anh_trinh_chieu(anh_trinh_chieu_id: int) -> bool:
+        anh_trinh_chieu = AnhTrinhChieu.query.get(anh_trinh_chieu_id)
         if not anh_trinh_chieu:
             return False
         

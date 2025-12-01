@@ -62,7 +62,7 @@ class NguoiDung(db.Model):
     # --- QUAN HỆ - Sử dụng string reference ---
     gio_hang = db.relationship('GioHang', back_populates='nguoi_dung', uselist=False, cascade="all, delete-orphan")
     don_hangs = db.relationship('DonHang', back_populates='nguoi_dung', lazy='dynamic')
-    phieu_thus = db.relationship('PhieuThu', back_populates='nguoi_dung', lazy='dynamic')  # String reference
+    phieu_nhaps = db.relationship('PhieuNhap', back_populates='nguoi_dung', lazy='dynamic')  # String reference
     danh_gias = db.relationship('DanhGia', back_populates='nguoi_dung', lazy='dynamic')
     dia_chis = db.relationship('DiaChi', back_populates='nguoi_dung', lazy='dynamic', cascade="all, delete-orphan")
 

@@ -1,1 +1,1 @@
-from .AnhTrinhChieu import AnhTrinhChieus
+from .AnhTrinhChieu import AnhTrinhChieu

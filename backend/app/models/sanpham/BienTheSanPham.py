@@ -24,7 +24,7 @@ class BienTheSanPham(db.Model):
     hinh_anhs = db.relationship('HinhAnhSanPham', back_populates='bien_the', cascade="all, delete-orphan")
     chi_tiet_gio_hangs = db.relationship('ChiTietGioHang', back_populates='bien_the_san_pham')
     chi_tiet_don_hangs = db.relationship('ChiTietDonHang', back_populates='bien_the_san_pham')
-    chi_tiet_phieu_thus = db.relationship('ChiTietPhieuThu', back_populates='bien_the_san_pham')
+    chi_tiet_phieu_nhaps = db.relationship('ChiTietPhieuNhap', back_populates='bien_the_san_pham')
 
     #-- Ràng buộc kiểm tra ---
     __table_args__ = (
@@ -33,6 +33,6 @@ class BienTheSanPham(db.Model):
         CheckConstraint('so_luong_nhap >= 0', name='check_so_luong_nhap_positive'),
         CheckConstraint('so_luong_ban >= 0', name='check_so_luong_ban_positive')
     )
-
+    
     def __repr__(self):
         return f'<Sản phẩm ID {self.san_pham_id} - Tên: {self.ten_bien_the}>'

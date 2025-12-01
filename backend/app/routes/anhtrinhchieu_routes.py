@@ -23,18 +23,25 @@ class ErrorResponse(BaseModel):
 class AnhTrinhChieuPath(BaseModel):
     anh_trinh_chieu_id: int
 
-anhtrinhchieu_api = APIBlueprint('anhtrinhchieu', __name__, url_prefix='/api/anhtrinhchieu')
+anhtrinhchieu_api = APIBlueprint('anhtrinhchieu', __name__, url_prefix='/api/anh-trinh-chieu')
 
 @anhtrinhchieu_api.get(
         '/private/<int:anh_trinh_chieu_id>', 
         responses={200: AnhTrinhChieuResponsePrivate}
         )
 @admin_required
-def get_anh_trinh_chieu_private(data: AnhTrinhChieuPath):
+def get_anh_trinh_chieu_private(path: AnhTrinhChieuPath):
     """Lấy thông tin ảnh trình chiếu theo ID (dành cho admin)"""
-    anh_trinh_chieu = AnhTrinhChieuService.get_anh_trinh_chieu_by_id(data.anh_trinh_chieu_id)
+    try:
+        id_anh_trinh_chieu = path.anh_trinh_chieu_id
+        if not id_anh_trinh_chieu:
+            raise BadRequest("Thiếu ID ảnh trình chiếu.")
+    except ValidationError as e:
+        raise BadRequest(e.errors())
+    
+    anh_trinh_chieu = AnhTrinhChieuService.get_anh_trinh_chieu_by_id(id_anh_trinh_chieu)
     if not anh_trinh_chieu:
-        raise NotFound(f"Ảnh trình chiếu với ID {data.anh_trinh_chieu_id} không tồn tại.")
+        raise NotFound(f"Ảnh trình chiếu với ID {id_anh_trinh_chieu} không tồn tại.")
     return jsonify(anh_trinh_chieu.model_dump())
 
 @anhtrinhchieu_api.get(
@@ -82,7 +89,12 @@ def create_anh_trinh_chieu():
     except Exception as e:
         raise BadRequest(f"Lỗi khi upload hình ảnh: {str(e)}")
     
-    anh_trinh_chieu_moi = AnhTrinhChieuService.create_anh_trinh_chieu(trinh_chieu_anh_data)
+    try:
+        create_data = AnhTrinhChieuCreate(**trinh_chieu_anh_data)
+    except ValidationError as e:
+        raise BadRequest(f"Dữ liệu không hợp lệ: {e.errors()}")
+    
+    anh_trinh_chieu_moi = AnhTrinhChieuService.create_anh_trinh_chieu(create_data)
     return jsonify(anh_trinh_chieu_moi.model_dump()), 201
 
 @anhtrinhchieu_api.put(
@@ -90,37 +102,47 @@ def create_anh_trinh_chieu():
         responses={200: AnhTrinhChieuResponsePrivate}
         )
 @admin_required
-def update_anh_trinh_chieu(data: AnhTrinhChieuPath):
+def update_anh_trinh_chieu(path: AnhTrinhChieuPath):
     """Cập nhật thông tin ảnh trình chiếu (dành cho admin)"""
+    try:
+        id_anh_trinh_chieu = path.anh_trinh_chieu_id
+        if not id_anh_trinh_chieu:
+            raise BadRequest("Thiếu ID ảnh trình chiếu.")
+    except ValidationError as e:
+        raise BadRequest(e.errors())
+
     try:
         update_data = AnhTrinhChieuUpdate.model_validate(request.json)
     except ValidationError as e:
         raise BadRequest(e.errors())
     
-    anh_trinh_chieu_cap_nhat = AnhTrinhChieuService.update_anh_trinh_chieu(data.anh_trinh_chieu_id, update_data)
+    anh_trinh_chieu_cap_nhat = AnhTrinhChieuService.update_anh_trinh_chieu(id_anh_trinh_chieu, update_data)
     if not anh_trinh_chieu_cap_nhat:
-        raise NotFound(f"Ảnh trình chiếu với ID {data.anh_trinh_chieu_id} không tồn tại.")
+        raise NotFound(f"Ảnh trình chiếu với ID {id_anh_trinh_chieu} không tồn tại.")
     
     return jsonify(anh_trinh_chieu_cap_nhat.model_dump())
 
+
+ 
+class DeleteResponse(BaseModel):
+    detail: str
+
 @anhtrinhchieu_api.delete(
         '/private/<int:anh_trinh_chieu_id>',
-        responses={200: BaseModel}
+        responses={200: DeleteResponse}
         )
 @admin_required
-def delete_anh_trinh_chieu(data: AnhTrinhChieuPath):
+def delete_anh_trinh_chieu(path: AnhTrinhChieuPath):
     """Xóa ảnh trình chiếu (dành cho admin)"""
-    xoa_thanh_cong = AnhTrinhChieuService.delete_anh_trinh_chieu(data.anh_trinh_chieu_id)
+    try:
+        id_anh_trinh_chieu = path.anh_trinh_chieu_id
+        if not id_anh_trinh_chieu:
+            raise BadRequest("Thiếu ID ảnh trình chiếu.")
+    except ValidationError as e:
+        raise BadRequest(e.errors())
+
+    xoa_thanh_cong = AnhTrinhChieuService.delete_anh_trinh_chieu(id_anh_trinh_chieu)
     if not xoa_thanh_cong:
-        raise NotFound(f"Ảnh trình chiếu với ID {data.anh_trinh_chieu_id} không tồn tại.")
+        raise NotFound(f"Ảnh trình chiếu với ID {id_anh_trinh_chieu} không tồn tại.")
     
     return jsonify({"detail": "Xóa ảnh trình chiếu thành công."})
-
-@anhtrinhchieu_api.get(
-    '/',
-    responses={200: DanhSachAnhTrinhChieuResponsePublic}
-)
-def get_all_anh_trinh_chieu_public():
-    """Lấy danh sách ảnh trình chiếu (dành cho public)"""
-    danh_sach = AnhTrinhChieuService.get_all_anh_trinh_chieu_public()
-    return jsonify(danh_sach.model_dump())

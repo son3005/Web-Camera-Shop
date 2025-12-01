@@ -1,17 +1,19 @@
 # app/services/sanpham_service.py
 import logging
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, aliased
 from sqlalchemy import or_, and_, func
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import NotFound, BadRequest
 from datetime import datetime
 
+from ..models.extras import DanhGia
+
 from ..extensions import db
 from ..models.sanpham import SanPham, BienTheSanPham, HinhAnhSanPham, DanhMuc, ThuongHieu, CapDo
 from ..models.giohang_dathang import ChiTietDonHang
 from ..schemas.sanpham import (
-    SanPhamCreate, SanPhamUpdate, SanPhamResponse,
-    BienTheSanPhamCreate, BienTheSanPhamUpdate
+    SanPhamCreate, SanPhamUpdate, SanPhamResponse, SanPhamLienQuanResponse,
+    BienTheSanPhamCreate, BienTheSanPhamUpdate,
 )
 from ..utils.taoMa import generate_ma_san_pham
 from .cloudinary_service import delete_image_task
@@ -637,82 +639,6 @@ class SanPhamService:
             logger.error(f"Lỗi khi lấy danh sách biến thể cơ bản: {e}", exc_info=True)
             raise BadRequest(f"Lỗi khi lấy danh sách biến thể: {str(e)}")
         
-    @staticmethod
-    def get_all_san_pham_noi_bat(limit=10):
-        """
-        Lấy danh sách sản phẩm nổi bật (bán chạy nhất) trong tháng hiện tại.
-        Nếu không đủ limit, lấy thêm sản phẩm nổi bật tổng thể.
-        """
-        logger.info(f"Lấy danh sách sản phẩm nổi bật (bán chạy nhất), giới hạn: {limit}")
-
-        try:
-            now = datetime.utcnow()
-            first_day = datetime(now.year, now.month, 1)
-            # Subquery: tổng số lượng bán trong tháng hiện tại
-            subquery_month = (
-                db.session.query(
-                    BienTheSanPham.san_pham_id.label("san_pham_id"),
-                    func.coalesce(func.sum(ChiTietDonHang.so_luong), 0).label("tong_so_luong_ban")
-                )
-                .join(ChiTietDonHang, ChiTietDonHang.bien_the_san_pham_id == BienTheSanPham.id)
-                .filter(ChiTietDonHang.ngay_tao >= first_day)
-                .group_by(BienTheSanPham.san_pham_id)
-                .subquery()
-            )
-
-            # Query sản phẩm nổi bật trong tháng
-            query_month = (
-                SanPham.query
-                .options(
-                    joinedload(SanPham.danh_muc),
-                    joinedload(SanPham.thuong_hieu),
-                    joinedload(SanPham.cap_do),
-                    selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
-                )
-                .join(subquery_month, SanPham.id == subquery_month.c.san_pham_id)
-                .order_by(desc(subquery_month.c.tong_so_luong_ban))
-                .limit(limit)
-            )
-            san_phams_month = query_month.all()
-            san_pham_ids = {sp.id for sp in san_phams_month}
-
-            # Nếu chưa đủ limit, lấy thêm sản phẩm nổi bật tổng thể (không trùng)
-            if len(san_phams_month) < limit:
-                subquery_all = (
-                    db.session.query(
-                        BienTheSanPham.san_pham_id.label("san_pham_id"),
-                        func.coalesce(func.sum(ChiTietDonHang.so_luong), 0).label("tong_so_luong_ban")
-                    )
-                    .outerjoin(ChiTietDonHang, ChiTietDonHang.bien_the_san_pham_id == BienTheSanPham.id)
-                    .group_by(BienTheSanPham.san_pham_id)
-                    .subquery()
-                )
-                query_all = (
-                    SanPham.query
-                    .options(
-                        joinedload(SanPham.danh_muc),
-                        joinedload(SanPham.thuong_hieu),
-                        joinedload(SanPham.cap_do),
-                        selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
-                    )
-                    .join(subquery_all, SanPham.id == subquery_all.c.san_pham_id)
-                    .filter(SanPham.id.in_(san_pham_ids))
-                    .order_by(desc(subquery_all.c.tong_so_luong_ban))
-                    .limit(limit - len(san_phams_month))
-                )
-                san_phams_all = query_all.all()
-            else:
-                san_phams_all = []
-
-            san_phams = san_phams_month + san_phams_all
-            data = [SanPhamResponse.model_validate(p).model_dump() for p in san_phams]
-
-            logger.info(f"Lấy danh sách sản phẩm nổi bật thành công: {len(data)} sản phẩm")
-            return {"data": data}
-
-        except Exception as e:
-            logger.error(f"Lỗi khi lấy danh sách sản phẩm nổi bật: {e}", exc_info=True)
-            raise BadRequest(f"Lỗi khi lấy danh sách sản phẩm nổi bật: {str(e)}")
         
     @staticmethod
     def get_san_pham_moi_nhat(limit=10):
@@ -735,7 +661,13 @@ class SanPhamService:
             )
             data = [SanPhamResponse.model_validate(p).model_dump() for p in san_phams]
             logger.info(f"Lấy danh sách sản phẩm mới nhất thành công: {len(data)} sản phẩm")
-            return {"data": data}
+            pagination = {
+                "total": len(data),
+                "page": 1,
+                "size": limit,
+                "total_pages": 1
+            }
+            return {"data": data, "pagination": pagination}
         except Exception as e:
             logger.error(f"Lỗi khi lấy danh sách sản phẩm mới nhất: {e}", exc_info=True)
             raise BadRequest(f"Lỗi khi lấy danh sách sản phẩm mới nhất: {str(e)}")
@@ -764,7 +696,8 @@ class SanPhamService:
                 .filter(
                     or_(
                         SanPham.danh_muc_id == san_pham.danh_muc_id,
-                        SanPham.thuong_hieu_id == san_pham.thuong_hieu_id
+                        SanPham.thuong_hieu_id == san_pham.thuong_hieu_id,
+                        SanPham.cap_do_id == san_pham.cap_do_id
                     ),
                     SanPham.id != san_pham_id
                 )
@@ -772,12 +705,90 @@ class SanPhamService:
                 .limit(limit)
             )
             san_phams = query.all()
-            data = [SanPhamResponse.model_validate(p).model_dump() for p in san_phams]
+            data = [SanPhamLienQuanResponse.model_validate(p).model_dump() for p in san_phams]
             logger.info(f"Lấy sản phẩm liên quan thành công: {len(data)} sản phẩm")
+            
             return {"data": data}
         except Exception as e:
             logger.error(f"Lỗi khi lấy sản phẩm liên quan: {e}", exc_info=True)
             raise BadRequest(f"Lỗi khi lấy sản phẩm liên quan: {str(e)}")
+        
+    @staticmethod
+    def get_san_pham_noi_bat(limit: int = 8):
+        """
+        Lấy danh sách sản phẩm nổi bật - phiên bản đơn giản kết hợp
+        """
+        logger.info(f"Lấy danh sách sản phẩm nổi bật, limit={limit}")
+        try:
+            # Tính tổng số lượng bán và kết hợp với sản phẩm
+            san_phams_with_sales = (
+                db.session.query(
+                    SanPham,
+                    func.coalesce(func.sum(BienTheSanPham.so_luong_ban), 0).label('tong_ban')
+                )
+                .options(
+                    joinedload(SanPham.danh_muc),
+                    joinedload(SanPham.thuong_hieu),
+                    joinedload(SanPham.cap_do),
+                    selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
+                )
+                .outerjoin(BienTheSanPham, SanPham.id == BienTheSanPham.san_pham_id)
+                .group_by(SanPham.id)
+                .subquery()
+            )
+
+            # Tạo alias cho subquery
+            SanPhamWithSales = aliased(SanPham, san_phams_with_sales)
+            tong_ban = san_phams_with_sales.c.tong_ban
+
+            # Tính số ngày từ khi tạo
+            days_since_created = func.datediff(func.now(), SanPhamWithSales.ngay_tao)
+            
+            # Công thức tính điểm
+            score = (
+                (func.coalesce(SanPhamWithSales.so_sao_trung_binh, 0) * func.coalesce(SanPhamWithSales.so_luong_danh_gia, 0)) +
+                (func.coalesce(SanPhamWithSales.so_luong_danh_gia, 0) * 0.1) +
+                func.greatest(0, 100 - days_since_created) +
+                (tong_ban * 0.5)
+            )
+
+            results = (
+                db.session.query(SanPhamWithSales, score.label('diem_noi_bat'), tong_ban)
+                .order_by(desc('diem_noi_bat'))
+                .limit(limit)
+                .all()
+            )
+
+            if not results:
+                # Fallback: lấy sản phẩm mới nhất
+                logger.info("Không có sản phẩm, lấy sản phẩm mới nhất")
+                san_phams = (
+                    SanPham.query
+                    .options(
+                        joinedload(SanPham.danh_muc),
+                        joinedload(SanPham.thuong_hieu),
+                        joinedload(SanPham.cap_do),
+                        selectinload(SanPham.cac_bien_the).selectinload(BienTheSanPham.hinh_anhs)
+                    )
+                    .order_by(desc(SanPham.ngay_tao))
+                    .limit(limit)
+                    .all()
+                )
+                data = [SanPhamResponse.model_validate(p).model_dump() for p in san_phams]
+            else:
+                data = [SanPhamResponse.model_validate(p[0]).model_dump() for p in results]
+
+            pagination = {
+                "total": len(data),
+                "page": 1,
+                "size": limit,
+                "total_pages": 1
+            }
+            logger.info(f"Lấy danh sách sản phẩm nổi bật thành công: {len(data)} sản phẩm")
+            return {"data": data, "pagination": pagination}
+        except Exception as e:
+            logger.error(f"Lỗi khi lấy danh sách sản phẩm nổi bật: {e}", exc_info=True)
+            raise BadRequest(f"Lỗi khi lấy danh sách sản phẩm nổi bật: {str(e)}")
         
     @staticmethod
     def search_bien_the_by_ten_san_pham(search: str, limit=20):
@@ -836,7 +847,15 @@ class SanPhamService:
                 for bien_the, san_pham in results
             ]
             logger.info(f"Tìm thấy {len(data)} biến thể phù hợp")
-            return {"data": data}
+            pagination = {
+                "total": len(data),
+                "page": 1,
+                "size": limit,
+                "total_pages": 1
+            }
+            return {"data": data, "pagination": pagination}
         except Exception as e:
             logger.error(f"Lỗi khi tìm kiếm biến thể theo tên sản phẩm: {e}", exc_info=True)
             raise BadRequest(f"Lỗi khi tìm kiếm biến thể: {str(e)}")
+        
+    

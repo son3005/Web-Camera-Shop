@@ -23,6 +23,11 @@ from ..utils.decorators import admin_required
 # ==============================================================
 product_api = APIBlueprint('product_api', __name__, url_prefix='/api/san-pham')
 
+
+class SanPhamLimit(BaseModel):
+    limit: int = Field(10, description="Số lượng sản phẩm cần lấy")
+
+
 # ==============================================================
 # 1️ LẤY DANH SÁCH SẢN PHẨM
 # ==============================================================
@@ -469,8 +474,9 @@ def get_san_pham_noi_bat():
 # ==============================================================
 # 9 LẤY DANH SÁCH SẢN PHẨM SẢN PHẨM MỚI NHẤT
 # ==============================================================
+
 @product_api.get(
-    '/danh-sach-moi-nhat',
+    '/danh-sach-moi-nhat/',
     responses={"200": SanPhamListResponse}
 )
 def get_san_pham_moi_nhat():
@@ -508,9 +514,8 @@ def get_san_pham_lien_quan(path: SanPhamPath):
         current_app.logger.info(f"Lấy danh sách sản phẩm liên quan cho sản phẩm {path.san_pham_id} với limit={limit}")
         
         result = SanPhamService.get_san_pham_lien_quan(san_pham_id=path.san_pham_id, limit=limit)
-        response = SanPhamListResponse.model_validate(result)
         
-        return jsonify(response.model_dump()), 200
+        return jsonify(result), 200
         
     except NotFound as e:
         return jsonify({"error": str(e)}), 404

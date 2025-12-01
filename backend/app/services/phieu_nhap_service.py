@@ -196,7 +196,8 @@ class PhieuNhapService:
         phieu_nhap_response = PhieuNhapResponse(
             id=phieu_nhap.id,
             ma_phieu_nhap=phieu_nhap.ma_phieu_nhap,
-            ten_nha_cung_cap=phieu_nhap.ten_nha_cung_cap,
+            nha_cung_cap_id=phieu_nhap.nha_cung_cap_id,
+            ten_nha_cung_cap=phieu_nhap.nha_cung_cap.ten_nha_cung_cap if phieu_nhap.nha_cung_cap else None,
             nguoi_nhap_id=phieu_nhap.nguoi_nhap_id,
             ngay_nhap=phieu_nhap.ngay_nhap,
             ngay_cap_nhat=phieu_nhap.ngay_cap_nhat,
@@ -217,7 +218,7 @@ class PhieuNhapService:
         try:
             phieu_nhap = PhieuNhap(
                 ma_phieu_nhap=PhieuNhapService.generate_ma_phieu_nhap(),
-                ten_nha_cung_cap=phieu_nhap_data.ten_nha_cung_cap,
+                nha_cung_cap_id=phieu_nhap_data.nha_cung_cap_id,
                 nguoi_nhap_id=nguoi_nhap_id,
                 ngay_nhap=datetime.utcnow()
             )
@@ -243,7 +244,7 @@ class PhieuNhapService:
             
             # Load lại phiếu nhập với đầy đủ relationship để trả về
             phieu_nhap_complete = session.query(PhieuNhap).\
-                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps)).\
+                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap)).\
                 filter(PhieuNhap.id == phieu_nhap.id).first()
             
             return phieu_nhap_complete
@@ -265,20 +266,20 @@ class PhieuNhapService:
         try:
             # Lấy phiếu thu hiện tại với đầy đủ chi tiết
             phieu_nhap = session.query(PhieuNhap).\
-                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps)).\
+                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap)).\
                 filter(PhieuNhap.id == phieu_nhap_id).first()
             
             if not phieu_nhap:
                 return None
             
             # Kiểm tra xem phiếu thu này có phải là phiếu thu mới nhất không
-            latest_phieu = session.query(PhieuNhap).order_by(PhieuNhap.ngay_thu.desc()).first()
+            latest_phieu = session.query(PhieuNhap).order_by(PhieuNhap.ngay_nhap.desc()).first()
             if latest_phieu.id != phieu_nhap_id:
                 raise ValueError("Chỉ được cập nhật phiếu thu mới nhất")
 
             # Cập nhật thông tin cơ bản
-            if update_data.ten_nha_cung_cap is not None:
-                phieu_nhap.ten_nha_cung_cap = update_data.ten_nha_cung_cap
+            if update_data.nha_cung_cap_id is not None:
+                phieu_nhap.nha_cung_cap_id = update_data.nha_cung_cap_id
             
             # Xử lý cập nhật chi tiết nếu có
             if update_data.phieu_nhap_chi_tiets is not None:
@@ -382,7 +383,7 @@ class PhieuNhapService:
             
             # Load lại với đầy đủ relationship
             phieu_nhap_complete = session.query(PhieuNhap).\
-                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps)).\
+                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap)).\
                 filter(PhieuNhap.id == phieu_nhap_id).first()
             
             return phieu_nhap_complete
@@ -395,7 +396,7 @@ class PhieuNhapService:
     def lay_phieu_nhap_theo_id(phieu_nhap_id: int) -> Optional[PhieuNhap]:
         """Lấy thông tin phiếu nhập theo ID với đầy đủ chi tiết"""
         return db.session.query(PhieuNhap).\
-            options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps)).\
+            options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap)).\
             filter(PhieuNhap.id == phieu_nhap_id).first()
     
     @staticmethod
@@ -411,18 +412,14 @@ class PhieuNhapService:
         Lấy danh sách phiếu nhập với phân trang và filter
         """
         query = db.session.query(PhieuNhap).\
-            options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps))
+            options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap))
         
         # Filter theo tên nhà cung cấp
         if ten_nha_cung_cap:
-            from ..models.phieunhap import NhaCungCap  
-            nha_cung_cap = db.session.query(NhaCungCap).filter(
-                func.to_tsvector('vietnamese', NhaCungCap.ten_nha_cung_cap).op('@@')(
-                    func.plainto_tsquery('vietnamese', ten_nha_cung_cap)
-                )
-            ).all()
-            if nha_cung_cap:
-                query = query.filter(PhieuNhap.nha_cung_cap_id == nha_cung_cap.id)
+            nha_cung_cap_subquery = db.session.query(NhaCungCap.id).filter(
+                NhaCungCap.ten_nha_cung_cap.ilike(f"%{ten_nha_cung_cap}%")
+            ).subquery()
+            query = query.filter(PhieuNhap.nha_cung_cap_id.in_(nha_cung_cap_subquery))
         
         # Filter theo mã phiếu nhập
         if ma_phieu_nhap:
@@ -475,8 +472,8 @@ class PhieuNhapService:
         
         query = query.filter(
             and_(
-                PhieuNhap.ngay_thu >= start_date,
-                PhieuNhap.ngay_thu <= end_date
+                PhieuNhap.ngay_nhap >= start_date,
+                PhieuNhap.ngay_nhap <= end_date
             )
         )
         

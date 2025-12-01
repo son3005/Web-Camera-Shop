@@ -91,3 +91,17 @@ class SanPhamBasicListResponse(BaseModel):
     data: List[SanPhamBasicResponse] = Field(..., description="Danh sách sản phẩm cơ bản")
     
     model_config = ConfigDict(from_attributes=True)
+
+class SanPhamLienQuanResponse(SanPhamBase):
+    id: int
+    ma_san_pham: str = Field(..., max_length=24, description="Mã sản phẩm")
+    # danh_muc: DanhMucResponse
+    # cap_do: CapDoResponse
+    # thuong_hieu: ThuongHieuResponse
+    so_sao_trung_binh: Optional[Decimal] = Field(0, description="Điểm trung bình")
+    so_luong_danh_gia: Optional[int] = Field(0, description="Tổng số đánh giá")
+    cac_bien_the: List[BienTheSanPhamResponse] = Field(
+        default_factory=list,
+        description="Danh sách biến thể (đã có ảnh, giá, tồn kho)"
+    )
+    model_config = ConfigDict(from_attributes=True)
