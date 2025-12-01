@@ -17,6 +17,9 @@ const SettingsLevels = lazy(() => import("../pages/Admin/SettingsLevels"));
 // 🔥 Trang quản lý đánh giá
 const AdminReviews = lazy(() => import("../pages/Admin/AdminReviewsPage"));
 
+// 🔥 Trang quản lý khách hàng (admin)
+const Customers = lazy(() => import("../pages/Admin/Customers"));
+
 const AdminLayoutWrapper = () => (
   <ProtectedRoute adminOnly={true}>
     <AdminLayout>
@@ -35,6 +38,9 @@ const AdminRoutes = {
     { path: "inventory", element: <Inventory /> },
     { path: "orders", element: <Orders /> },
     { path: "phieu-thu", element: <PhieuThu /> },
+
+    // 🔥 Trang quản lý khách hàng
+    { path: "customers", element: <Customers /> },
 
     // 🔥 Trang đánh giá
     { path: "reviews", element: <AdminReviews /> },

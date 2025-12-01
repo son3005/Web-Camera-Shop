@@ -72,7 +72,7 @@ const Pagination = ({ page, pages, setPage, isLoading, showing, total }) => {
           <button
             onClick={() => setPage((p) => Math.min(pages, p + 1))}
             disabled={page === pages || isLoading}
-            className="p-2 rounded-md bg-black/5 dark:bg:white/5 disabled:opacity-40"
+            className="p-2 rounded-md bg-black/5 dark:bg-white/5 disabled:opacity-40"
           >
             <ChevronRight size={18} />
           </button>
@@ -110,6 +110,51 @@ const Pagination = ({ page, pages, setPage, isLoading, showing, total }) => {
   );
 };
 
+// ===== helper trạng thái giống TableRow =====
+const normalizeStatusKey = (raw) => {
+  if (typeof raw === "boolean") {
+    return raw ? "dang_ban" : "ngung_ban";
+  }
+  if (typeof raw === "string") {
+    const v = raw.trim().toUpperCase();
+    if (["DANG_BAN", "DANGBAN", "ACTIVE", "DANG_BAN"].includes(v))
+      return "dang_ban";
+    if (["SAP_BAN", "SAPBAN", "SAPPHANH", "COMING_SOON"].includes(v))
+      return "sap_ban";
+    if (["NGUNG_BAN", "AN", "INACTIVE"].includes(v)) return "ngung_ban";
+  }
+  return "ngung_ban";
+};
+
+const getBusinessStatus = (item) => {
+  const variants =
+    item?.cac_bien_the || item?.bien_the_san_phams || item?.variants || [];
+
+  let raw =
+    item.trang_thai_kich_hoat !== undefined &&
+    item.trang_thai_kich_hoat !== null
+      ? item.trang_thai_kich_hoat
+      : item.trang_thai;
+
+  if (raw !== undefined && raw !== null) {
+    return normalizeStatusKey(raw);
+  }
+
+  // nếu không có trạng thái ở sản phẩm, nhìn xuống biến thể:
+  let hasActive = false;
+  let hasComing = false;
+
+  variants.forEach((v) => {
+    const s = normalizeStatusKey(v.trang_thai_kich_hoat);
+    if (s === "dang_ban") hasActive = true;
+    if (s === "sap_ban") hasComing = true;
+  });
+
+  if (hasActive) return "dang_ban";
+  if (hasComing) return "sap_ban";
+  return "ngung_ban";
+};
+
 const Inventory = () => {
   const queryClient = useQueryClient();
   const filterRef = useRef(null);
@@ -126,14 +171,14 @@ const Inventory = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // ====== 2 state filter ======
+  // ====== state filter ======
   // state đang áp dụng thật
   const [appliedFilters, setAppliedFilters] = useState({
     sortBy: { name: null, price: null },
     danh_muc_ids: [],
     thuong_hieu_ids: [],
     priceRange: { min: "", max: "" },
-    status: [], // "dang_ban" | "ngung_ban"
+    status: [], // "dang_ban" | "sap_ban" | "ngung_ban"
     stockStatus: [], // "in_stock" | "low_stock" | "out_of_stock"
   });
 
@@ -201,43 +246,13 @@ const Inventory = () => {
       );
     };
 
-    // helper: coi sản phẩm đang bán không
-    const isProductActive = (item) => {
-      // nếu sản phẩm có field boolean
-      if (typeof item.trang_thai_kich_hoat === "boolean") {
-        return item.trang_thai_kich_hoat;
-      }
-      // nếu sản phẩm có field string
-      if (
-        typeof item.trang_thai_kich_hoat === "string" &&
-        item.trang_thai_kich_hoat.toUpperCase() === "DANG_BAN"
-      ) {
-        return true;
-      }
-
-      // nếu không có, nhìn xuống biến thể
-      const variants =
-        item?.cac_bien_the || item?.bien_the_san_phams || item?.variants || [];
-      if (!variants.length) return false;
-
-      return variants.some((v) => {
-        if (typeof v.trang_thai_kich_hoat === "boolean")
-          return v.trang_thai_kich_hoat;
-        if (typeof v.trang_thai_kich_hoat === "string")
-          return v.trang_thai_kich_hoat.toUpperCase() === "DANG_BAN";
-        return false;
-      });
-    };
-
     return list.filter((item) => {
       // 1. lọc trạng thái kinh doanh nếu có chọn
       if (appliedFilters.status && appliedFilters.status.length > 0) {
-        const active = isProductActive(item);
-        const needDangBan = appliedFilters.status.includes("dang_ban");
-        const needNgung = appliedFilters.status.includes("ngung_ban");
-
-        if (active && !needDangBan) return false;
-        if (!active && !needNgung) return false;
+        const productStatus = getBusinessStatus(item); // "dang_ban" | "sap_ban" | "ngung_ban"
+        if (!appliedFilters.status.includes(productStatus)) {
+          return false;
+        }
       }
 
       // 2. lọc tồn kho nếu có chọn

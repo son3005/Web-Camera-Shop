@@ -1,12 +1,17 @@
 // src/components/product/ReviewsPanel.jsx
-// Panel đánh giá: đọc API public /danh-gia/san-pham, /thong-ke
+// Panel đánh giá: đọc API public + cho phép user viết đánh giá ngay dưới sản phẩm
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   layDanhGiaSanPham,
   layThongKeDanhGiaSanPham,
+  taoDanhGia,
 } from "../../api/reviewApi";
+import { getProduct } from "../../api/productApi";
+import { useCustomerOrderList } from "../../hooks/useCustomerOrders";
+import ReviewForm from "../review/ReviewForm";
 
 function StarDisplay({ value = 0, size = 16 }) {
   const arr = [1, 2, 3, 4, 5];
@@ -33,6 +38,57 @@ function StarDisplay({ value = 0, size = 16 }) {
 export default function ReviewsPanel({ productId }) {
   const [page, setPage] = useState(1);
   const [starFilter, setStarFilter] = useState(null); // null = tất cả
+
+  const authUser = useSelector((state) => state.auth.user);
+  const queryClient = useQueryClient();
+
+  // ==== THÔNG TIN SẢN PHẨM (để lấy danh sách biến thể) ====
+  const { data: productDetail } = useQuery({
+    queryKey: ["product-review-panel", productId],
+    queryFn: () => getProduct(productId),
+    enabled: !!productId && !!authUser, // chỉ cần khi user đang login
+  });
+
+  const variantIds = useMemo(() => {
+    if (!productDetail?.variants) return [];
+    return productDetail.variants.map((v) => v.id).filter(Boolean);
+  }, [productDetail]);
+
+  // ==== LỊCH SỬ ĐƠN HÀNG CỦA USER (để kiểm tra đã mua & đã giao) ====
+  const {
+    data: orders = [],
+    isLoading: loadingOrders,
+    isError: ordersError,
+  } = useCustomerOrderList();
+
+  // Lọc các chi tiết đơn hàng có thể đánh giá cho sản phẩm này
+  const eligibleLines = useMemo(() => {
+    if (!authUser || !orders || !Array.isArray(orders) || !variantIds.length) {
+      return [];
+    }
+
+    const setVariant = new Set(variantIds);
+    const lines = [];
+
+    for (const od of orders) {
+      if (od.trang_thai !== "da_giao") continue; // chỉ cho phép đơn đã giao
+      const items = od.items || [];
+      for (const item of items) {
+        if (setVariant.has(item.bien_the_san_pham_id)) {
+          lines.push({
+            chiTietDonHangId: item.id,
+            orderId: od.id,
+            maDonHang: od.ma_don_hang,
+            ngayGiao: od.ngay_cap_nhat || od.ngay_tao,
+            tenSanPham: item.ten_san_pham_luc_mua,
+            tenBienThe: item.ten_bien_the_luc_mua,
+          });
+        }
+      }
+    }
+
+    return lines;
+  }, [authUser, orders, variantIds]);
 
   // ==== THỐNG KÊ ====
   const { data: stats, isLoading: loadingStats } = useQuery({
@@ -75,6 +131,48 @@ export default function ReviewsPanel({ productId }) {
   const handleChangeStarFilter = (star) => {
     setStarFilter(star);
     setPage(1);
+  };
+
+  // ==== MUTATION: GỬI ĐÁNH GIÁ ====
+  const createReviewMutation = useMutation({
+    mutationFn: (payload) => taoDanhGia(payload),
+    onSuccess: () => {
+      alert("✅ Đã gửi đánh giá, cảm ơn bạn!");
+      queryClient.invalidateQueries({ queryKey: ["reviews", productId] });
+      queryClient.invalidateQueries({ queryKey: ["review-stats", productId] });
+      queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+    },
+    onError: (err) => {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Không gửi được đánh giá. Vui lòng thử lại.";
+      alert(msg);
+    },
+  });
+
+  const handleSubmitReview = (values) => {
+    if (!authUser) {
+      alert("Vui lòng đăng nhập để gửi đánh giá.");
+      return;
+    }
+
+    if (!eligibleLines.length) {
+      alert(
+        "Bạn chưa có đơn hàng đã giao cho sản phẩm này nên chưa thể đánh giá."
+      );
+      return;
+    }
+
+    // Chọn dòng chi tiết đầu tiên phù hợp (nếu muốn, sau này có thể cho user chọn)
+    const target = eligibleLines[0];
+
+    createReviewMutation.mutate({
+      chi_tiet_don_hang_id: target.chiTietDonHangId,
+      diem_danh_gia: values.diem_danh_gia,
+      binh_luan: values.binh_luan,
+    });
   };
 
   return (
@@ -244,11 +342,54 @@ export default function ReviewsPanel({ productId }) {
         )}
       </div>
 
-      {/* Gợi ý cách đánh giá */}
-      <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-        Để đánh giá sản phẩm, bạn cần mua hàng và đơn ở trạng thái{" "}
-        <b>Đã giao</b>. Sau đó vào trang <b>Tài khoản &gt; Lịch sử đơn hàng</b>{" "}
-        để gửi đánh giá.
+      {/* ==== FORM VIẾT ĐÁNH GIÁ ==== */}
+      <div className="mt-6">
+        <h3 className="font-semibold mb-2 text-sm">Viết đánh giá của bạn</h3>
+
+        {!authUser && (
+          <p className="text-xs text-slate-500">
+            Bạn cần đăng nhập để gửi đánh giá cho sản phẩm này.
+          </p>
+        )}
+
+        {authUser && (
+          <>
+            {loadingOrders && (
+              <p className="text-xs text-slate-500">
+                Đang kiểm tra lịch sử đơn hàng của bạn...
+              </p>
+            )}
+
+            {!loadingOrders && ordersError && (
+              <p className="text-xs text-red-500">
+                Không kiểm tra được lịch sử đơn hàng. Bạn vẫn có thể thử gửi
+                đánh giá, hệ thống sẽ tự kiểm tra.
+              </p>
+            )}
+
+            {!loadingOrders && !ordersError && !eligibleLines.length && (
+              <p className="text-xs text-slate-500">
+                Bạn chưa có đơn hàng <b>đã giao</b> cho sản phẩm này, nên hiện
+                tại chưa thể đánh giá.
+              </p>
+            )}
+
+            {!!eligibleLines.length && (
+              <>
+                <p className="text-[11px] text-slate-500 mb-2">
+                  Hệ thống sẽ tự gắn đánh giá với đơn hàng{" "}
+                  <b>#{eligibleLines[0].maDonHang}</b> chứa sản phẩm bạn đã mua
+                  và đã giao.
+                </p>
+
+                <ReviewForm
+                  onSubmit={handleSubmitReview}
+                  submitting={createReviewMutation.isLoading}
+                />
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
