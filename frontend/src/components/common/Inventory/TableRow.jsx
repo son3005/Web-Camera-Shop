@@ -42,32 +42,72 @@ const StockStatusBadge = ({ quantity }) => {
   );
 };
 
-// chip nhỏ hiển thị “Đang bán/Ngừng bán”
-const SellingStatusBadge = ({ isActive }) => {
-  return isActive ? (
+// 3 trạng thái kinh doanh: đang bán / sắp bán / ngừng bán
+const SellingStatusBadge = ({ status }) => {
+  if (status === "sap_ban") {
+    return (
+      <span className="px-2 py-1 text-xs font-semibold text-amber-800 bg-amber-200 rounded-full dark:bg-amber-500/20 dark:text-amber-300">
+        Sắp bán
+      </span>
+    );
+  }
+  if (status === "ngung_ban") {
+    return (
+      <span className="px-2 py-1 text-xs font-semibold text-slate-800 bg-slate-300 rounded-full dark:bg-slate-600 dark:text-slate-300">
+        Ngừng bán
+      </span>
+    );
+  }
+  // mặc định coi là đang bán
+  return (
     <span className="px-2 py-1 text-xs font-semibold text-cyan-800 bg-cyan-200 rounded-full dark:bg-cyan-500/20 dark:text-cyan-300">
       Đang bán
-    </span>
-  ) : (
-    <span className="px-2 py-1 text-xs font-semibold text-slate-800 bg-slate-300 rounded-full dark:bg-slate-600 dark:text-slate-300">
-      Ngừng bán
     </span>
   );
 };
 
-// ✅ hàm chuẩn hoá mọi kiểu trạng thái từ BE thành boolean
-// BE của cậu đang có: "DANG_BAN" | "AN"
-// FE trước đây có: "dang_ban" | "ngung_ban" | true | false
-const toActiveBool = (raw) => {
-  if (typeof raw === "boolean") return raw;
-  if (typeof raw === "string") {
-    const v = raw.trim().toLowerCase();
-    if (v === "dang_ban") return true;
-    if (v === "dang ban") return true;
-    if (v === "dang_ban".toLowerCase()) return true;
-    return false;
+// map raw status => "dang_ban" | "sap_ban" | "ngung_ban"
+const normalizeStatusKey = (raw) => {
+  if (typeof raw === "boolean") {
+    return raw ? "dang_ban" : "ngung_ban";
   }
-  return false;
+  if (typeof raw === "string") {
+    const v = raw.trim().toUpperCase();
+    if (["DANG_BAN", "ACTIVE", "DANGBAN"].includes(v)) return "dang_ban";
+    if (["SAP_BAN", "SAPPHANH", "SAPBAN", "COMING_SOON"].includes(v))
+      return "sap_ban";
+    if (["NGUNG_BAN", "AN", "INACTIVE"].includes(v)) return "ngung_ban";
+  }
+  return "ngung_ban";
+};
+
+const getBusinessStatus = (item) => {
+  const variants =
+    item?.cac_bien_the || item?.bien_the_san_phams || item?.variants || [];
+
+  let raw =
+    item.trang_thai_kich_hoat !== undefined &&
+    item.trang_thai_kich_hoat !== null
+      ? item.trang_thai_kich_hoat
+      : item.trang_thai;
+
+  if (raw !== undefined && raw !== null) {
+    return normalizeStatusKey(raw);
+  }
+
+  // nếu không có trạng thái ở sản phẩm, nhìn xuống biến thể:
+  let hasActive = false;
+  let hasComing = false;
+
+  variants.forEach((v) => {
+    const s = normalizeStatusKey(v.trang_thai_kich_hoat);
+    if (s === "dang_ban") hasActive = true;
+    if (s === "sap_ban") hasComing = true;
+  });
+
+  if (hasActive) return "dang_ban";
+  if (hasComing) return "sap_ban";
+  return "ngung_ban";
 };
 
 const TableRow = ({ item, onDelete, onView, onEdit }) => {
@@ -92,21 +132,7 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
       return price > 0 && price < min ? price : min;
     }, Infinity) || 0;
 
-  // ✅ lấy trạng thái ở cấp sản phẩm trước
-  // backend có thể trả: item.trang_thai_kich_hoat = "DANG_BAN"
-  // hoặc item.trang_thai = "DANG_BAN"
-  let isActive = false;
-  if (
-    item.trang_thai_kich_hoat !== undefined &&
-    item.trang_thai_kich_hoat !== null
-  ) {
-    isActive = toActiveBool(item.trang_thai_kich_hoat);
-  } else if (item.trang_thai !== undefined && item.trang_thai !== null) {
-    isActive = toActiveBool(item.trang_thai);
-  } else if (Array.isArray(variants) && variants.length > 0) {
-    // nếu sản phẩm không có field thì nhìn xuống biến thể
-    isActive = variants.some((v) => toActiveBool(v.trang_thai_kich_hoat));
-  }
+  const businessStatus = getBusinessStatus(item);
 
   return (
     <tr className="border-b border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/70 transition-colors h-[61px]">
@@ -132,9 +158,9 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
         <StockStatusBadge quantity={totalStock} />
       </td>
 
-      {/* trạng thái kinh doanh */}
+      {/* trạng thái kinh doanh (3 trạng thái) */}
       <td className="px-4 py-3 text-center">
-        <SellingStatusBadge isActive={isActive} />
+        <SellingStatusBadge status={businessStatus} />
       </td>
 
       <td className="px-4 py-3 text-center">

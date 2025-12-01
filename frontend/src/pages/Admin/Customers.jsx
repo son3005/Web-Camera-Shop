@@ -83,7 +83,7 @@ export default function Customers() {
               {isFilterOpen && (
                 <FilterMenu
                   initialFilters={activeFilters}
-                  onApplyFilters={handleApplyFilters}
+                  onApply={handleApplyFilters} // ✅ ĐÚNG PROP
                   onClose={() => setIsFilterOpen(false)}
                 />
               )}
@@ -94,7 +94,7 @@ export default function Customers() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-black/5 dark:bg-white/5">
+            <thead className="bg-black/5 dark:bg.white/5 dark:bg-white/5">
               <tr>
                 {[
                   "Mã KH",

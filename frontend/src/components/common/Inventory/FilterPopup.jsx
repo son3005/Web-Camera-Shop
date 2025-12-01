@@ -90,16 +90,21 @@ const FilterPopup = ({
         {/* Trạng thái kinh doanh */}
         <div>
           <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Trạng thái
+            Trạng thái kinh doanh
           </h4>
           <div className="grid grid-cols-2 gap-2">
             <CheckboxOption
-              label="Đang kinh doanh"
+              label="Đang bán"
               checked={status.includes("dang_ban")}
               onChange={() => handleMultiSelectChange("status", "dang_ban")}
             />
             <CheckboxOption
-              label="Ngừng kinh doanh"
+              label="Sắp bán"
+              checked={status.includes("sap_ban")}
+              onChange={() => handleMultiSelectChange("status", "sap_ban")}
+            />
+            <CheckboxOption
+              label="Ngừng bán"
               checked={status.includes("ngung_ban")}
               onChange={() => handleMultiSelectChange("status", "ngung_ban")}
             />
