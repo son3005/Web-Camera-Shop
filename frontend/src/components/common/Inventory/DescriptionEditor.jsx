@@ -1,4 +1,4 @@
-// DescriptionEditor.jsx
+// src/components/common/Inventory/DescriptionEditor.jsx
 import React from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
@@ -7,7 +7,7 @@ const DescriptionEditor = ({ value, onChange, readOnly = false }) => {
   return (
     <div className="w-full">
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-        Product Description
+        Mô tả sản phẩm
       </label>
 
       {readOnly ? (

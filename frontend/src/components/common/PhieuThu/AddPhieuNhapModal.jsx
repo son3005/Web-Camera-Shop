@@ -1,30 +1,38 @@
-// src/components/common/PhieuThu/AddPhieuThuModal.jsx
+// src/components/common/PhieuNhap/AddPhieuNhapModal.jsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getProducts } from "../../../api/productApi"; // ✅ đổi sang getProducts cho chắc có dữ liệu
+import { getProducts } from "../../../api/productApi";
+import { getSuppliersBasic } from "../../../api/supplierApi";
 
-export default function AddPhieuThuModal({ onClose, onSubmit }) {
-  const [supplier, setSupplier] = useState("");
+export default function AddPhieuNhapModal({ onClose, onSubmit }) {
+  const [supplierId, setSupplierId] = useState("");
   const [rows, setRows] = useState([
     { bien_the_san_pham_id: "", so_luong: 1, gia_nhap_tung_vat: 0 },
   ]);
 
-  // ✅ lấy tới 200 sp để chọn biến thể
-  const { data: productList, isLoading } = useQuery({
-    queryKey: ["products-for-phieuthu"],
+  // Lấy danh sách sản phẩm (để chọn biến thể)
+  const { data: productList, isLoading: loadingProducts } = useQuery({
+    queryKey: ["products-for-phieunhap"],
     queryFn: () => getProducts({ page: 1, limit: 200 }),
   });
 
-  // flatten tất cả biến thể ra 1 mảng để select
   const allVariants =
     productList?.items
       ?.flatMap((sp) =>
         (sp.variants || []).map((v) => ({
           id: v.id,
-          label: `${sp.name} – ${v.ten_bien_the || v.name || "Biến thể"}`,
+          label: `${sp.name} – ${
+            v.ten_bien_the || v.name || "Biến thể không tên"
+          }`,
         }))
       )
       .filter(Boolean) || [];
+
+  // Lấy danh sách nhà cung cấp cơ bản
+  const { data: suppliers = [], isLoading: loadingSuppliers } = useQuery({
+    queryKey: ["suppliers-basic"],
+    queryFn: getSuppliersBasic,
+  });
 
   const handleAddRow = () =>
     setRows((prev) => [
@@ -40,14 +48,18 @@ export default function AddPhieuThuModal({ onClose, onSubmit }) {
 
   const handleSubmit = () => {
     const details = rows.filter((r) => r.bien_the_san_pham_id);
+    if (!supplierId) {
+      alert("Vui lòng chọn nhà cung cấp");
+      return;
+    }
     if (!details.length) {
       alert("Vui lòng chọn ít nhất một biến thể để nhập hàng");
       return;
     }
 
     const payload = {
-      ten_nha_cung_cap: supplier || "Nhà cung cấp",
-      phieu_thu_chi_tiets: details.map((d) => ({
+      nha_cung_cap_id: Number(supplierId),
+      phieu_nhap_chi_tiets: details.map((d) => ({
         bien_the_san_pham_id: Number(d.bien_the_san_pham_id),
         so_luong: Number(d.so_luong || 1),
         gia_nhap_tung_vat: Number(d.gia_nhap_tung_vat || 0),
@@ -62,7 +74,7 @@ export default function AddPhieuThuModal({ onClose, onSubmit }) {
       <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-emerald-500/40 bg-white/90 dark:bg-slate-950/95 text-slate-900 dark:text-slate-50 shadow-2xl space-y-4 p-6">
         {/* header */}
         <div className="flex justify-between items-center pb-2 border-b border-slate-200/70 dark:border-slate-800/70">
-          <h2 className="text-lg font-semibold">Tạo phiếu thu mới</h2>
+          <h2 className="text-lg font-semibold">Tạo phiếu nhập mới</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 cursor-pointer"
@@ -74,14 +86,21 @@ export default function AddPhieuThuModal({ onClose, onSubmit }) {
         {/* nhà cung cấp */}
         <div>
           <label className="text-sm block mb-1 text-slate-700 dark:text-slate-300">
-            Tên nhà cung cấp
+            Nhà cung cấp
           </label>
-          <input
-            value={supplier}
-            onChange={(e) => setSupplier(e.target.value)}
-            className="w-full rounded-md px-3 py-2 text-sm bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-            placeholder="VD: Sony Việt Nam"
-          />
+          <select
+            value={supplierId}
+            onChange={(e) => setSupplierId(e.target.value)}
+            disabled={loadingSuppliers}
+            className="w-full rounded-md px-3 py-2 text-sm bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500"
+          >
+            <option value="">-- Chọn nhà cung cấp --</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.ten_nha_cung_cap || s.ten || `NCC #${s.id}`}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* bảng biến thể */}
@@ -107,7 +126,7 @@ export default function AddPhieuThuModal({ onClose, onSubmit }) {
                         handleChange(i, "bien_the_san_pham_id", e.target.value)
                       }
                       className="w-full rounded-md px-2 py-1.5 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500 cursor-pointer"
-                      disabled={isLoading}
+                      disabled={loadingProducts}
                     >
                       <option value="">-- Chọn biến thể --</option>
                       {allVariants.map((v) => (
@@ -164,7 +183,7 @@ export default function AddPhieuThuModal({ onClose, onSubmit }) {
               onClick={handleSubmit}
               className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-400 hover:to-slate-500 shadow-md shadow-emerald-500/30 cursor-pointer transition"
             >
-              Lưu phiếu
+              Lưu phiếu nhập
             </button>
           </div>
         </div>

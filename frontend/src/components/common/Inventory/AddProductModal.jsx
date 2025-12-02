@@ -38,6 +38,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     toastHook?.success || toastHook?.toast?.success || (() => {});
   const showError = toastHook?.error || toastHook?.toast?.error || (() => {});
 
+  // các biến thể bị xóa (đã tồn tại trong DB) để gửi lên backend
   const [deletedVariantIds, setDeletedVariantIds] = useState([]);
 
   const { data: danhMucData } = useGetAllDanhMuc({ page: 1, per_page: 100 });
@@ -54,6 +55,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
   const createMutation = useCreateSanPham();
   const updateMutation = useUpdateSanPham();
 
+  // ✅ DEFAULT VALUES KHÔNG CÒN SỐ LƯỢNG
   const methods = useForm({
     defaultValues: {
       ten_san_pham: "",
@@ -68,7 +70,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
           ten_bien_the: "",
           gia_ban: 0,
           mau: "",
-          so_luong: 0,
           trang_thai_kich_hoat: "dang_ban",
           hinh_anhs: [],
         },
@@ -84,16 +85,25 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     formState: { errors },
   } = methods;
 
-  // fill data khi edit
+  // ✅ FILL DATA khi EDIT – map theo backend (nested danh_muc / thuong_hieu / cap_do)
   useEffect(() => {
     if (mode === "edit" && productDetail) {
       setDeletedVariantIds([]);
 
       reset({
         ten_san_pham: productDetail.ten_san_pham,
-        danh_muc_id: productDetail.danh_muc_id?.toString() || "",
-        thuong_hieu_id: productDetail.thuong_hieu_id?.toString() || "",
-        cap_do_id: productDetail.cap_do_id?.toString() || "",
+        danh_muc_id:
+          productDetail.danh_muc?.id != null
+            ? String(productDetail.danh_muc.id)
+            : "",
+        thuong_hieu_id:
+          productDetail.thuong_hieu?.id != null
+            ? String(productDetail.thuong_hieu.id)
+            : "",
+        cap_do_id:
+          productDetail.cap_do?.id != null
+            ? String(productDetail.cap_do.id)
+            : "",
         mo_ta: productDetail.mo_ta || "",
         trang_thai: mapBackendStatusToForm(productDetail.trang_thai),
         thong_so_ky_thuat:
@@ -106,16 +116,13 @@ const AddProductModal = ({ mode, productId, onClose }) => {
                 }
               })()
             : productDetail.thong_so_ky_thuat || {},
+        // ✅ KHÔNG ĐƯA so_luong VÀO FORM (backend không có field này)
         bien_the_san_phams: (productDetail.cac_bien_the || []).map((v) => ({
           id: v.id,
           id_in_db: v.id,
           ten_bien_the: v.ten_bien_the,
           gia_ban: v.gia_ban,
           mau: v.mau || "",
-          so_luong:
-            typeof v.so_luong_ton === "number"
-              ? v.so_luong_ton
-              : v.so_luong || 0,
           trang_thai_kich_hoat: mapBackendStatusToForm(v.trang_thai_kich_hoat),
           hinh_anhs: (v.hinh_anhs || []).map((img, idx) => ({
             id: img.id,
@@ -130,6 +137,8 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     }
   }, [mode, productDetail, reset]);
 
+  // ✅ Chuẩn hóa dữ liệu form -> backend (SanPhamCreate / SanPhamUpdate)
+  //    Không còn gửi so_luong vào biến thể
   const normalizeForBackend = (formData) => {
     const thongSoObj = formData.thong_so_ky_thuat || {};
 
@@ -152,7 +161,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
         mau: v.mau || "",
         gia_ban: v.gia_ban ? Number(v.gia_ban) : 0,
         trang_thai_kich_hoat: mapFormStatusToBackend(v.trang_thai_kich_hoat),
-        so_luong: v.so_luong ? Number(v.so_luong) : 0,
+        // ✅ KHÔNG gửi so_luong nữa – backend hiện không có trường này
         hinh_anhs: (v.hinh_anhs || []).map((img, j) => ({
           ...(img.id ? { id: img.id } : {}),
           alt_text: img.alt_text || img?.file?.name || `Ảnh ${j + 1}`,
@@ -163,7 +172,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
               : j === 0,
           ...(img.url ? { url: img.url } : {}),
           ...(img.public_id ? { public_id: img.public_id } : {}),
-          ...(img.file ? { file: img.file } : {}),
+          ...(img.file ? { file: img.file } : {}), // 🔥 giữ file để adminProductApi chuyển qua FormData
         })),
       })),
     };
@@ -291,6 +300,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
                 </div>
               </div>
 
+              {/* ✅ VariantManager KHÔNG còn số lượng */}
               <VariantManager
                 control={control}
                 register={register}

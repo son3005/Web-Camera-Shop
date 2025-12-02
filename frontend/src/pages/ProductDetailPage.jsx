@@ -1,6 +1,9 @@
 // src/pages/ProductDetailPage.jsx
 // ============================================================
 // Trang chi tiết sản phẩm – đã nối đúng với giỏ hàng backend
+//  + Đọc đúng product.variants từ productApi
+//  + Tồn kho = so_luong_ton / so_luong / stock / (so_luong_nhap - so_luong_ban)
+//  + Suy trạng thái sản phẩm từ biến thể nếu top-level không có
 // ============================================================
 
 import { useState, useMemo } from "react";
@@ -9,6 +12,22 @@ import { useQuery } from "@tanstack/react-query";
 import { getProduct } from "../api/productApi";
 import ProductTabs from "../components/product/ProductTabs";
 import { useCart } from "../hooks/useCart";
+import { useToast } from "../hooks/useToast";
+
+// ✅ Chuẩn hóa trạng thái từ backend -> "dang_ban" | "sap_ban" | "ngung_ban"
+const normalizeStatusKey = (raw) => {
+  if (typeof raw === "boolean") {
+    return raw ? "dang_ban" : "ngung_ban";
+  }
+  if (typeof raw === "string") {
+    const v = raw.trim().toUpperCase();
+    if (["DANG_BAN", "DANGBAN", "ACTIVE", "DANG_BAN"].includes(v))
+      return "dang_ban";
+    if (["SAP_BAN", "SAPBAN", "COMING_SOON"].includes(v)) return "sap_ban";
+    if (["NGUNG_BAN", "AN", "INACTIVE"].includes(v)) return "ngung_ban";
+  }
+  return "ngung_ban";
+};
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
@@ -19,7 +38,9 @@ export default function ProductDetailPage() {
   const addToCart = useAddToCart();
   const checkStock = useCheckStock();
 
-  // load sản phẩm
+  const { success, error, info } = useToast();
+
+  // load sản phẩm từ API (productApi)
   const {
     data: product,
     isLoading,
@@ -35,7 +56,7 @@ export default function ProductDetailPage() {
   const vnd = (n) =>
     Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + "₫";
 
-  // xử lý biến thể + ảnh
+  // ===== Xử lý biến thể + ảnh (dùng product.variants từ normalizeProduct) =====
   const { variants, selectedVariant, gallery, displayPrice } = useMemo(() => {
     if (!product)
       return {
@@ -45,14 +66,18 @@ export default function ProductDetailPage() {
         displayPrice: 0,
       };
 
-    const vars = Array.isArray(product.variants) ? product.variants : [];
-    const currentVariant =
-      vars.find((v) => v.id === selectedVariantId) || vars[0] || null;
+    // 🔥 CHUẨN: getProduct() trả product.variants (đã normalize)
+    const varsRaw = Array.isArray(product.variants) ? product.variants : [];
 
-    // ảnh
+    const currentVariant =
+      varsRaw.find((v) => v.id === selectedVariantId) || varsRaw[0] || null;
+
+    // Ảnh:
+    // 1. Nếu product.images có -> dùng
+    // 2. Nếu không, gom từ hinh_anhs của biến thể
     let imgs = Array.isArray(product.images) ? product.images : [];
-    if ((!imgs || imgs.length === 0) && vars.length) {
-      imgs = vars
+    if ((!imgs || imgs.length === 0) && varsRaw.length) {
+      imgs = varsRaw
         .flatMap((v) =>
           Array.isArray(v.hinh_anhs)
             ? v.hinh_anhs.map((img) => img.url).filter(Boolean)
@@ -69,38 +94,107 @@ export default function ProductDetailPage() {
       0;
 
     return {
-      variants: vars,
+      variants: varsRaw,
       selectedVariant: currentVariant,
       gallery: imgs,
       displayPrice: price,
     };
   }, [product, selectedVariantId]);
 
+  // =============== Loading / Error state ===============
   if (isLoading) return <div className="p-6">Đang tải sản phẩm…</div>;
   if (isError || !product)
     return <div className="p-6 text-red-500">Không tải được sản phẩm.</div>;
 
-  // chọn biến thể
+  // ====== Trạng thái & tồn kho để quyết định có cho mua không ======
+
+  // ✅ Trạng thái sản phẩm:
+  //  - productApi hiện không map sẵn trạng thái → ta suy từ biến thể
+  const productStatus = (() => {
+    const direct =
+      product.trang_thai_kich_hoat ?? product.trang_thai ?? product.status;
+    if (direct !== undefined && direct !== null) {
+      return normalizeStatusKey(direct);
+    }
+
+    // Fallback: gom từ biến thể
+    let hasActive = false;
+    let hasComing = false;
+    (variants || []).forEach((v) => {
+      const s = normalizeStatusKey(
+        v.trang_thai_kich_hoat ?? v.trang_thai ?? v.status
+      );
+      if (s === "dang_ban") hasActive = true;
+      if (s === "sap_ban") hasComing = true;
+    });
+
+    if (hasActive) return "dang_ban";
+    if (hasComing) return "sap_ban";
+    return "ngung_ban";
+  })();
+
+  // ✅ Trạng thái biến thể
+  const variantStatus = normalizeStatusKey(
+    selectedVariant?.trang_thai_kich_hoat ??
+      selectedVariant?.trang_thai ??
+      selectedVariant?.status
+  );
+
+  // ✅ Số lượng tồn:
+  //  1. Ưu tiên so_luong_ton / so_luong / stock (nếu BE có)
+  //  2. Nếu không → dùng so_luong_nhap - so_luong_ban (schema BE mới)
+  const variantQty = (() => {
+    const v = selectedVariant;
+    if (!v) return 0;
+
+    if (typeof v.so_luong_ton === "number") return v.so_luong_ton;
+    if (typeof v.so_luong === "number") return v.so_luong;
+    if (typeof v.stock === "number") return v.stock;
+
+    const nhap = Number(v.so_luong_nhap ?? 0);
+    const ban = Number(v.so_luong_ban ?? 0);
+    const q = nhap - ban;
+    return q > 0 ? q : 0;
+  })();
+
+  // 🔥 Điều kiện có thể mua
+  const canBuy =
+    !!selectedVariant &&
+    productStatus === "dang_ban" &&
+    variantStatus === "dang_ban" &&
+    variantQty > 0;
+
+  // ===== Chọn biến thể =====
   const handlePickVariant = (variantId) => {
     setSelectedVariantId(variantId);
     const found = variants.find((v) => v.id === variantId);
-    const thumb =
+
+    // Lấy ảnh đại diện của biến thể nếu có
+    const thumbFromVariant =
       found?.hinh_anhs?.find((img) => img.la_anh_dai_dien)?.url ||
       found?.hinh_anhs?.[0]?.url;
-    if (thumb) setActiveImage(thumb);
+
+    if (thumbFromVariant) {
+      setActiveImage(thumbFromVariant);
+    }
   };
 
-  // thêm giỏ
+  // ===== Thêm vào giỏ =====
   const handleAddToCart = async () => {
     const variant = selectedVariant || variants[0];
 
     if (!variant?.id) {
-      alert("Vui lòng chọn biến thể trước khi thêm vào giỏ hàng!");
+      info("Vui lòng chọn biến thể trước khi thêm vào giỏ hàng!");
+      return;
+    }
+
+    if (!canBuy) {
+      info("Sản phẩm / biến thể này hiện không thể mua.");
       return;
     }
 
     try {
-      // 1. kiểm tra tồn kho
+      // 1. kiểm tra tồn kho trên backend
       await checkStock.mutateAsync({
         bienTheId: variant.id,
         soLuong: 1,
@@ -112,19 +206,27 @@ export default function ProductDetailPage() {
         soLuong: 1,
       });
 
-      alert("✅ Đã thêm vào giỏ hàng!");
+      success("Đã thêm vào giỏ hàng!");
     } catch (err) {
       console.error("Add to cart error:", err);
-      alert(
-        err?.response?.data?.message || "Có lỗi khi thêm vào giỏ hàng, thử lại!"
+      error(
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Có lỗi khi thêm vào giỏ hàng, thử lại!"
       );
     }
   };
 
+  // ===== Mua ngay =====
   const handleBuyNow = () => {
     const variant = selectedVariant || variants[0];
-    if (!variant) {
-      alert("Vui lòng chọn biến thể trước khi mua!");
+    if (!variant?.id) {
+      info("Vui lòng chọn biến thể trước khi mua!");
+      return;
+    }
+
+    if (!canBuy) {
+      info("Sản phẩm / biến thể này hiện không thể mua.");
       return;
     }
 
@@ -132,7 +234,7 @@ export default function ProductDetailPage() {
       state: {
         productId: product.id,
         variantId: variant.id,
-        soLuong: 1
+        soLuong: 1,
       },
     });
   };
@@ -149,7 +251,7 @@ export default function ProductDetailPage() {
             {currentImage ? (
               <img
                 src={currentImage}
-                alt={product.name}
+                alt={product.name || product.ten_san_pham}
                 className="w-full h-full object-contain"
               />
             ) : (
@@ -184,11 +286,12 @@ export default function ProductDetailPage() {
         <div className="lg:col-span-1 flex flex-col justify-center h-full text-center lg:text-left px-4">
           <div className="flex flex-col justify-center h-full">
             <h1 className="text-2xl font-semibold mb-1 text-white">
-              {product.name}
+              {product.name || product.ten_san_pham}
             </h1>
-            {product.brand && (
+            {(product.brand || product.thuong_hieu?.ten_thuong_hieu) && (
               <p className="text-sm text-slate-200 mb-3">
-                Thương hiệu: {product.brand}
+                Thương hiệu:{" "}
+                {product.brand || product.thuong_hieu?.ten_thuong_hieu}
               </p>
             )}
 
@@ -221,13 +324,27 @@ export default function ProductDetailPage() {
             <div className="flex justify-center lg:justify-start gap-3 mt-4">
               <button
                 onClick={handleAddToCart}
-                className="btn-emerald px-5 py-2 rounded-lg font-semibold"
+                disabled={!canBuy || addToCart.isPending}
+                className={`px-5 py-2 rounded-lg font-semibold transition ${
+                  !canBuy || addToCart.isPending
+                    ? "bg-slate-500/70 text-slate-100 cursor-not-allowed"
+                    : "bg-emerald-500 hover:bg-emerald-600 text-white"
+                }`}
               >
-                Thêm vào giỏ
+                {!canBuy
+                  ? "Không thể mua"
+                  : addToCart.isPending
+                  ? "Đang thêm..."
+                  : "Thêm vào giỏ"}
               </button>
               <button
                 onClick={handleBuyNow}
-                className="px-5 py-2 rounded-lg border border-emerald-500 text-emerald-100 hover:bg-emerald-500/10 font-semibold"
+                disabled={!canBuy}
+                className={`px-5 py-2 rounded-lg border font-semibold transition ${
+                  !canBuy
+                    ? "border-slate-500 text-slate-400 cursor-not-allowed"
+                    : "border-emerald-500 text-emerald-100 hover:bg-emerald-500/10"
+                }`}
               >
                 Mua ngay
               </button>
@@ -236,14 +353,13 @@ export default function ProductDetailPage() {
             <div className="mt-4 text-sm text-slate-100/80 space-y-1">
               <p>
                 {product.description ||
+                  product.mo_ta ||
                   "Máy ảnh mirrorless full-frame chuyên nghiệp, hiệu năng cao."}
               </p>
-              {selectedVariant?.so_luong != null && (
+              {selectedVariant && (
                 <p>
-                  Số lượng:{" "}
-                  <span className="font-medium text-white">
-                    {selectedVariant.so_luong}
-                  </span>
+                  Số lượng còn lại:{" "}
+                  <span className="font-medium text-white">{variantQty}</span>
                 </p>
               )}
             </div>
@@ -288,8 +404,8 @@ export default function ProductDetailPage() {
       {/* KHỐI DƯỚI: TABS */}
       <ProductTabs
         productId={product.id}
-        description={product.description}
-        specs={product.specs}
+        description={product.description || product.mo_ta}
+        specs={product.specs || product.thong_so_ky_thuat}
       />
     </div>
   );

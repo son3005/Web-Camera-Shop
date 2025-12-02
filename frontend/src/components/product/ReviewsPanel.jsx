@@ -12,6 +12,7 @@ import {
 import { getProduct } from "../../api/productApi";
 import { useCustomerOrderList } from "../../hooks/useCustomerOrders";
 import ReviewForm from "../review/ReviewForm";
+import { useToast } from "../../hooks/useToast";
 
 function StarDisplay({ value = 0, size = 16 }) {
   const arr = [1, 2, 3, 4, 5];
@@ -41,6 +42,7 @@ export default function ReviewsPanel({ productId }) {
 
   const authUser = useSelector((state) => state.auth.user);
   const queryClient = useQueryClient();
+  const { success, error, info } = useToast();
 
   // ==== THÔNG TIN SẢN PHẨM (để lấy danh sách biến thể) ====
   const { data: productDetail } = useQuery({
@@ -137,7 +139,7 @@ export default function ReviewsPanel({ productId }) {
   const createReviewMutation = useMutation({
     mutationFn: (payload) => taoDanhGia(payload),
     onSuccess: () => {
-      alert("✅ Đã gửi đánh giá, cảm ơn bạn!");
+      success("Đã gửi đánh giá, cảm ơn bạn!");
       queryClient.invalidateQueries({ queryKey: ["reviews", productId] });
       queryClient.invalidateQueries({ queryKey: ["review-stats", productId] });
       queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
@@ -148,24 +150,23 @@ export default function ReviewsPanel({ productId }) {
         err?.response?.data?.message ||
         err?.message ||
         "Không gửi được đánh giá. Vui lòng thử lại.";
-      alert(msg);
+      error(msg);
     },
   });
 
   const handleSubmitReview = (values) => {
     if (!authUser) {
-      alert("Vui lòng đăng nhập để gửi đánh giá.");
+      info("Vui lòng đăng nhập để gửi đánh giá.");
       return;
     }
 
     if (!eligibleLines.length) {
-      alert(
+      info(
         "Bạn chưa có đơn hàng đã giao cho sản phẩm này nên chưa thể đánh giá."
       );
       return;
     }
 
-    // Chọn dòng chi tiết đầu tiên phù hợp (nếu muốn, sau này có thể cho user chọn)
     const target = eligibleLines[0];
 
     createReviewMutation.mutate({

@@ -1,33 +1,31 @@
-// src/components/common/PhieuThu/PhieuThuDetailModal.jsx
+// src/components/common/PhieuNhap/PhieuNhapDetailModal.jsx
 // ======================================================
-// Modal xem chi tiết 1 phiếu thu – chịu được nhiều format BE
+// Modal xem chi tiết 1 phiếu nhập
 // ======================================================
 
 import { useQuery } from "@tanstack/react-query";
-import { getPhieuThu } from "../../../api/phieuThuApi";
+import { getPhieuNhap } from "../../../api/phieuNhapApi";
 
-export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
+export default function PhieuNhapDetailModal({ phieuNhapId, onClose }) {
   const {
-    data: ptRaw,
+    data: pt,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["phieu-thu-detail", phieuThuId],
-    queryFn: () => getPhieuThu(phieuThuId),
+    queryKey: ["phieu-nhap-detail", phieuNhapId],
+    queryFn: () => getPhieuNhap(phieuNhapId),
   });
 
-  const pt = ptRaw || {};
-
-  const ngayNhap = pt.ngay_thu || pt.ngay_tao || pt.ngay_cap_nhat || null;
-
+  const ngayNhap = pt?.ngay_nhap || pt?.ngay_tao || pt?.ngay_cap_nhat || null;
   const chiTiet =
-    pt.cac_chi_tiet_phieu_thu ||
-    pt.phieu_thu_chi_tiets ||
-    pt.chi_tiet_phieu_thu ||
+    pt?.chi_tiet ||
+    pt?.cac_chi_tiet_phieu_nhap ||
+    pt?.phieu_nhap_chi_tiets ||
+    pt?.chi_tiet_phieu_nhap ||
     [];
 
   const tongTien =
-    pt.tong_gia_tri ??
+    pt?.tong_gia_tri ??
     chiTiet.reduce((sum, item) => {
       const sl = Number(item.so_luong || 0);
       const gia = Number(item.gia_nhap_tung_vat || 0);
@@ -46,7 +44,8 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/70 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/90">
           <div>
             <h2 className="text-lg font-semibold">
-              Chi tiết phiếu thu {pt.ma_phieu_thu ? `– ${pt.ma_phieu_thu}` : ""}
+              Chi tiết phiếu nhập{" "}
+              {pt?.ma_phieu_nhap ? `– ${pt.ma_phieu_nhap}` : ""}
             </h2>
             {ngayNhap && (
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -71,23 +70,25 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
           )}
           {isError && (
             <div className="text-sm text-red-500 dark:text-red-400">
-              Không tải được chi tiết phiếu thu
+              Không tải được chi tiết phiếu nhập
             </div>
           )}
 
-          {!isLoading && !isError && (
+          {!isLoading && !isError && pt && (
             <>
               {/* info chung */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="space-y-1">
                   <p className="text-slate-500 dark:text-slate-400">Mã phiếu</p>
-                  <p className="font-medium">{pt.ma_phieu_thu || "-"}</p>
+                  <p className="font-medium">{pt.ma_phieu_nhap || "-"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-slate-500 dark:text-slate-400">
                     Nhà cung cấp
                   </p>
-                  <p className="font-medium">{pt.ten_nha_cung_cap || "-"}</p>
+                  <p className="font-medium">
+                    {pt.ten_nha_cung_cap || pt.ten || "-"}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-slate-500 dark:text-slate-400">
@@ -129,10 +130,11 @@ export default function PhieuThuDetailModal({ phieuThuId, onClose }) {
 
                       const tenBienThe =
                         ct.ten_bien_the ||
-                        ct.ten_san_pham?.concat(
-                          ct.ten_bien_the ? ` – ${ct.ten_bien_the}` : ""
-                        ) ||
-                        (ct.ten_san_pham && ct.ten_san_pham) ||
+                        (ct.ten_san_pham
+                          ? `${ct.ten_san_pham}${
+                              ct.ten_bien_the ? ` – ${ct.ten_bien_the}` : ""
+                            }`
+                          : null) ||
                         `Biến thể #${ct.bien_the_san_pham_id}`;
 
                       return (

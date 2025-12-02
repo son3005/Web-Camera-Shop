@@ -1,6 +1,6 @@
 // src/hooks/useToast.js
 // Hook dùng để gọi toast từ bất cứ đâu (client, admin, trang đăng nhập...)
-// Tất cả đều dùng react-hot-toast
+// Tất cả đều dùng react-toastify
 
 import { toast } from "react-toastify";
 
@@ -38,6 +38,8 @@ export const useToast = () => {
         return toast.loading(message, config);
       case "info":
         return toast.info(message, config);
+      case "warn":
+        return toast.warn(message, config);
       case "custom":
         return toast.custom(message, config);
       default:

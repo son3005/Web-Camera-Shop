@@ -7,7 +7,8 @@ import ProtectedRoute from "./ProtectedRoute";
 const Dashboard = lazy(() => import("../pages/Admin/Dashboard"));
 const Inventory = lazy(() => import("../pages/Admin/Inventory"));
 const Orders = lazy(() => import("../pages/Admin/Orders"));
-const PhieuThu = lazy(() => import("../pages/Admin/PhieuThuPage"));
+const PhieuNhap = lazy(() => import("../pages/Admin/PhieuNhapPage"));
+const SuppliersPage = lazy(() => import("../pages/Admin/SuppliersPage"));
 const SettingsBrands = lazy(() => import("../pages/Admin/SettingsBrands"));
 const SettingsCategories = lazy(() =>
   import("../pages/Admin/SettingsCategories")
@@ -37,7 +38,12 @@ const AdminRoutes = {
     { index: true, element: <Dashboard /> },
     { path: "inventory", element: <Inventory /> },
     { path: "orders", element: <Orders /> },
-    { path: "phieu-thu", element: <PhieuThu /> },
+
+    // Phiếu nhập
+    { path: "phieu-nhap", element: <PhieuNhap /> },
+
+    // Nhà cung cấp
+    { path: "suppliers", element: <SuppliersPage /> },
 
     // 🔥 Trang quản lý khách hàng
     { path: "customers", element: <Customers /> },

@@ -1,8 +1,8 @@
 """init full tables - fixed nullable
 
-Revision ID: e6bcdcf6a4fa
+Revision ID: f772a5cdf49a
 Revises: 
-Create Date: 2025-12-01 07:08:13.678001
+Create Date: 2025-12-02 01:23:48.084550
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'e6bcdcf6a4fa'
+revision = 'f772a5cdf49a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -129,8 +129,8 @@ def upgrade():
     sa.Column('nguoi_nhap_id', sa.Integer(), nullable=True),
     sa.Column('ma_phieu_nhap', sa.String(length=25), nullable=True),
     sa.Column('nha_cung_cap_id', sa.Integer(), nullable=False),
-    sa.Column('ngay_nhap', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('ngay_cap_nhat', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('ngay_nhap', sa.DateTime(), nullable=True),
+    sa.Column('ngay_cap_nhat', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['nguoi_nhap_id'], ['nguoi_dung.id'], ),
     sa.ForeignKeyConstraint(['nha_cung_cap_id'], ['nha_cung_cap.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -248,8 +248,8 @@ def upgrade():
     sa.Column('bien_the_san_pham_id', sa.Integer(), nullable=True),
     sa.Column('so_luong', sa.Integer(), server_default='1', nullable=False),
     sa.Column('gia_nhap_tung_vat', sa.Numeric(precision=12, scale=0), nullable=False),
-    sa.Column('ngay_tao', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('ngay_cap_nhat', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('ngay_tao', sa.DateTime(), nullable=True),
+    sa.Column('ngay_cap_nhat', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['bien_the_san_pham_id'], ['bien_the_san_pham.id'], ),
     sa.ForeignKeyConstraint(['phieu_nhap_id'], ['phieu_nhap.id'], ),
     sa.PrimaryKeyConstraint('id')

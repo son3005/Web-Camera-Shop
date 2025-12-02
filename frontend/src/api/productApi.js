@@ -4,7 +4,7 @@
 // - Dùng apiClient (base: http://localhost:5000/api)
 // - Endpoint thực tế: /api/san-pham  và  /api/san-pham/:id
 // - Có normalizeProduct để FE xài đồng nhất
-// - Có getProductsBasic để module Phiếu Thu dùng
+// - Thêm các API: sản phẩm nổi bật, mới nhất, liên quan, tìm biến thể
 // ============================================================
 
 import apiClient from "./apiClient";
@@ -67,7 +67,7 @@ export function normalizeProduct(sp) {
       .flatMap((v) => (v.hinh_anhs || []).map((img) => img.url))
       .filter(Boolean),
 
-    // nếu backend sau này có rating thì vẫn giữ chỗ
+    // rating (nếu backend có)
     rating: sp.trung_binh_danh_gia || 0,
     reviewCount: sp.so_luong_danh_gia || 0,
 
@@ -112,16 +112,14 @@ export async function getProducts({
     params.cap_do_ids = filters.cap_do_ids;
   }
 
-  // sort: backend của bạn dùng 2 param riêng (sort_by_price, sort_by_name)
-  // nhưng bạn gom thành 1 "sort" → map lại:
+  // sort: backend dùng sort_by_price, sort_by_name
   if (sort?.startsWith("price_")) {
     params.sort_by_price = sort; // "price_asc" | "price_desc"
   } else if (sort?.startsWith("name_")) {
     params.sort_by_name = sort; // "name_asc" | "name_desc"
   }
 
-  // 🔥 paramsSerializer để axios gửi array theo dạng:
-  // ?thuong_hieu_ids=1&thuong_hieu_ids=2
+  // Gửi array dạng ?thuong_hieu_ids=1&thuong_hieu_ids=2
   const res = await apiClient.get("/san-pham", {
     params,
     paramsSerializer: (paramsObj) => {
@@ -197,6 +195,63 @@ export async function quickSearch(term, limit = 6) {
 // ----------------------------------------------
 export async function getProductsBasic() {
   const res = await apiClient.get("/san-pham/danh-sach-co-ban");
-  // để nguyên để modal phiếu thu map trực tiếp
-  return res.data;
+  return res.data; // { data: [ { id, ten_san_pham } ] }
+}
+
+// ----------------------------------------------
+// LẤY SẢN PHẨM NỔI BẬT
+// GET /api/san-pham/danh-sach-noi-bat?limit=...
+// ----------------------------------------------
+export async function getFeaturedProducts(limit = 8) {
+  const res = await apiClient.get("/san-pham/danh-sach-noi-bat", {
+    params: { limit },
+  });
+
+  const raw = res.data;
+  const arr = raw.data || [];
+  return arr.map((p) => normalizeProduct(p));
+}
+
+// ----------------------------------------------
+// LẤY SẢN PHẨM MỚI NHẤT
+// GET /api/san-pham/danh-sach-moi-nhat/?limit=...
+// ----------------------------------------------
+export async function getNewestProducts(limit = 8) {
+  const res = await apiClient.get("/san-pham/danh-sach-moi-nhat/", {
+    params: { limit },
+  });
+
+  const raw = res.data;
+  const arr = raw.data || [];
+  return arr.map((p) => normalizeProduct(p));
+}
+
+// ----------------------------------------------
+// LẤY SẢN PHẨM LIÊN QUAN
+// GET /api/san-pham/:id/lien-quan?limit=...
+// ----------------------------------------------
+export async function getRelatedProducts(productId, limit = 8) {
+  const res = await apiClient.get(`/san-pham/${productId}/lien-quan`, {
+    params: { limit },
+  });
+
+  const raw = res.data;
+  const arr = raw.data || [];
+  return arr.map((p) => normalizeProduct(p));
+}
+
+// ----------------------------------------------
+// TÌM KIẾM BIẾN THỂ (autocomplete)
+// GET /api/san-pham/tim-kiem-bien-the?query=...&limit=...
+// ----------------------------------------------
+export async function searchVariantsByProductName(query, limit = 20) {
+  const q = String(query || "").trim();
+  if (!q) return [];
+
+  const res = await apiClient.get("/san-pham/tim-kiem-bien-the", {
+    params: { query: q, limit },
+  });
+
+  const raw = res.data;
+  return raw.data || [];
 }
