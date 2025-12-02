@@ -622,13 +622,17 @@ class SanPhamService:
             # Query lấy biến thể của sản phẩm, chỉ id và tên
             bien_thes = BienTheSanPham.query.with_entities(
                 BienTheSanPham.id,
-                BienTheSanPham.ten_bien_the
+                BienTheSanPham.ten_bien_the,
+                BienTheSanPham.so_luong_nhap,
+                BienTheSanPham.so_luong_ban,
+                BienTheSanPham.gia_ban
+
             ).filter(
                 BienTheSanPham.san_pham_id == san_pham_id
             ).order_by(BienTheSanPham.ten_bien_the.asc()).all()
             
             # Chuyển đổi kết quả
-            data = [{"id": bt.id, "ten_bien_the": bt.ten_bien_the} for bt in bien_thes]
+            data = [{"id": bt.id, "ten_bien_the": bt.ten_bien_the, "so_luong_co_the_ban": bt.so_luong_nhap - bt.so_luong_ban, "gia_ban": bt.gia_ban} for bt in bien_thes]
             
             logger.info(f"Lấy danh sách biến thể cơ bản thành công: {len(data)} biến thể")
             return {"data": data}
@@ -857,5 +861,4 @@ class SanPhamService:
         except Exception as e:
             logger.error(f"Lỗi khi tìm kiếm biến thể theo tên sản phẩm: {e}", exc_info=True)
             raise BadRequest(f"Lỗi khi tìm kiếm biến thể: {str(e)}")
-        
     

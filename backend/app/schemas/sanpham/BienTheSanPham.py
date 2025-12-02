@@ -58,7 +58,8 @@ class BienTheBasicResponse(BaseModel):
     """
     id: int
     ten_bien_the: str = Field(..., description="Tên biến thể sản phẩm")
-    
+    so_luong_co_the_ban: int = Field(..., description="Số lượng có thể bán hiện tại")
+    gia_ban: Decimal = Field(..., description="Giá bán của biến thể sản phẩm")
     model_config = ConfigDict(from_attributes=True)
 
 
