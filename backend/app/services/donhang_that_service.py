@@ -66,6 +66,17 @@ class DonHangThatService:
                     don_gia_luc_mua=item['don_gia'],
                     so_luong=item['so_luong']
                 )
+                if don_hang_ao.gio_hang_id is not None:
+                    from ..models.giohang_dathang import ChiTietGioHang
+                    gio_hang_chi_tiet = ChiTietGioHang.query.filter_by(
+                        gio_hang_id=don_hang_ao.gio_hang_id,
+                        bien_the_san_pham_id=item['id_bien_the']
+                    ).first()
+                    
+                    if gio_hang_chi_tiet:
+                        gio_hang_chi_tiet.so_luong -= item['so_luong']
+                        if gio_hang_chi_tiet.so_luong <= 0:
+                            self.db.session.delete(gio_hang_chi_tiet)
                 self.db.session.add(chi_tiet)
             
             # Tạo thanh toán
@@ -116,7 +127,7 @@ class DonHangThatService:
         """
         Tạo đơn hàng thật trực tiếp (cho COD) không qua đơn hàng ảo
         """
-        from ..models.giohang_dathang import DonHang, ChiTietDonHang, ThanhToan
+        from ..models.giohang_dathang import DonHang, ChiTietDonHang, ThanhToan, ChiTietGioHang
         
         try:
             # Tạo mã đơn hàng
@@ -155,6 +166,17 @@ class DonHangThatService:
                     don_gia_luc_mua=item['don_gia'],
                     so_luong=item['so_luong']
                 )
+                if don_hang_data.get('gio_hang_id'):
+                    gio_hang_chi_tiet = ChiTietGioHang.query.filter_by(
+                        gio_hang_id=don_hang_data['gio_hang_id'],
+                        bien_the_san_pham_id=item['id_bien_the']
+                    ).first()
+                    
+                    if gio_hang_chi_tiet:
+                        gio_hang_chi_tiet.so_luong -= item['so_luong']
+                        if gio_hang_chi_tiet.so_luong <= 0:
+                            self.db.session.delete(gio_hang_chi_tiet)
+
                 self.db.session.add(chi_tiet)
             
             # Tạo thanh toán COD

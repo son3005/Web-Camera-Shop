@@ -12,7 +12,7 @@ from ..schemas.giohang_dathang import (
 )
 from ..extensions import db, redis
 from ..models.enums import TrangThaiDonHangEnum, TrangThaiThanhToanEnum
-from ..services.email_service import send_email
+from ..services.email_service import send_email,send_email_xac_nhan
 
 
 chuyen_trang_thai_don_hang = {
@@ -212,11 +212,41 @@ def cap_nhat_trang_thai(don_hang_id):
             if not data.get('ly_do'):
                 return jsonify({"msg": "Vui lòng nhập lý do chấp nhận đổi trả"}), 400
             don_hang.ly_do = data['ly_do']
+            if don_hang.nguoi_dung:
+                send_email(
+                    to_email=don_hang.nguoi_dung.email,
+                    subject="Thông báo huỷ đơn hàng",
+                    template="email/huy_don_hang.html",
+                    data={
+                        "ma_don_hang": don_hang.ma_don_hang,
+                        "ly_do": data['ly_do']
+                    }
+                )
 
         elif new_status == TrangThaiDonHangEnum.TU_CHOI_DOI_TRA:
             if not data.get('ly_do'):
                 return jsonify({"msg": "Vui lòng nhập lý do từ chối đổi trả"}), 400
             don_hang.ly_do = data['ly_do']
+            if don_hang.nguoi_dung:
+                send_email(
+                    to_email=don_hang.nguoi_dung.email,
+                    subject="Thông báo huỷ đơn hàng",
+                    template="email/huy_don_hang.html",
+                    data={
+                        "ma_don_hang": don_hang.ma_don_hang,
+                        "ly_do": data['ly_do']
+                    }
+                )
+        elif new_status == TrangThaiDonHangEnum.DA_XAC_NHAN:
+            if don_hang.nguoi_dung:
+                send_email_xac_nhan(
+                    to_email=don_hang.nguoi_dung.email,
+                    subject="Thông báo huỷ đơn hàng",
+                    template="email/xac_nhan_don_hang.html",
+                    data={
+                        "ma_don_hang": don_hang.ma_don_hang
+                    }
+                )
 
         don_hang.trang_thai = new_status
         db.session.commit()
