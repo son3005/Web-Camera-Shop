@@ -4,44 +4,44 @@ from datetime import datetime, date, timedelta
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, func, extract
 from ..extensions import db
-from ..models.phieuthu import PhieuThu, ChiTietPhieuThu
+from ..models.phieunhap import ChiTietPhieuNhap, PhieuNhap, NhaCungCap
 from ..models.sanpham import BienTheSanPham, SanPham
-from ..schemas.phieuthu import PhieuThuCreate, PhieuThuUpdate, ChiTietPhieuThuCreate, ChiTietPhieuThuUpdate, ChiTietPhieuThuResponse, PhieuThuResponse
+from ..schemas.phieunhap import PhieuNhapCreate, PhieuNhapUpdate, PhieuNhapResponse, ChiTietPhieuNhapResponse
+from sqlalchemy import func
 
-
-class PhieuThuService:
+class PhieuNhapService:
     """
-    Service xử lý nghiệp vụ Phiếu Thu
-    - Tạo phiếu thu và cộng dồn số lượng biến thể
-    - Cập nhật phiếu thu và điều chỉnh số lượng biến thể
-    - Chỉ cho phép cập nhật biến thể trong phiếu thu mới nhất
+    Service xử lý nghiệp vụ Phiếu Nhập
+    - Tạo phiếu nhập và cộng dồn số lượng biến thể
+    - Cập nhật phiếu nhập và điều chỉnh số lượng biến thể
+    - Chỉ cho phép cập nhật biến thể trong phiếu nhập mới nhất
     """
     
     @staticmethod
-    def generate_ma_phieu_thu() -> str:
-        """Tạo mã phiếu thu tự động (PT + timestamp)"""
+    def generate_ma_phieu_nhap() -> str:
+        """Tạo mã phiếu nhập tự động (PN + timestamp)"""
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        return f"PT{timestamp}"
+        return f"PN{timestamp}"
     
     @staticmethod
-    def _kiem_tra_bien_the_trong_phieu_thu_moi_nhat(
+    def _kiem_tra_bien_the_trong_phieu_nhap_moi_nhat(
         session: Session, 
         bien_the_id: int, 
-        phieu_thu_id: int
+        phieu_nhap_id: int
     ) -> bool:
         """
-        Kiểm tra xem biến thể có nằm trong phiếu thu mới nhất không
-        Returns: True nếu biến thể nằm trong phiếu thu mới nhất, False nếu không
+        Kiểm tra xem biến thể có nằm trong phiếu nhập mới nhất không
+        Returns: True nếu biến thể nằm trong phiếu nhập mới nhất, False nếu không
         """
-        # Tìm phiếu thu mới nhất có chứa biến thể này
-        latest_phieu_with_bien_the = session.query(PhieuThu).\
-            join(ChiTietPhieuThu, PhieuThu.id == ChiTietPhieuThu.phieu_thu_id).\
-            filter(ChiTietPhieuThu.bien_the_san_pham_id == bien_the_id).\
-            order_by(PhieuThu.ngay_thu.desc(), PhieuThu.id.desc()).\
+        # Tìm phiếu nhập mới nhất có chứa biến thể này
+        latest_phieu_with_bien_the = session.query(PhieuNhap).\
+            join(ChiTietPhieuNhap, PhieuNhap.id == ChiTietPhieuNhap.phieu_nhap_id).\
+            filter(ChiTietPhieuNhap.bien_the_san_pham_id == bien_the_id).\
+            order_by(PhieuNhap.ngay_nhap.desc(), PhieuNhap.id.desc()).\
             first()
         
-        # Nếu không tìm thấy phiếu thu nào chứa biến thể, hoặc phiếu thu mới nhất là phiếu thu hiện tại
-        if not latest_phieu_with_bien_the or latest_phieu_with_bien_the.id == phieu_thu_id:
+        # Nếu không tìm thấy phiếu nhập nào chứa biến thể, hoặc phiếu nhập mới nhất là phiếu nhập hiện tại
+        if not latest_phieu_with_bien_the or latest_phieu_with_bien_the.id == phieu_nhap_id:
             return True
         
         return False
@@ -108,7 +108,7 @@ class PhieuThuService:
         return start_datetime, end_datetime
     
     @staticmethod
-    def _lay_thong_tin_san_pham_cho_chi_tiet(chi_tiet: ChiTietPhieuThu) -> dict:
+    def _lay_thong_tin_san_pham_cho_chi_tiet(chi_tiet: ChiTietPhieuNhap) -> dict:
         """
         Lấy thông tin sản phẩm và biến thể cho chi tiết phiếu thu
         """
@@ -157,32 +157,32 @@ class PhieuThuService:
             }
     
     @staticmethod
-    def _tinh_tong_so_luong_va_gia_tri(chi_tiet_phieu_thus: List[ChiTietPhieuThu]) -> tuple[int, Decimal]:
+    def _tinh_tong_so_luong_va_gia_tri(chi_tiet_phieu_nhaps: List[ChiTietPhieuNhap]) -> tuple[int, Decimal]:
         """
-        Tính tổng số lượng và tổng giá trị từ danh sách chi tiết phiếu thu
+        Tính tổng số lượng và tổng giá trị từ danh sách chi tiết phiếu nhập
         """
         tong_so_luong = 0
         tong_gia_tri = Decimal('0')
         
-        for chi_tiet in chi_tiet_phieu_thus:
+        for chi_tiet in chi_tiet_phieu_nhaps:
             tong_so_luong += chi_tiet.so_luong
             tong_gia_tri += chi_tiet.so_luong * chi_tiet.gia_nhap_tung_vat
         
         return tong_so_luong, tong_gia_tri
     
     @staticmethod
-    def chuyen_doi_phieu_thu_sang_response(phieu_thu: PhieuThu) -> PhieuThuResponse:
+    def chuyen_doi_phieu_nhap_sang_response(phieu_nhap: PhieuNhap) -> PhieuNhapResponse:
         """
-        Chuyển đổi model PhieuThu sang schema PhieuThuResponse
+        Chuyển đổi model PhieuNhap sang schema PhieuNhapResponse
         với đầy đủ thông tin sản phẩm và biến thể
         """
         chi_tiet_responses = []
-        for chi_tiet in phieu_thu.chi_tiet_phieu_thus:
-            thong_tin_san_pham = PhieuThuService._lay_thong_tin_san_pham_cho_chi_tiet(chi_tiet)
+        for chi_tiet in phieu_nhap.chi_tiet_phieu_nhaps:
+            thong_tin_san_pham = PhieuNhapService._lay_thong_tin_san_pham_cho_chi_tiet(chi_tiet)
             
-            chi_tiet_response = ChiTietPhieuThuResponse(
+            chi_tiet_response = ChiTietPhieuNhapResponse(
                 id=chi_tiet.id,
-                phieu_thu_id=chi_tiet.phieu_thu_id,
+                phieu_nhap_id=chi_tiet.phieu_nhap_id,
                 bien_the_san_pham_id=chi_tiet.bien_the_san_pham_id,
                 so_luong=chi_tiet.so_luong,
                 gia_nhap_tung_vat=chi_tiet.gia_nhap_tung_vat,
@@ -191,49 +191,50 @@ class PhieuThuService:
             )
             chi_tiet_responses.append(chi_tiet_response)
         
-        tong_so_luong, tong_gia_tri = PhieuThuService._tinh_tong_so_luong_va_gia_tri(phieu_thu.chi_tiet_phieu_thus)
+        tong_so_luong, tong_gia_tri = PhieuNhapService._tinh_tong_so_luong_va_gia_tri(phieu_nhap.chi_tiet_phieu_nhaps)
         
-        phieu_thu_response = PhieuThuResponse(
-            id=phieu_thu.id,
-            ma_phieu_thu=phieu_thu.ma_phieu_thu,
-            ten_nha_cung_cap=phieu_thu.ten_nha_cung_cap,
-            nguoi_nhap_id=phieu_thu.nguoi_nhap_id,
-            ngay_thu=phieu_thu.ngay_thu,
-            ngay_cap_nhat=phieu_thu.ngay_cap_nhat,
-            cac_chi_tiet_phieu_thu=chi_tiet_responses,
+        phieu_nhap_response = PhieuNhapResponse(
+            id=phieu_nhap.id,
+            ma_phieu_nhap=phieu_nhap.ma_phieu_nhap,
+            nha_cung_cap_id=phieu_nhap.nha_cung_cap_id,
+            ten_nha_cung_cap=phieu_nhap.nha_cung_cap.ten_nha_cung_cap if phieu_nhap.nha_cung_cap else None,
+            nguoi_nhap_id=phieu_nhap.nguoi_nhap_id,
+            ngay_nhap=phieu_nhap.ngay_nhap,
+            ngay_cap_nhat=phieu_nhap.ngay_cap_nhat,
+            cac_chi_tiet_phieu_nhap=chi_tiet_responses,
             tong_so_luong=tong_so_luong,
             tong_gia_tri=tong_gia_tri
         )
         
-        return phieu_thu_response
+        return phieu_nhap_response
     
     @staticmethod
-    def tao_phieu_thu(phieu_thu_data: PhieuThuCreate, nguoi_nhap_id: int) -> PhieuThu:
+    def tao_phieu_nhap(phieu_nhap_data: PhieuNhapCreate, nguoi_nhap_id: int) -> PhieuNhap:
         """
-        Tạo phiếu thu mới và cộng dồn số lượng biến thể
+        Tạo phiếu nhập mới và cộng dồn số lượng biến thể
         """
         session = db.session
         
         try:
-            phieu_thu = PhieuThu(
-                ma_phieu_thu=PhieuThuService.generate_ma_phieu_thu(),
-                ten_nha_cung_cap=phieu_thu_data.ten_nha_cung_cap,
+            phieu_nhap = PhieuNhap(
+                ma_phieu_nhap=PhieuNhapService.generate_ma_phieu_nhap(),
+                nha_cung_cap_id=phieu_nhap_data.nha_cung_cap_id,
                 nguoi_nhap_id=nguoi_nhap_id,
-                ngay_thu=datetime.utcnow()
+                ngay_nhap=datetime.utcnow()
             )
-            session.add(phieu_thu)
-            session.flush()  # Lấy ID của phiếu thu
+            session.add(phieu_nhap)
+            session.flush()  # Lấy ID của phiếu nhập
             
-            for chi_tiet_data in phieu_thu_data.phieu_thu_chi_tiets:
-                chi_tiet = ChiTietPhieuThu(
-                    phieu_thu_id=phieu_thu.id,
+            for chi_tiet_data in phieu_nhap_data.phieu_nhap_chi_tiets:
+                chi_tiet = ChiTietPhieuNhap(
+                    phieu_nhap_id=phieu_nhap.id,
                     bien_the_san_pham_id=chi_tiet_data.bien_the_san_pham_id,
                     so_luong=chi_tiet_data.so_luong,
                     gia_nhap_tung_vat=chi_tiet_data.gia_nhap_tung_vat
                 )
                 session.add(chi_tiet)
                 
-                PhieuThuService._cap_nhat_so_luong_bien_the(
+                PhieuNhapService._cap_nhat_so_luong_bien_the(
                     chi_tiet_data.bien_the_san_pham_id,
                     chi_tiet_data.so_luong,
                     session
@@ -241,19 +242,19 @@ class PhieuThuService:
             
             session.commit()
             
-            # Load lại phiếu thu với đầy đủ relationship để trả về
-            phieu_thu_complete = session.query(PhieuThu).\
-                options(joinedload(PhieuThu.chi_tiet_phieu_thus)).\
-                filter(PhieuThu.id == phieu_thu.id).first()
+            # Load lại phiếu nhập với đầy đủ relationship để trả về
+            phieu_nhap_complete = session.query(PhieuNhap).\
+                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap)).\
+                filter(PhieuNhap.id == phieu_nhap.id).first()
             
-            return phieu_thu_complete
+            return phieu_nhap_complete
             
         except Exception as e:
             session.rollback()
             raise e
     
     @staticmethod
-    def cap_nhat_phieu_thu(phieu_thu_id: int, update_data: PhieuThuUpdate) -> Optional[PhieuThu]:
+    def cap_nhat_phieu_nhap(phieu_nhap_id: int, update_data: PhieuNhapUpdate) -> Optional[PhieuNhap]:
         """
         Cập nhật phiếu thu và điều chỉnh số lượng biến thể
         - Chỉ cho phép cập nhật biến thể trong phiếu thu mới nhất
@@ -264,31 +265,31 @@ class PhieuThuService:
         
         try:
             # Lấy phiếu thu hiện tại với đầy đủ chi tiết
-            phieu_thu = session.query(PhieuThu).\
-                options(joinedload(PhieuThu.chi_tiet_phieu_thus)).\
-                filter(PhieuThu.id == phieu_thu_id).first()
+            phieu_nhap = session.query(PhieuNhap).\
+                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap)).\
+                filter(PhieuNhap.id == phieu_nhap_id).first()
             
-            if not phieu_thu:
+            if not phieu_nhap:
                 return None
             
             # Kiểm tra xem phiếu thu này có phải là phiếu thu mới nhất không
-            latest_phieu = session.query(PhieuThu).order_by(PhieuThu.ngay_thu.desc()).first()
-            if latest_phieu.id != phieu_thu_id:
+            latest_phieu = session.query(PhieuNhap).order_by(PhieuNhap.ngay_nhap.desc()).first()
+            if latest_phieu.id != phieu_nhap_id:
                 raise ValueError("Chỉ được cập nhật phiếu thu mới nhất")
 
             # Cập nhật thông tin cơ bản
-            if update_data.ten_nha_cung_cap is not None:
-                phieu_thu.ten_nha_cung_cap = update_data.ten_nha_cung_cap
+            if update_data.nha_cung_cap_id is not None:
+                phieu_nhap.nha_cung_cap_id = update_data.nha_cung_cap_id
             
             # Xử lý cập nhật chi tiết nếu có
-            if update_data.phieu_thu_chi_tiets is not None:
+            if update_data.phieu_nhap_chi_tiets is not None:
                 # Lấy chi tiết hiện tại
                 chi_tiet_hien_tai = {
-                    ct.id: ct for ct in phieu_thu.chi_tiet_phieu_thus
+                    ct.id: ct for ct in phieu_nhap.chi_tiet_phieu_nhaps
                 }
                 
                 # Xử lý từng chi tiết trong request
-                for chi_tiet_update in update_data.phieu_thu_chi_tiets:
+                for chi_tiet_update in update_data.phieu_nhap_chi_tiets:
                     # Cập nhật chi tiết tồn tại
                     if chi_tiet_update.id and chi_tiet_update.id in chi_tiet_hien_tai:
                         chi_tiet = chi_tiet_hien_tai.get(chi_tiet_update.id)
@@ -304,15 +305,15 @@ class PhieuThuService:
                             
                             # KIỂM TRA QUYỀN CẬP NHẬT CHO BIẾN THỂ MỚI
                             if bien_the_id_moi != bien_the_id_cu:
-                                # Nếu thay đổi biến thể, kiểm tra biến thể mới có trong phiếu thu mới nhất không
-                                if not PhieuThuService._kiem_tra_bien_the_trong_phieu_thu_moi_nhat(
-                                    session, bien_the_id_moi, phieu_thu_id
+                                # Nếu thay đổi biến thể, kiểm tra biến thể mới có trong phiếu nhập mới nhất không
+                                if not PhieuNhapService._kiem_tra_bien_the_trong_phieu_nhap_moi_nhat(
+                                    session, bien_the_id_moi, phieu_nhap_id
                                 ):
                                     raise ValueError(f"Không được phép cập nhật biến thể {bien_the_id_moi} vì nó không nằm trong phiếu thu mới nhất")
                             else:
-                                # Nếu cùng biến thể, kiểm tra biến thể hiện tại có trong phiếu thu mới nhất không
-                                if not PhieuThuService._kiem_tra_bien_the_trong_phieu_thu_moi_nhat(
-                                    session, bien_the_id_cu, phieu_thu_id
+                                # Nếu cùng biến thể, kiểm tra biến thể hiện tại có trong phiếu nhập mới nhất không
+                                if not PhieuNhapService._kiem_tra_bien_the_trong_phieu_nhap_moi_nhat(
+                                    session, bien_the_id_cu, phieu_nhap_id
                                 ):
                                     raise ValueError(f"Không được phép cập nhật biến thể {bien_the_id_cu} vì nó không nằm trong phiếu thu mới nhất")
                             
@@ -320,13 +321,13 @@ class PhieuThuService:
                             if bien_the_id_cu != bien_the_id_moi:
                                 # TH1: Thay đổi biến thể sản phẩm
                                 # Giảm số lượng ở biến thể cũ
-                                PhieuThuService._cap_nhat_so_luong_bien_the(
+                                PhieuNhapService._cap_nhat_so_luong_bien_the(
                                     bien_the_id_cu,
                                     -so_luong_cu,
                                     session
                                 )
                                 # Tăng số lượng ở biến thể mới
-                                PhieuThuService._cap_nhat_so_luong_bien_the(
+                                PhieuNhapService._cap_nhat_so_luong_bien_the(
                                     bien_the_id_moi,
                                     so_luong_moi,
                                     session
@@ -335,7 +336,7 @@ class PhieuThuService:
                                 # TH2: Cùng biến thể, chỉ thay đổi số lượng
                                 chenh_lech = so_luong_moi - so_luong_cu
                                 if chenh_lech != 0:
-                                    PhieuThuService._cap_nhat_so_luong_bien_the(
+                                    PhieuNhapService._cap_nhat_so_luong_bien_the(
                                         bien_the_id_cu,
                                         chenh_lech,
                                         session
@@ -356,20 +357,20 @@ class PhieuThuService:
                             raise ValueError("gia_nhap_tung_vat là bắt buộc khi thêm chi tiết mới")
                         
                         # KIỂM TRA QUYỀN THÊM MỚI CHO BIẾN THỂ
-                        if not PhieuThuService._kiem_tra_bien_the_trong_phieu_thu_moi_nhat(
-                            session, chi_tiet_update.bien_the_san_pham_id, phieu_thu_id
+                        if not PhieuNhapService._kiem_tra_bien_the_trong_phieu_nhap_moi_nhat(
+                            session, chi_tiet_update.bien_the_san_pham_id, phieu_nhap_id
                         ):
                             raise ValueError(f"Không được phép thêm biến thể {chi_tiet_update.bien_the_san_pham_id} vì nó không nằm trong phiếu thu mới nhất")
                         
-                        chi_tiet_moi = ChiTietPhieuThu(
-                            phieu_thu_id=phieu_thu_id,
+                        chi_tiet_moi = ChiTietPhieuNhap(
+                            phieu_nhap_id=phieu_nhap_id,
                             bien_the_san_pham_id=chi_tiet_update.bien_the_san_pham_id,
                             so_luong=chi_tiet_update.so_luong,
                             gia_nhap_tung_vat=chi_tiet_update.gia_nhap_tung_vat
                         )
                         session.add(chi_tiet_moi)
                         
-                        PhieuThuService._cap_nhat_so_luong_bien_the(
+                        PhieuNhapService._cap_nhat_so_luong_bien_the(
                             chi_tiet_update.bien_the_san_pham_id,
                             chi_tiet_update.so_luong,
                             session
@@ -378,66 +379,69 @@ class PhieuThuService:
             session.commit()
             
             # Refresh để lấy dữ liệu mới nhất
-            session.refresh(phieu_thu)
+            session.refresh(phieu_nhap)
             
             # Load lại với đầy đủ relationship
-            phieu_thu_complete = session.query(PhieuThu).\
-                options(joinedload(PhieuThu.chi_tiet_phieu_thus)).\
-                filter(PhieuThu.id == phieu_thu_id).first()
+            phieu_nhap_complete = session.query(PhieuNhap).\
+                options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap)).\
+                filter(PhieuNhap.id == phieu_nhap_id).first()
             
-            return phieu_thu_complete
+            return phieu_nhap_complete
             
         except Exception as e:
             session.rollback()
             raise e
     
     @staticmethod
-    def lay_phieu_thu_theo_id(phieu_thu_id: int) -> Optional[PhieuThu]:
-        """Lấy thông tin phiếu thu theo ID với đầy đủ chi tiết"""
-        return db.session.query(PhieuThu).\
-            options(joinedload(PhieuThu.chi_tiet_phieu_thus)).\
-            filter(PhieuThu.id == phieu_thu_id).first()
+    def lay_phieu_nhap_theo_id(phieu_nhap_id: int) -> Optional[PhieuNhap]:
+        """Lấy thông tin phiếu nhập theo ID với đầy đủ chi tiết"""
+        return db.session.query(PhieuNhap).\
+            options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap)).\
+            filter(PhieuNhap.id == phieu_nhap_id).first()
     
     @staticmethod
-    def lay_danh_sach_phieu_thu(
+    def lay_danh_sach_phieu_nhap(
         page: int = 1, 
         per_page: int = 10,
         ten_nha_cung_cap: Optional[str] = None,
         ngay_bat_dau: Optional[str] = None,
         ngay_ket_thuc: Optional[str] = None,
-        ma_phieu_thu: Optional[str] = None
+        ma_phieu_nhap: Optional[str] = None
     ):
         """
-        Lấy danh sách phiếu thu với phân trang và filter
+        Lấy danh sách phiếu nhập với phân trang và filter
         """
-        query = db.session.query(PhieuThu).\
-            options(joinedload(PhieuThu.chi_tiet_phieu_thus))
+        query = db.session.query(PhieuNhap).\
+            options(joinedload(PhieuNhap.chi_tiet_phieu_nhaps), joinedload(PhieuNhap.nha_cung_cap))
         
         # Filter theo tên nhà cung cấp
         if ten_nha_cung_cap:
-            query = query.filter(PhieuThu.ten_nha_cung_cap.ilike(f"%{ten_nha_cung_cap}%"))
+            nha_cung_cap_subquery = db.session.query(NhaCungCap.id).filter(
+                NhaCungCap.ten_nha_cung_cap.ilike(f"%{ten_nha_cung_cap}%")
+            ).subquery()
+            query = query.filter(PhieuNhap.nha_cung_cap_id.in_(nha_cung_cap_subquery))
         
-        # Filter theo mã phiếu thu
-        if ma_phieu_thu:
-            query = query.filter(PhieuThu.ma_phieu_thu.ilike(f"%{ma_phieu_thu}%"))
+        # Filter theo mã phiếu nhập
+        if ma_phieu_nhap:
+            query = query.filter(PhieuNhap.ma_phieu_nhap.ilike(f"%{ma_phieu_nhap}%"))
         
         # Filter theo khoảng thời gian
         try:
-            start_datetime, end_datetime = PhieuThuService._chuan_hoa_thoi_gian_loc(
+            start_datetime, end_datetime = PhieuNhapService._chuan_hoa_thoi_gian_loc(
                 ngay_bat_dau, ngay_ket_thuc
             )
             
             if start_datetime:
-                query = query.filter(PhieuThu.ngay_thu >= start_datetime)
+                query = query.filter(PhieuNhap.ngay_nhap >= start_datetime)
             
             if end_datetime:
-                query = query.filter(PhieuThu.ngay_thu <= end_datetime)
+                query = query.filter(PhieuNhap.ngay_nhap <= end_datetime)
                 
         except ValueError as e:
             raise e
         
-        # Sắp xếp theo ngày thu mới nhất
-        query = query.order_by(PhieuThu.ngay_thu.desc())
+        # Sắp xếp theo ngày nhập mới nhất
+        query = query.order_by(PhieuNhap.ngay_nhap.desc())
         
         return query.paginate(
             page=page, 
@@ -453,7 +457,7 @@ class PhieuThuService:
         """
         Thống kê nhập hàng theo tháng/năm
         """
-        query = db.session.query(PhieuThu)
+        query = db.session.query(PhieuNhap)
         
         # Filter theo năm và tháng
         if thang:
@@ -468,26 +472,26 @@ class PhieuThuService:
         
         query = query.filter(
             and_(
-                PhieuThu.ngay_thu >= start_date,
-                PhieuThu.ngay_thu <= end_date
+                PhieuNhap.ngay_nhap >= start_date,
+                PhieuNhap.ngay_nhap <= end_date
             )
         )
         
-        phieu_thu_list = query.all()
+        phieu_nhap_list = query.all()
         
         # Tính tổng số lượng và giá trị nhập
         tong_so_luong = 0
         tong_gia_tri = Decimal('0')
         
-        for phieu_thu in phieu_thu_list:
-            for chi_tiet in phieu_thu.chi_tiet_phieu_thus:
+        for phieu_nhap in phieu_nhap_list:
+            for chi_tiet in phieu_nhap.chi_tiet_phieu_nhaps:
                 tong_so_luong += chi_tiet.so_luong
                 tong_gia_tri += chi_tiet.so_luong * chi_tiet.gia_nhap_tung_vat
         
         return {
             'nam': nam,
             'thang': thang,
-            'tong_phieu_thu': len(phieu_thu_list),
+            'tong_phieu_nhap': len(phieu_nhap_list),
             'tong_so_luong_nhap': tong_so_luong,
             'tong_gia_tri_nhap': float(tong_gia_tri),
             'tu_ngay': start_date.strftime("%Y-%m-%d"),

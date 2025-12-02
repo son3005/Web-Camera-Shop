@@ -81,15 +81,14 @@ class UploadService:
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             unique_id = str(uuid.uuid4())[:4]  # 4 ký tự đầu của UUID
-            original_filename = file.filename
-            name_without_ext = original_filename.rsplit('.', 1)[0]
+            
             
             # Tạo public_id unique: timestamp_uuid4_original_name
-            unique_public_id = f"{timestamp}_{unique_id}_{name_without_ext}"
+            unique_public_id = f"{timestamp}_{unique_id}"
             
             # Nếu có folder, thêm vào public_id
             if folder:
-                unique_public_id = f"{folder}/{unique_public_id}"
+                unique_public_id = f"{unique_public_id}"
 
             # Upload lên Cloudinary
             logger.debug("Gửi request upload tới Cloudinary...")
@@ -99,7 +98,8 @@ class UploadService:
                 use_filename=False,  # Sử dụng public_id của chúng ta
                 unique_filename=False,
                 overwrite=False,  # Không ghi đè
-                resource_type="image"
+                resource_type="image",
+                folder=folder
             )
 
             secure_url = upload_result.get('secure_url')

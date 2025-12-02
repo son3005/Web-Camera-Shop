@@ -23,6 +23,11 @@ from ..utils.decorators import admin_required
 # ==============================================================
 product_api = APIBlueprint('product_api', __name__, url_prefix='/api/san-pham')
 
+
+class SanPhamLimit(BaseModel):
+    limit: int = Field(10, description="Số lượng sản phẩm cần lấy")
+
+
 # ==============================================================
 # 1️ LẤY DANH SÁCH SẢN PHẨM
 # ==============================================================
@@ -438,3 +443,115 @@ def get_bien_the_basic_by_san_pham(path: SanPhamPath):
     except Exception:
         current_app.logger.error(f"Lỗi lấy danh sách biến thể cơ bản: {traceback.format_exc()}")
         return jsonify({"error": "Lỗi máy chủ khi lấy danh sách biến thể."}), 500
+    
+# ==============================================================
+# 8️ LẤY DANH SÁCH SẢN PHẨM NỔI BẬT
+# ==============================================================
+@product_api.get(
+    '/danh-sach-noi-bat',
+    responses={"200": SanPhamListResponse}
+)
+def get_san_pham_noi_bat():
+    """
+    Lấy danh sách sản phẩm nổi bật dựa trên số lượng bán trong tháng
+    Kết hợp với sản phẩm bán chạy nhất
+    """
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        current_app.logger.info(f"Lấy danh sách sản phẩm nổi bật với limit={limit}")
+        
+        result = SanPhamService.get_san_pham_noi_bat(limit=limit)
+        response = SanPhamListResponse.model_validate(result)
+        
+        return jsonify(response.model_dump()), 200
+        
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"Lỗi lấy danh sách sản phẩm nổi bật: {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ khi lấy danh sách sản phẩm nổi bật."}), 500
+    
+# ==============================================================
+# 9 LẤY DANH SÁCH SẢN PHẨM SẢN PHẨM MỚI NHẤT
+# ==============================================================
+
+@product_api.get(
+    '/danh-sach-moi-nhat/',
+    responses={"200": SanPhamListResponse}
+)
+def get_san_pham_moi_nhat():
+    """
+    Lấy danh sách sản phẩm mới nhất theo ngày tạo
+    """
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        current_app.logger.info(f"Lấy danh sách sản phẩm mới nhất với limit={limit}")
+        
+        result = SanPhamService.get_san_pham_moi_nhat(limit=limit)
+        response = SanPhamListResponse.model_validate(result)
+        
+        return jsonify(response.model_dump()), 200
+        
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"Lỗi lấy danh sách sản phẩm mới nhất: {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ khi lấy danh sách sản phẩm mới nhất."}), 500
+    
+# ==============================================================
+# 10 LẤY DANH SÁCH SẢN PHẨM LIÊN QUAN
+# ==============================================================
+@product_api.get(
+    '/<int:san_pham_id>/lien-quan',
+    responses={"200": SanPhamListResponse}
+)
+def get_san_pham_lien_quan(path: SanPhamPath):
+    """
+    Lấy danh sách sản phẩm liên quan dựa trên cùng danh mục và thương hiệu
+    """
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        current_app.logger.info(f"Lấy danh sách sản phẩm liên quan cho sản phẩm {path.san_pham_id} với limit={limit}")
+        
+        result = SanPhamService.get_san_pham_lien_quan(san_pham_id=path.san_pham_id, limit=limit)
+        
+        return jsonify(result), 200
+        
+    except NotFound as e:
+        return jsonify({"error": str(e)}), 404
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"Lỗi lấy danh sách sản phẩm liên quan: {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ khi lấy danh sách sản phẩm liên quan."}), 500
+
+
+#==============================================================
+# 11 LẤY DANH SÁCH SẢN PHẨM THEO SEARCH (TÌM KIẾM AUTOCOMPLETE)
+#=============================================================
+@product_api.get(
+    '/tim-kiem-bien-the',
+    responses={"200": BienTheBasicListResponse}
+)
+def search_bien_the_by_ten_san_pham():
+    """
+    Tìm kiếm biến thể theo tên sản phẩm (autocomplete cho biến thể)
+    """
+    try:
+        query = request.args.get('query', '', type=str)
+        limit = request.args.get('limit', 20, type=int)
+
+        current_app.logger.info(f"Tìm kiếm biến thể với tên sản phẩm query='{query}', limit={limit}")
+
+        result = SanPhamService.search_bien_the_by_ten_san_pham(
+            search=query,
+            limit=limit
+        )
+        response = BienTheBasicListResponse.model_validate(result)
+        return jsonify(response.model_dump()), 200
+
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception:
+        current_app.logger.error(f"Lỗi tìm kiếm biến thể theo tên sản phẩm: {traceback.format_exc()}")
+        return jsonify({"error": "Lỗi máy chủ khi tìm kiếm biến thể."}), 500

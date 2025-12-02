@@ -125,7 +125,7 @@ def create_app(config_class=None):
         from .routes.thuonghieu_routes import thuonghieu_api
         from .routes.capdo_routes import capdo_api
         from .routes.diachi_routes import dia_chi_api
-        from .routes.phieu_thu_routes import phieu_thu_api
+        from .routes.phieu_nhap_routes import phieu_nhap_api
         from .routes.giohang_routes import giohang_api
         from .routes.thanhtoan_routes import thanhtoan_api
         from .routes.khachhang_donhang_routes import khachhang_donhang_api
@@ -134,6 +134,9 @@ def create_app(config_class=None):
         from .routes.admin_danhgia_routes import admin_danh_gia_api
         from .routes.nguoidung_routes import nguoidung_api
         from .routes.khachhang_routes import khach_hang_api
+        from .routes.thongke_routes import thong_ke_api
+        from .routes.anhtrinhchieu_routes import anhtrinhchieu_api
+        from .routes.nhapcungcap_routes import supplier_api
 
         # ĐĂNG KÝ BLUEPRINTS
         app.register_blueprint(auth_api, url_prefix='/api/auth')
@@ -143,7 +146,7 @@ def create_app(config_class=None):
         app.register_blueprint(thuonghieu_api, url_prefix='/api/thuong-hieu')
         app.register_blueprint(capdo_api, url_prefix='/api/cap-do')
         app.register_blueprint(dia_chi_api, url_prefix='/api/dia-chi')
-        app.register_blueprint(phieu_thu_api, url_prefix='/api/phieu-thu')
+        app.register_blueprint(phieu_nhap_api, url_prefix='/api/phieu-nhap')
         app.register_blueprint(giohang_api, url_prefix='/api/gio-hang')
         app.register_blueprint(thanhtoan_api, url_prefix='/api/thanh-toan')
         app.register_blueprint(khachhang_donhang_api, url_prefix='/api/khach-hang/don-hang')
@@ -152,6 +155,9 @@ def create_app(config_class=None):
         app.register_blueprint(admin_danh_gia_api, url_prefix='/api/admin/danh-gia')
         app.register_blueprint(nguoidung_api, url_prefix='/api/nguoi-dung')
         app.register_blueprint(khach_hang_api, url_prefix='/api/khach-hang')
+        app.register_blueprint(thong_ke_api, url_prefix='/api/thong-ke')
+        app.register_blueprint(anhtrinhchieu_api, url_prefix='/api/anh-trinh-chieu')
+        app.register_blueprint(supplier_api, url_prefix='/api/nha-cung-cap')
 
         logger.info("All blueprints registered successfully")
 

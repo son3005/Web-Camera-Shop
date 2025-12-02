@@ -13,4 +13,6 @@ from .extras import *
 from .enums import *
 
 
-from .phieuthu import *
+from .phieunhap import *
+
+from .khac import *
