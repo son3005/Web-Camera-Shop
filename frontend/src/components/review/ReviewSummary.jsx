@@ -14,16 +14,14 @@ export default function ReviewSummary({ stats }) {
   const rows = [5, 4, 3, 2, 1];
 
   return (
-    <div className="surface-panel p-4 flex flex-col md:flex-row gap-4">
+    <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row gap-4 shadow-sm">
       {/* trung bình */}
-      <div className="flex-1 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-200/60 dark:border-slate-700/60 pb-4 md:pb-0 md:pr-4">
+      <div className="flex-1 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-200/60 pb-4 md:pb-0 md:pr-4">
         <div className="text-4xl font-bold text-amber-400">
           {trung_binh?.toFixed ? trung_binh.toFixed(1) : trung_binh}
         </div>
         <StarRating value={Math.round(trung_binh)} readOnly size={22} />
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {tong_danh_gia} đánh giá
-        </p>
+        <p className="text-sm text-slate-500 mt-1">{tong_danh_gia} đánh giá</p>
       </div>
 
       {/* bars */}
@@ -37,18 +35,16 @@ export default function ReviewSummary({ stats }) {
                 {star}
                 <span className="text-amber-400">★</span>
               </span>
-              <div className="flex-1 h-2 rounded-full overflow-hidden bg-slate-200/70 dark:bg-slate-700">
+              <div className="flex-1 h-2 rounded-full overflow-hidden bg-slate-200/70">
                 <div
                   className="h-full bg-emerald-500"
                   style={{ width: `${percent}%` }}
                 />
               </div>
-              <span className="w-12 text-right text-slate-500 dark:text-slate-400">
+              <span className="w-12 text-right text-slate-500">
                 {percent.toFixed ? percent.toFixed(0) : percent}%
               </span>
-              <span className="w-10 text-right text-slate-500 dark:text-slate-400">
-                {count}
-              </span>
+              <span className="w-10 text-right text-slate-500">{count}</span>
             </div>
           );
         })}

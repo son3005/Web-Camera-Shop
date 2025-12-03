@@ -19,22 +19,22 @@ function KhuVucBieuDo() {
 
   return (
     <div className="space-y-6">
-      {/* Bộ lọc thời gian dùng chung cho tất cả biểu đồ */}
+      {/* Tiêu đề + bộ lọc thời gian */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-slate-100">
+          <h2 className="text-base font-semibold text-slate-900">
             Thống kê chi tiết
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Áp dụng cùng bộ lọc thời gian cho tất cả biểu đồ bên dưới để dễ so
             sánh số liệu.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-300">Năm:</span>
+            <span className="text-sm text-slate-700">Năm:</span>
             <select
-              className="text-sm rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-slate-100"
+              className="text-sm rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-800 shadow-sm"
               value={nam ?? ""}
               onChange={(e) =>
                 setNam(e.target.value === "" ? null : Number(e.target.value))
@@ -50,9 +50,9 @@ function KhuVucBieuDo() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-300">Tháng:</span>
+            <span className="text-sm text-slate-700">Tháng:</span>
             <select
-              className="text-sm rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-slate-100"
+              className="text-sm rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-800 shadow-sm"
               value={thang ?? ""}
               onChange={(e) =>
                 setThang(e.target.value === "" ? null : Number(e.target.value))

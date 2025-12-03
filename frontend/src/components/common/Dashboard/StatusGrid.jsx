@@ -3,10 +3,11 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { layTongHopThongKe } from "../../../api/thongKeApi";
 
+// Card nhỏ hiển thị 1 thông số
 function StatCard({ label, value, color }) {
   return (
-    <div className="bg-[#071824] rounded-2xl border border-slate-700/60 p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </p>
       <p className={`mt-2 text-2xl font-semibold ${color}`}>{value}</p>
@@ -26,7 +27,7 @@ export default function StatusGrid() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="h-20 bg-slate-800/60 rounded-2xl border border-slate-700/60"
+            className="h-20 bg-slate-100 rounded-2xl border border-slate-200"
           />
         ))}
       </div>
@@ -34,11 +35,10 @@ export default function StatusGrid() {
   }
 
   if (isError || !data) {
-    return (
-      <div className="bg-[#071824] rounded-2xl border border-red-500/50 p-4 text-sm text-red-300">
-        Lỗi khi tải thống kê tổng hợp: {error?.message}
-      </div>
-    );
+    return;
+    <div className="bg-white rounded-2xl border border-red-400/40 p-4 text-sm text-red-600 shadow-sm">
+      Lỗi khi tải thống kê tổng hợp: {error?.message}
+    </div>;
   }
 
   return (
@@ -51,17 +51,17 @@ export default function StatusGrid() {
       <StatCard
         label="Đơn hàng tháng này"
         value={data.don_hang_thang_nay || 0}
-        color="text-sky-400"
+        color="text-sky-500"
       />
       <StatCard
         label="Người dùng mới"
         value={data.nguoi_dung_moi_thang_nay || 0}
-        color="text-indigo-400"
+        color="text-indigo-500"
       />
       <StatCard
         label="Tổng tài khoản"
         value={data.tong_so_tai_khoan || 0}
-        color="text-amber-400"
+        color="text-amber-500"
       />
     </div>
   );

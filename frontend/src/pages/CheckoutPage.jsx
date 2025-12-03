@@ -3,22 +3,32 @@
 // ==========================
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useEffect } from "react";
 import { getProduct } from "../api/productApi";
 import { taoDonHangAo } from "../api/paymentApi";
 import { layDanhSachDiaChi, taoDiaChi } from "../api/addressApi";
 import { layThongTinCaNhan } from "../api/userApi";
-import { kiemTraTonKho } from "../api/gioHangApi"; // ✅ dùng để check tồn kho server
+import { kiemTraTonKho, xoaKhoiGioHang } from "../api/gioHangApi"; // ✅ thêm xóa giỏ
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const queryClient = useQueryClient();
 
   // 1) MULTI CHECKOUT (từ giỏ hàng)
   const itemsFromCart = state?.items || null;
   const isCartCheckout =
     Array.isArray(itemsFromCart) && itemsFromCart.length > 0;
+
+  // 👉 ID giỏ hàng (nếu checkout từ giỏ)
+  const gioHangId = isCartCheckout
+    ? state?.gio_hang_id ??
+      state?.gioHangId ??
+      state?.cartId ??
+      itemsFromCart?.[0]?.gio_hang_id ??
+      null
+    : null;
 
   // 2) SINGLE CHECKOUT (mua ngay)
   const productId = state?.productId || null;
@@ -71,19 +81,14 @@ export default function CheckoutPage() {
     if (!addresses.length) return null;
     return (
       addresses.find(
-        (a) =>
-          a.la_mac_dinh ||
-          a.mac_dinh ||
-          a.is_default ||
-          a.default === true
+        (a) => a.la_mac_dinh || a.mac_dinh || a.is_default || a.default === true
       ) || addresses[0]
     );
   }, [addresses]);
 
   // --- chọn địa chỉ trong dropdown ---
   const [selectedAddressId, setSelectedAddressId] = useState("new");
-  const [hasInitAddressSelection, setHasInitAddressSelection] =
-    useState(false);
+  const [hasInitAddressSelection, setHasInitAddressSelection] = useState(false);
 
   useEffect(() => {
     if (!hasInitAddressSelection && addresses.length > 0) {
@@ -139,10 +144,7 @@ export default function CheckoutPage() {
         ten_nguoi_nhan:
           addr.ten_nguoi_nhan || addr.ho_ten || prev.ten_nguoi_nhan || "",
         so_dien_thoai_nguoi_nhan:
-          addr.so_dien_thoai ||
-          addr.sdt ||
-          prev.so_dien_thoai_nguoi_nhan ||
-          "",
+          addr.so_dien_thoai || addr.sdt || prev.so_dien_thoai_nguoi_nhan || "",
         dia_chi_giao: getAddressString(addr) || prev.dia_chi_giao || "",
         phuong_xa: addr.phuong_xa || prev.phuong_xa || "",
         tinh_thanh: addr.tinh_thanh || prev.tinh_thanh || "",
@@ -231,8 +233,7 @@ export default function CheckoutPage() {
         return {
           ok: false,
           message:
-            result.message ||
-            "Số lượng yêu cầu vượt quá số lượng tồn kho.",
+            result.message || "Số lượng yêu cầu vượt quá số lượng tồn kho.",
         };
       }
       return { ok: true };
@@ -243,8 +244,7 @@ export default function CheckoutPage() {
         return {
           ok: false,
           message:
-            result.message ||
-            "Số lượng yêu cầu vượt quá số lượng tồn kho.",
+            result.message || "Số lượng yêu cầu vượt quá số lượng tồn kho.",
         };
       }
       return { ok: true };
@@ -294,16 +294,38 @@ export default function CheckoutPage() {
   // MUTATION ĐƠN HÀNG — COD & PAYOS
   const orderMutation = useMutation({
     mutationFn: taoDonHangAo,
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       const data = res.data || res;
 
+      // Nếu là PayOS → chuyển ngay sang trang PayOS, KHÔNG xóa giỏ
       if (form.phuong_thuc_thanh_toan === "payos_qr") {
-        window.location.href =
-          data.payment_url || data.data?.payment_url || "";
-      } else {
-        const id = data.id || data.data?.id;
-        navigate(`/payment-result/${id}?status=cod_thanhcong`);
+        window.location.href = data.payment_url || data.data?.payment_url || "";
+        return;
       }
+
+      // ✅ COD + checkout từ giỏ → cố gắng xóa item trong giỏ
+      if (isCartCheckout && cartItems.length > 0) {
+        try {
+          const ids = cartItems
+            .map((it) => it.id)
+            .filter((v) => v !== null && v !== undefined);
+
+          await Promise.all(ids.map((id) => xoaKhoiGioHang(id)));
+        } catch (err) {
+          console.error("❌ Lỗi xóa sản phẩm khỏi giỏ sau khi đặt hàng:", err);
+          // không chặn luồng điều hướng
+        }
+      }
+
+      // Invalidate cache giỏ hàng
+      try {
+        queryClient.invalidateQueries({ queryKey: ["gio-hang"] });
+      } catch (e) {
+        console.warn("invalidate gio-hang fail", e);
+      }
+
+      const id = data.id || data.data?.id;
+      navigate(`/payment-result/${id}?status=cod_thanhcong`);
     },
     onError: (err) => {
       alert(getErrorMessage(err));
@@ -353,8 +375,7 @@ export default function CheckoutPage() {
     if (!item) return null;
 
     if (typeof item.ton_kho === "number") return item.ton_kho;
-    if (typeof item.so_luong_con_lai === "number")
-      return item.so_luong_con_lai;
+    if (typeof item.so_luong_con_lai === "number") return item.so_luong_con_lai;
     if (typeof item.so_luong_toi_da === "number") return item.so_luong_toi_da;
 
     if (
@@ -387,10 +408,7 @@ export default function CheckoutPage() {
     }
 
     // 2) Fallback: check server (nếu backend có logic riêng)
-    const check = await checkStockOnServer(
-      item.bien_the_san_pham_id,
-      newQty
-    );
+    const check = await checkStockOnServer(item.bien_the_san_pham_id, newQty);
 
     if (!check.ok) {
       alert(
@@ -402,9 +420,7 @@ export default function CheckoutPage() {
 
     // 3) OK → cập nhật local state
     setCartItems((prev) =>
-      prev.map((it) =>
-        it.id === item.id ? { ...it, so_luong: newQty } : it
-      )
+      prev.map((it) => (it.id === item.id ? { ...it, so_luong: newQty } : it))
     );
   };
 
@@ -485,6 +501,7 @@ export default function CheckoutPage() {
       phuong_thuc_thanh_toan: form.phuong_thuc_thanh_toan,
       phi_van_chuyen: phiShip,
       ghi_chu: form.ghi_chu,
+      gio_hang_id: gioHangId,
       url_success: "http://localhost:5173/payment-result/success",
       url_cancel: "http://localhost:5173/payment-result/cancel",
       items: itemsPayload,
@@ -492,11 +509,7 @@ export default function CheckoutPage() {
 
     const matchedAddress = addresses.find((addr) => {
       const ten =
-        addr.ten_nguoi_nhan ||
-        addr.ho_ten ||
-        addr.ten ||
-        addr.full_name ||
-        "";
+        addr.ten_nguoi_nhan || addr.ho_ten || addr.ten || addr.full_name || "";
       const sdt = addr.so_dien_thoai || addr.sdt || addr.phone || "";
       const diaChi = getAddressString(addr);
 
@@ -582,9 +595,7 @@ export default function CheckoutPage() {
                   Sản phẩm
                 </h2>
                 <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium">
-                  {isCartCheckout
-                    ? `${cartItems.length} sản phẩm`
-                    : "Mua ngay"}
+                  {isCartCheckout ? `${cartItems.length} sản phẩm` : "Mua ngay"}
                 </span>
               </div>
 
@@ -636,9 +647,9 @@ export default function CheckoutPage() {
                       <div className="text-xs text-slate-500">
                         Tạm tính:{" "}
                         <span className="font-semibold text-slate-800">
-                          {(
-                            Number(it.don_gia) * it.so_luong
-                          ).toLocaleString("vi-VN")}
+                          {(Number(it.don_gia) * it.so_luong).toLocaleString(
+                            "vi-VN"
+                          )}
                           ₫
                         </span>
                       </div>
@@ -648,9 +659,7 @@ export default function CheckoutPage() {
 
               {/* CHECKOUT MUA NGAY (SINGLE) */}
               {!isCartCheckout && isSingleCheckout && (
-                <div
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 border-t border-slate-100 pt-3 mt-3"
-                >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-t border-slate-100 pt-3 mt-3">
                   {/* Bên trái: ảnh + thông tin */}
                   <div className="flex items-center gap-3 flex-1">
                     <img
@@ -705,9 +714,9 @@ export default function CheckoutPage() {
                     <div className="text-xs text-slate-500">
                       Tạm tính:{" "}
                       <span className="font-semibold text-slate-800">
-                        {(
-                          Number(variant.gia_ban) * soLuong
-                        ).toLocaleString("vi-VN")}
+                        {(Number(variant.gia_ban) * soLuong).toLocaleString(
+                          "vi-VN"
+                        )}
                         ₫
                       </span>
                     </div>
@@ -795,9 +804,7 @@ export default function CheckoutPage() {
                   >
                     {addresses.map((addr) => (
                       <option key={addr.id} value={String(addr.id)}>
-                        {(addr.ten_nguoi_nhan ||
-                          addr.ho_ten ||
-                          "Không tên") +
+                        {(addr.ten_nguoi_nhan || addr.ho_ten || "Không tên") +
                           " - " +
                           getAddressString(addr)}
                       </option>

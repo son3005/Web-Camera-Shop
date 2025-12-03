@@ -1,165 +1,258 @@
 // src/api/thongKeApi.js
-// ----------------------------------------------------
-// Service gọi các API thống kê cho dashboard admin
-// Map với backend /api/thong-ke/*
-// ----------------------------------------------------
+// Map dữ liệu từ backend mới -> dạng camelCase mà các chart đang dùng
 
-import apiClient from "./apiClient";
+import axios from "axios";
 
-function unwrap(res) {
-  const payload = res.data;
-  if (!payload?.success) {
-    throw new Error(payload?.message || "Lỗi API thống kê");
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+// Gắn token admin (nếu có)
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return payload.data ?? null;
+  return config;
+});
+
+const handleResponse = (res) => {
+  const data = res.data;
+  if (!data || data.success === false) {
+    throw new Error(data?.message || "Lỗi khi lấy thống kê");
+  }
+  return data.data;
+};
+
+// Helper: build start_date / end_date từ nam, thang (dùng cho API danh-sach-*)
+const buildDateRangeFromYearMonth = (nam, thang) => {
+  if (!nam && !thang) return {};
+
+  // Có năm, có tháng -> cả tháng đó
+  if (nam && thang) {
+    const start = new Date(nam, thang - 1, 1);
+    const end = new Date(nam, thang, 0); // ngày cuối tháng
+    const pad = (v) => String(v).padStart(2, "0");
+    return {
+      start_date: `${nam}-${pad(thang)}-01`,
+      end_date: `${nam}-${pad(thang)}-${pad(end.getDate())}`,
+    };
+  }
+
+  // Chỉ có năm -> cả năm
+  if (nam && !thang) {
+    return {
+      start_date: `${nam}-01-01`,
+      end_date: `${nam}-12-31`,
+    };
+  }
+
+  // Chỉ có tháng (tất cả năm) -> không convert được chuẩn, cứ để backend trả tất cả
+  return {};
+};
+
+/* =========================================================
+ * 1. Tổng hợp dashboard
+ * =======================================================*/
+export async function layTongHopThongKe() {
+  const res = await api.get("/thong-ke/tong-hop");
+  return handleResponse(res); // {doanh_thu_thang_nay,...}
 }
 
-// Helper: sắp xếp tăng dần theo năm / tháng để các biểu đồ đồng bộ
-function sortByNamThang(list) {
-  return [...list].sort((a, b) => {
-    if (a.nam === b.nam) {
-      const ta = a.thang ?? 0;
-      const tb = b.thang ?? 0;
-      return ta - tb;
-    }
-    return a.nam - b.nam;
+/* =========================================================
+ * 2. Doanh thu & lợi nhuận
+ *    Backend: /thong-ke/doanh-thu
+ *    Trả về: [{nam, thang?, ngay?, tong_doanh_thu, loi_nhuan}]
+ *    FE cần: [{nam, thang?, ngay?, tongDoanhThu, loiNhuan}]
+ * =======================================================*/
+export async function layDuLieuDoanhThu({ nam, thang } = {}) {
+  const res = await api.get("/thong-ke/doanh-thu", {
+    params: { nam, thang },
   });
+  const raw = handleResponse(res) || [];
+
+  return raw.map((item) => ({
+    nam: item.nam,
+    thang: item.thang ?? null,
+    ngay: item.ngay ?? null,
+    tongDoanhThu: item.tong_doanh_thu || 0,
+    loiNhuan: item.loi_nhuan || 0,
+  }));
 }
 
-// Bảng màu dùng chung cho dashboard
+/* =========================================================
+ * 3. Người dùng mới
+ *    Backend: /thong-ke/nguoi-dung-moi
+ *    Trả về: {so_nguoi_dung_moi, tong_so_tai_khoan}
+ * =======================================================*/
+export async function layThongKeNguoiDungMoi({ nam, thang } = {}) {
+  const res = await api.get("/thong-ke/nguoi-dung-moi", {
+    params: { nam, thang },
+  });
+  const raw = handleResponse(res) || [];
+
+  return raw.map((item) => ({
+    nam: item.nam,
+    thang: item.thang ?? null,
+    soNguoiDungMoi: item.so_nguoi_dung_moi || 0,
+    tongSoTaiKhoan: item.tong_so_tai_khoan ?? null,
+  }));
+}
+
+/* =========================================================
+ * 4. Đơn hàng thành công
+ *    Backend: /thong-ke/don-hang-thanh-cong
+ * =======================================================*/
+export async function layThongKeDonHangThanhCong({ nam, thang } = {}) {
+  const res = await api.get("/thong-ke/don-hang-thanh-cong", {
+    params: { nam, thang },
+  });
+  const raw = handleResponse(res) || [];
+
+  return raw.map((item) => ({
+    nam: item.nam,
+    thang: item.thang ?? null,
+    soDonThanhCong: item.so_don_thanh_cong || 0,
+  }));
+}
+
+/* =========================================================
+ * 5. Tỉ trọng thương hiệu
+ *    Backend: /thong-ke/ti-trong-thuong-hieu
+ *    Trả về: {thuong_hieu, so_luong_don, tong_doanh_thu, ti_trong_phantram}
+ * =======================================================*/
 const BRAND_COLORS = [
-  "#0ea5e9", // sky
-  "#22c55e", // emerald
-  "#a855f7", // violet
-  "#f97316", // orange
-  "#e11d48", // rose
-  "#6366f1", // indigo
-  "#14b8a6", // teal
-  "#facc15", // amber
+  "#22c55e",
+  "#3b82f6",
+  "#f97316",
+  "#eab308",
+  "#ec4899",
+  "#a855f7",
 ];
 
-/** Tổng hợp thống kê dashboard (cards trên cùng) */
-export async function layTongHopThongKe() {
-  const data = unwrap(await apiClient.get("/thong-ke/tong-hop"));
-  return data;
-}
-
-/** Doanh thu & lợi nhuận theo năm/tháng
- *  Backend đã lọc: chỉ đơn hàng DA_GIAO + thanh toán DA_THANH_TOAN
- */
-export async function layDuLieuDoanhThu({ nam, thang } = {}) {
-  const params = {};
-  if (nam != null) params.nam = nam;
-  if (thang != null) params.thang = thang;
-
-  const raw =
-    unwrap(await apiClient.get("/thong-ke/doanh-thu", { params })) || [];
-
-  const mapped = raw.map((item) => ({
-    nam: Number(item.nam),
-    thang: item.thang != null ? Number(item.thang) : null,
-    tongDoanhThu: Number(item.tong_doanh_thu || 0),
-    loiNhuan: Number(item.loi_nhuan || 0),
-  }));
-
-  return sortByNamThang(mapped);
-}
-
-/** Tỉ trọng doanh thu theo thương hiệu
- *  Backend: đơn hàng DA_GIAO, tính theo tổng doanh thu
- */
 export async function layTiTrongThuongHieu({ nam, thang } = {}) {
-  const params = {};
-  if (nam != null) params.nam = nam;
-  if (thang != null) params.thang = thang;
-
-  const raw =
-    unwrap(await apiClient.get("/thong-ke/ti-trong-thuong-hieu", { params })) ||
-    [];
+  const res = await api.get("/thong-ke/ti-trong-thuong-hieu", {
+    params: { nam, thang },
+  });
+  const raw = handleResponse(res) || [];
 
   return raw.map((item, index) => ({
     tenThuongHieu: item.thuong_hieu,
-    soLuongDon: Number(item.so_luong_don || 0),
-    tongDoanhThu: Number(item.tong_doanh_thu || 0),
-    tiTrongPhanTram: Number(item.ti_trong_phantram || 0),
+    soLuongDon: item.so_luong_don || 0,
+    tongDoanhThu: item.tong_doanh_thu || 0,
+    tiTrongPhanTram: item.ti_trong_phantram || 0,
     color: BRAND_COLORS[index % BRAND_COLORS.length],
   }));
 }
 
-/** Người dùng mới theo năm/tháng (ngay_tao) */
-export async function layThongKeNguoiDungMoi({ nam, thang } = {}) {
-  const params = {};
-  if (nam != null) params.nam = nam;
-  if (thang != null) params.thang = thang;
-
-  const raw =
-    unwrap(await apiClient.get("/thong-ke/nguoi-dung-moi", { params })) || [];
-
-  const mapped = raw.map((item) => ({
-    nam: Number(item.nam),
-    thang: item.thang != null ? Number(item.thang) : null,
-    soNguoiDungMoi: Number(item.so_nguoi_dung_moi || 0),
-    tongSoTaiKhoan: Number(item.tong_so_tai_khoan || 0),
-  }));
-
-  return sortByNamThang(mapped);
-}
-
-/** Đơn hàng thành công theo năm/tháng (trạng thái DA_GIAO) */
-export async function layThongKeDonHangThanhCong({ nam, thang } = {}) {
-  const params = {};
-  if (nam != null) params.nam = nam;
-  if (thang != null) params.thang = thang;
-
-  const raw =
-    unwrap(await apiClient.get("/thong-ke/don-hang-thanh-cong", { params })) ||
-    [];
-
-  const mapped = raw.map((item) => ({
-    nam: Number(item.nam),
-    thang: item.thang != null ? Number(item.thang) : null,
-    soDonThanhCong: Number(item.so_don_thanh_cong || 0),
-  }));
-
-  return sortByNamThang(mapped);
-}
-
-/** Người dùng đã đăng nhập theo năm/tháng (lan_cuoi_dang_nhap) */
+/* =========================================================
+ * 6. Người dùng hoạt động (đăng nhập)
+ *    Backend: /thong-ke/nguoi-dung-dang-nhap
+ * =======================================================*/
 export async function layThongKeDangNhap({ nam, thang } = {}) {
-  const params = {};
-  if (nam != null) params.nam = nam;
-  if (thang != null) params.thang = thang;
+  const res = await api.get("/thong-ke/nguoi-dung-dang-nhap", {
+    params: { nam, thang },
+  });
+  const raw = handleResponse(res) || [];
 
-  const raw =
-    unwrap(await apiClient.get("/thong-ke/nguoi-dung-dang-nhap", { params })) ||
-    [];
-
-  const mapped = raw.map((item) => ({
-    nam: Number(item.nam),
-    thang: item.thang != null ? Number(item.thang) : null,
-    soNguoiDungDangNhap: Number(item.so_nguoi_dung_dang_nhap || 0),
+  return raw.map((item) => ({
+    nam: item.nam,
+    thang: item.thang ?? null,
+    soNguoiDungDangNhap: item.so_nguoi_dung_dang_nhap || 0,
   }));
-
-  return sortByNamThang(mapped);
 }
 
-/** Thống kê đánh giá (tích cực/trung bình/tiêu cực) */
+/* =========================================================
+ * 7. Chất lượng đánh giá
+ *    Backend mới: /thong-ke/danh-sach-danh-gia?start_date&end_date
+ *    Trả về dạng phân cấp: [{nam, danh_gia_*, thang: [{thang, ...}]}]
+ *
+ *    Ta map về dạng cũ:
+ *      - không filter -> mỗi năm 1 item
+ *      - filter nam    -> 1 item cho năm đó
+ *      - filter nam+thang -> 1 item cho tháng đó
+ *      - filter thang (không nam) -> gộp cùng tháng của tất cả năm
+ * =======================================================*/
 export async function layThongKeDanhGia({ nam, thang } = {}) {
-  const params = {};
-  if (nam != null) params.nam = nam;
-  if (thang != null) params.thang = thang;
+  const params = buildDateRangeFromYearMonth(nam, thang);
 
-  const raw =
-    unwrap(await apiClient.get("/thong-ke/danh-gia", { params })) || [];
+  const res = await api.get("/thong-ke/danh-sach-danh-gia", { params });
+  const raw = handleResponse(res) || [];
 
-  const mapped = raw.map((item) => ({
-    nam: Number(item.nam),
-    thang: item.thang != null ? Number(item.thang) : null,
-    danhGiaTieuCuc: Number(item.danh_gia_tieu_cuc || 0),
-    danhGiaTrungBinh: Number(item.danh_gia_trung_binh || 0),
-    danhGiaTichCuc: Number(item.danh_gia_tich_cuc || 0),
-    tongSoDanhGia: Number(item.tong_so_danh_gia || 0),
-  }));
+  // Không filter -> mỗi năm là 1 dòng
+  if (!nam && !thang) {
+    return raw.map((item) => ({
+      nam: item.nam,
+      danhGiaTieuCuc: item.danh_gia_tieu_cuc || 0,
+      danhGiaTrungBinh: item.danh_gia_trung_binh || 0,
+      danhGiaTichCuc: item.danh_gia_tich_cuc || 0,
+    }));
+  }
 
-  return sortByNamThang(mapped);
+  // Có năm, không tháng -> 1 dòng cho cả năm đó
+  if (nam && !thang) {
+    const yearItem = raw.find((x) => x.nam === nam);
+    if (!yearItem) return [];
+    return [
+      {
+        nam,
+        danhGiaTieuCuc: yearItem.danh_gia_tieu_cuc || 0,
+        danhGiaTrungBinh: yearItem.danh_gia_trung_binh || 0,
+        danhGiaTichCuc: yearItem.danh_gia_tich_cuc || 0,
+      },
+    ];
+  }
+
+  // Có tháng, không năm -> gộp tất cả năm cho tháng đó
+  if (!nam && thang) {
+    let agg = {
+      danh_gia_tieu_cuc: 0,
+      danh_gia_trung_binh: 0,
+      danh_gia_tich_cuc: 0,
+    };
+
+    raw.forEach((yearItem) => {
+      const m =
+        Array.isArray(yearItem.thang) &&
+        yearItem.thang.find((t) => t.thang === thang);
+      if (!m) return;
+      agg.danh_gia_tieu_cuc += m.danh_gia_tieu_cuc || 0;
+      agg.danh_gia_trung_binh += m.danh_gia_trung_binh || 0;
+      agg.danh_gia_tich_cuc += m.danh_gia_tich_cuc || 0;
+    });
+
+    return [
+      {
+        nam: null,
+        thang,
+        danhGiaTieuCuc: agg.danh_gia_tieu_cuc,
+        danhGiaTrungBinh: agg.danh_gia_trung_binh,
+        danhGiaTichCuc: agg.danh_gia_tich_cuc,
+      },
+    ];
+  }
+
+  // Có cả năm + tháng -> lấy đúng tháng trong năm đó
+  if (nam && thang) {
+    const yearItem = raw.find((x) => x.nam === nam);
+    if (!yearItem || !Array.isArray(yearItem.thang)) return [];
+
+    const monthItem = yearItem.thang.find((t) => t.thang === thang);
+    if (!monthItem) return [];
+
+    return [
+      {
+        nam,
+        thang,
+        danhGiaTieuCuc: monthItem.danh_gia_tieu_cuc || 0,
+        danhGiaTrungBinh: monthItem.danh_gia_trung_binh || 0,
+        danhGiaTichCuc: monthItem.danh_gia_tich_cuc || 0,
+      },
+    ];
+  }
+
+  return [];
 }

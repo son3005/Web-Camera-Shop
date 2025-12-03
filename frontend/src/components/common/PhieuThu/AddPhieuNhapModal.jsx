@@ -70,14 +70,16 @@ export default function AddPhieuNhapModal({ onClose, onSubmit }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-emerald-500/40 bg-white/90 dark:bg-slate-950/95 text-slate-900 dark:text-slate-50 shadow-2xl space-y-4 p-6">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="w-full max-w-3xl rounded-2xl border border-emerald-50 bg-white/96 text-slate-900 shadow-2xl space-y-5 p-6">
         {/* header */}
-        <div className="flex justify-between items-center pb-2 border-b border-slate-200/70 dark:border-slate-800/70">
-          <h2 className="text-lg font-semibold">Tạo phiếu nhập mới</h2>
+        <div className="flex justify-between items-center pb-3 border-b border-slate-200">
+          <h2 className="text-xl font-bold text-slate-900">
+            Tạo phiếu nhập mới
+          </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 cursor-pointer"
+            className="text-slate-400 hover:text-slate-700 cursor-pointer"
           >
             ✕
           </button>
@@ -85,14 +87,14 @@ export default function AddPhieuNhapModal({ onClose, onSubmit }) {
 
         {/* nhà cung cấp */}
         <div>
-          <label className="text-sm block mb-1 text-slate-700 dark:text-slate-300">
+          <label className="text-sm block mb-1 text-slate-700 font-medium">
             Nhà cung cấp
           </label>
           <select
             value={supplierId}
             onChange={(e) => setSupplierId(e.target.value)}
             disabled={loadingSuppliers}
-            className="w-full rounded-md px-3 py-2 text-sm bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500"
+            className="w-full rounded-lg px-3 py-2 text-sm bg-white/90 text-slate-900 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500"
           >
             <option value="">-- Chọn nhà cung cấp --</option>
             {suppliers.map((s) => (
@@ -104,20 +106,20 @@ export default function AddPhieuNhapModal({ onClose, onSubmit }) {
         </div>
 
         {/* bảng biến thể */}
-        <div className="rounded-xl overflow-hidden border border-slate-200/70 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/60">
+        <div className="rounded-xl overflow-hidden border border-slate-200 bg-white/90">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200">
+            <thead className="bg-slate-50 text-slate-700">
               <tr>
-                <th className="p-2 text-left">Biến thể</th>
-                <th className="p-2 text-left w-20">SL</th>
-                <th className="p-2 text-left w-32">Giá nhập</th>
+                <th className="p-2 text-left font-semibold">Biến thể</th>
+                <th className="p-2 text-left w-24 font-semibold">SL</th>
+                <th className="p-2 text-left w-36 font-semibold">Giá nhập</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row, i) => (
                 <tr
                   key={i}
-                  className="border-t border-slate-100 dark:border-slate-800/80 bg-white/40 dark:bg-transparent hover:bg-slate-50/80 dark:hover:bg-slate-900/60 transition-colors"
+                  className="border-t border-slate-100 bg-white hover:bg-slate-50 transition-colors"
                 >
                   <td className="p-2">
                     <select
@@ -125,7 +127,7 @@ export default function AddPhieuNhapModal({ onClose, onSubmit }) {
                       onChange={(e) =>
                         handleChange(i, "bien_the_san_pham_id", e.target.value)
                       }
-                      className="w-full rounded-md px-2 py-1.5 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500 cursor-pointer"
+                      className="w-full rounded-md px-2 py-1.5 bg-white/90 text-slate-900 border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500 cursor-pointer"
                       disabled={loadingProducts}
                     >
                       <option value="">-- Chọn biến thể --</option>
@@ -144,7 +146,7 @@ export default function AddPhieuNhapModal({ onClose, onSubmit }) {
                       onChange={(e) =>
                         handleChange(i, "so_luong", e.target.value)
                       }
-                      className="w-full rounded-md px-2 py-1.5 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500"
+                      className="w-full rounded-md px-2 py-1.5 bg-white/90 text-slate-900 border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500"
                     />
                   </td>
                   <td className="p-2">
@@ -155,7 +157,7 @@ export default function AddPhieuNhapModal({ onClose, onSubmit }) {
                       onChange={(e) =>
                         handleChange(i, "gia_nhap_tung_vat", e.target.value)
                       }
-                      className="w-full rounded-md px-2 py-1.5 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500"
+                      className="w-full rounded-md px-2 py-1.5 bg-white/90 text-slate-900 border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-emerald-500/80 focus:border-emerald-500"
                     />
                   </td>
                 </tr>
@@ -168,14 +170,14 @@ export default function AddPhieuNhapModal({ onClose, onSubmit }) {
         <div className="flex justify-between items-center pt-2">
           <button
             onClick={handleAddRow}
-            className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white/70 dark:bg-slate-900/70 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition"
+            className="px-3 py-2 rounded-lg border border-slate-200 bg-white/90 text-slate-700 hover:bg-slate-100 cursor-pointer transition"
           >
             + Thêm dòng
           </button>
           <div className="space-x-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white/60 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition"
+              className="px-4 py-2 rounded-lg border border-slate-200 bg-white/80 text-slate-700 hover:bg-slate-100 cursor-pointer transition"
             >
               Hủy
             </button>

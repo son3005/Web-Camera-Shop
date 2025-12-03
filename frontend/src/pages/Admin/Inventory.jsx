@@ -22,7 +22,9 @@ import FilterPopup from "../../components/common/Inventory/FilterPopup";
 import { useProducts } from "../../hooks/useProducts";
 import { useCatalogs } from "../../hooks/useCatalogs";
 
-// debounce đơn giản cho input search
+// =====================================================
+// Hook debounce đơn giản cho input search
+// =====================================================
 const useDebounce = (value, delay = 300) => {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -32,14 +34,17 @@ const useDebounce = (value, delay = 300) => {
   return debounced;
 };
 
-// pagination component
+// =====================================================
+// Component Pagination (nằm trong trang này luôn)
+// =====================================================
 const Pagination = ({ page, pages, setPage, isLoading, showing, total }) => {
   const [inputPage, setInputPage] = useState(page);
   useEffect(() => setInputPage(page), [page]);
 
+  // Nếu chỉ có 1 trang thì chỉ hiện text "Hiển thị x trên y"
   if (!pages || pages <= 1) {
     return (
-      <div className="flex justify-between items-center mt-6 text-sm text-slate-600 dark:text-slate-400">
+      <div className="flex justify-between items-center mt-6 text-sm text-slate-600">
         <span>
           {isLoading
             ? "Đang tải..."
@@ -51,18 +56,20 @@ const Pagination = ({ page, pages, setPage, isLoading, showing, total }) => {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 mt-6">
-      <span className="text-sm text-slate-600 dark:text-slate-400">
+      {/* Text bên trái */}
+      <span className="text-sm text-slate-600">
         {isLoading
           ? "Đang tải..."
           : `Hiển thị ${showing} trên ${total} kết quả`}
       </span>
 
+      {/* Điều khiển trang bên phải */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1 || isLoading}
-            className="p-2 rounded-md bg-black/5 dark:bg-white/5 disabled:opacity-40"
+            className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             <ChevronLeft size={18} />
           </button>
@@ -72,12 +79,13 @@ const Pagination = ({ page, pages, setPage, isLoading, showing, total }) => {
           <button
             onClick={() => setPage((p) => Math.min(pages, p + 1))}
             disabled={page === pages || isLoading}
-            className="p-2 rounded-md bg-black/5 dark:bg-white/5 disabled:opacity-40"
+            className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             <ChevronRight size={18} />
           </button>
         </div>
 
+        {/* Nhập số trang muốn đến */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -96,11 +104,11 @@ const Pagination = ({ page, pages, setPage, isLoading, showing, total }) => {
             min={1}
             max={pages}
             onChange={(e) => setInputPage(e.target.value)}
-            className="w-16 px-2 py-1 rounded bg-white/70 dark:bg-slate-700/40 text-center"
+            className="w-16 px-2 py-1 rounded border border-slate-200 bg-white/90 text-center text-sm"
           />
           <button
             type="submit"
-            className="px-3 py-1 text-sm rounded bg-slate-900/5 dark:bg-white/5"
+            className="px-3 py-1 text-sm rounded bg-slate-900/5 hover:bg-slate-900/10 border border-slate-200 cursor-pointer"
           >
             Đến
           </button>
@@ -147,17 +155,22 @@ const Inventory = () => {
   const queryClient = useQueryClient();
   const filterRef = useRef(null);
 
+  // Search
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
 
+  // Trang hiện tại
   const [page, setPage] = useState(1);
   const perPage = 10;
 
+  // Modal (add / edit / view)
   const [modalType, setModalType] = useState(null);
   const [activeId, setActiveId] = useState(null);
+
+  // Popup filter
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // FILT ER STATE
+  // FILTER STATE (đã apply)
   const [appliedFilters, setAppliedFilters] = useState({
     sortBy: { name: null, price: null },
     danh_muc_ids: [],
@@ -167,6 +180,7 @@ const Inventory = () => {
     stockStatus: [],
   });
 
+  // FILTER STATE local trong popup (chưa apply)
   const [localFilters, setLocalFilters] = useState(appliedFilters);
 
   // Lấy danh mục + thương hiệu
@@ -180,6 +194,7 @@ const Inventory = () => {
   // API sản phẩm
   const { useGetAllSanPham, useDeleteSanPham } = useProducts();
 
+  // Tham số truyền cho API backend
   const apiParams = {
     page,
     per_page: perPage,
@@ -223,19 +238,19 @@ const Inventory = () => {
   };
 
   // ===========================
-  // FILTER FE
+  // FILTER phía FE (stock + status)
   // ===========================
   const feFilteredProducts = useMemo(() => {
     return productsFromApi.filter((item) => {
       const totalStock = getTotalStock(item);
 
-      // lọc theo trạng thái kinh doanh
+      // Lọc theo trạng thái kinh doanh
       if (appliedFilters.status.length > 0) {
         const s = getBusinessStatus(item);
         if (!appliedFilters.status.includes(s)) return false;
       }
 
-      // lọc theo tồn kho
+      // Lọc theo tồn kho
       if (appliedFilters.stockStatus.length > 0) {
         const wantIn = appliedFilters.stockStatus.includes("in_stock");
         const wantLow = appliedFilters.stockStatus.includes("low_stock");
@@ -253,7 +268,9 @@ const Inventory = () => {
     });
   }, [productsFromApi, appliedFilters]);
 
+  // ===========================
   // MODALS
+  // ===========================
   const openModal = (type, id = null) => {
     setModalType(type);
     setActiveId(id);
@@ -264,7 +281,9 @@ const Inventory = () => {
     setActiveId(null);
   };
 
-  // FILTER popup
+  // ===========================
+  // FILTER popup logic
+  // ===========================
   const toggleFilter = () => {
     if (!isFilterOpen) setLocalFilters(appliedFilters);
     setIsFilterOpen((p) => !p);
@@ -291,6 +310,7 @@ const Inventory = () => {
     setIsFilterOpen(false);
   };
 
+  // Click ngoài filter popup -> đóng
   useEffect(() => {
     const handler = (e) => {
       if (filterRef.current && !filterRef.current.contains(e.target)) {
@@ -301,11 +321,12 @@ const Inventory = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Khi search / filter đổi thì về trang 1
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, appliedFilters]);
 
-  // delete SP
+  // Xoá sản phẩm
   const handleDelete = (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
     deleteMutation.mutate(id, {
@@ -316,17 +337,21 @@ const Inventory = () => {
   };
 
   // ===========================
-  // Render bảng
+  // Render tbody bảng
   // ===========================
   const renderBody = () => {
+    // Loading skeleton
     if (isLoading) {
       return (
         <tbody>
           {Array.from({ length: perPage }).map((_, i) => (
-            <tr key={i} className="h-[61px] animate-pulse border-b">
+            <tr
+              key={i}
+              className="h-[61px] animate-pulse border-b border-slate-100"
+            >
               {Array.from({ length: 8 }).map((__, j) => (
                 <td key={j} className="px-4 py-3">
-                  <div className="h-4 bg-slate-300/60 dark:bg-slate-600/40 rounded" />
+                  <div className="h-4 bg-slate-200/70 rounded" />
                 </td>
               ))}
             </tr>
@@ -335,6 +360,7 @@ const Inventory = () => {
       );
     }
 
+    // Lỗi
     if (isError) {
       return (
         <tbody>
@@ -343,14 +369,14 @@ const Inventory = () => {
               <div className="flex flex-col items-center justify-center h-full text-center text-red-500">
                 <AlertCircle size={46} className="mb-4" />
                 <p className="font-semibold mb-1">Không thể tải dữ liệu</p>
-                <p className="text-sm mb-4">
+                <p className="text-sm mb-4 text-slate-600">
                   {error?.message || "Đã xảy ra lỗi"}
                 </p>
                 <button
                   onClick={() =>
                     queryClient.invalidateQueries({ queryKey: ["san-pham"] })
                   }
-                  className="px-4 py-2 rounded bg-red-500 text-white"
+                  className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition-colors cursor-pointer"
                 >
                   Thử lại
                 </button>
@@ -361,6 +387,7 @@ const Inventory = () => {
       );
     }
 
+    // Không có sản phẩm
     if (feFilteredProducts.length === 0) {
       return (
         <tbody>
@@ -377,6 +404,7 @@ const Inventory = () => {
       );
     }
 
+    // Đủ data: render row + fill thêm row rỗng cho đều chiều cao
     const emptyRows = perPage - feFilteredProducts.length;
 
     return (
@@ -402,7 +430,7 @@ const Inventory = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen text-slate-800 dark:text-slate-200">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-emerald-50 via-white to-slate-100 text-slate-800">
       {/* MODALS */}
       {(modalType === "add" || modalType === "edit") && (
         <AddProductModal
@@ -416,11 +444,13 @@ const Inventory = () => {
         <ProductDetailModal productId={activeId} onClose={closeModal} />
       )}
 
-      {/* CARD */}
-      <div className="w-full max-w-7xl mx-auto rounded-2xl shadow-xl bg-slate-200/80 dark:bg-slate-800/70 backdrop-blur-lg border border-white/20 dark:border-slate-700/50 p-6">
+      {/* CARD chính của trang */}
+      <div className="w-full max-w-7xl mx-auto rounded-3xl shadow-xl bg-white/90 backdrop-blur-lg border border-emerald-50 p-6">
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Quản lý Sản phẩm</h1>
+          <h1 className="text-3xl font-bold text-slate-900">
+            Quản lý Sản phẩm
+          </h1>
           {isFetching && (
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -429,7 +459,7 @@ const Inventory = () => {
           )}
         </div>
 
-        {/* ACTION BAR */}
+        {/* ACTION BAR: search + filter + add */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           {/* search */}
           <div className="relative flex-1 min-w-[280px]">
@@ -441,7 +471,7 @@ const Inventory = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm kiếm sản phẩm..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/40 dark:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/80 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/80"
             />
           </div>
 
@@ -450,7 +480,7 @@ const Inventory = () => {
             <div className="relative" ref={filterRef}>
               <button
                 onClick={toggleFilter}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900/5 dark:bg-white/10"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 cursor-pointer"
               >
                 <Filter size={18} /> Lọc & sắp xếp
               </button>
@@ -501,7 +531,7 @@ const Inventory = () => {
             {/* add */}
             <button
               onClick={() => openModal("add")}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-500/90 hover:to-slate-600/90 shadow-md cursor-pointer"
             >
               <Plus size={18} /> Thêm sản phẩm
             </button>
@@ -509,32 +539,32 @@ const Inventory = () => {
         </div>
 
         {/* TABLE */}
-        <div className="overflow-x-auto rounded-lg border border-black/5 dark:border-white/10">
+        <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white/80">
           <table className="w-full">
-            <thead className="bg-black/5 dark:bg-white/5">
+            <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase w-[8%]">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-[8%]">
                   ID
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase w-[28%]">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-[28%]">
                   Sản phẩm
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase w-[12%]">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-[12%]">
                   Thương hiệu
                 </th>
-                <th className="px-4 py-3 text-center text-sm font-semibold uppercase w-[10%]">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-[10%]">
                   Giá
                 </th>
-                <th className="px-4 py-3 text-center text-sm font-semibold uppercase w-[8%]">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-[8%]">
                   SL
                 </th>
-                <th className="px-4 py-3 text-center text-sm font-semibold uppercase w-[12%]">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-[12%]">
                   Trạng thái Sản phẩm
                 </th>
-                <th className="px-4 py-3 text-center text-sm font-semibold uppercase w-[13%]">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-[13%]">
                   Trạng thái Kinh doanh
                 </th>
-                <th className="px-4 py-3 text-center text-sm font-semibold uppercase w-[9%]">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-[9%]">
                   Hành động
                 </th>
               </tr>

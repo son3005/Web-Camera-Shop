@@ -41,59 +41,65 @@ function BieuDoDanhGia({ nam, thang }) {
       : "Thời gian: Tất cả dữ liệu";
 
   return (
-    <div className="bg-[#071824] rounded-2xl border border-slate-700/60 p-6 h-[260px]">
-      <h3 className="text-base font-semibold text-slate-50 mb-1">
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 h-[260px] shadow-sm">
+      <h3 className="text-base font-semibold text-slate-900 mb-1">
         Chất lượng đánh giá
       </h3>
-      <p className="text-xs text-slate-400">{filterLabel}</p>
-      <p className="text-xs text-slate-400 mb-4">
+      <p className="text-xs text-slate-500">{filterLabel}</p>
+      <p className="text-xs text-slate-500 mb-4">
         Phân loại theo số sao (1–2: tiêu cực, 3–4: trung bình, 5: tích cực).
       </p>
 
       {isLoading ? (
         <div className="h-[180px] flex items-center justify-center">
-          <p className="text-slate-400 text-sm animate-pulse">Đang tải...</p>
+          <p className="text-slate-500 text-sm animate-pulse">Đang tải...</p>
         </div>
       ) : isError ? (
         <div className="h-[180px] flex items-center justify-center">
-          <p className="text-red-300 text-sm">
+          <p className="text-red-600 text-sm">
             Lỗi khi tải thống kê: {error?.message}
           </p>
         </div>
       ) : !hasData ? (
         <div className="h-[180px] flex items-center justify-center">
-          <p className="text-slate-400 text-sm">Chưa có dữ liệu đánh giá.</p>
+          <p className="text-slate-500 text-sm">Chưa có dữ liệu đánh giá.</p>
         </div>
       ) : (
         <div className="h-[180px]">
           <ResponsiveContainer width="100%" height="100%">
-            {/* BỎ stackOffset="expand" để giữ đúng số lượng đánh giá */}
-            <BarChart data={chartData}>
+            <BarChart
+              data={chartData}
+              margin={{ top: 10, right: 12, left: 0, bottom: 30 }}
+            >
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
-                stroke="#1e293b"
-                opacity={0.4}
+                stroke="#e5e7eb"
+                opacity={0.9}
               />
               <XAxis
                 dataKey="nhan"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "#9ca3af", fontSize: 11 }}
+                tick={{ fill: "#6b7280", fontSize: 11 }}
+                tickMargin={8}
               />
               <YAxis
                 allowDecimals={false}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "#9ca3af", fontSize: 11 }}
+                tick={{ fill: "#6b7280", fontSize: 11 }}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#020617",
+                  backgroundColor: "#ffffff",
                   borderRadius: 12,
-                  border: "1px solid rgba(148,163,184,.35)",
+                  border: "1px solid #e2e8f0",
                   fontSize: 12,
+                  boxShadow: "0 12px 30px rgba(15,23,42,0.16)",
+                  color: "#0f172a",
                 }}
+                labelStyle={{ color: "#64748b", fontSize: 12 }}
                 formatter={(value, name) => {
                   const label =
                     name === "tichCuc"

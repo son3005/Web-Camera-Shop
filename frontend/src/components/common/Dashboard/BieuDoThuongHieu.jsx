@@ -39,30 +39,30 @@ function BieuDoThuongHieu({ nam, thang }) {
       : "Thời gian: Tất cả dữ liệu";
 
   return (
-    <div className="bg-[#071824] rounded-2xl border border-slate-700/60 p-6 h-[360px]">
-      <h3 className="text-base font-semibold text-slate-50 mb-1">
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 h-[360px] shadow-sm">
+      <h3 className="text-base font-semibold text-slate-900 mb-1">
         Tỉ trọng doanh thu theo thương hiệu
       </h3>
-      <p className="text-xs text-slate-400">{filterLabel}</p>
-      <p className="text-xs text-slate-400 mb-4">
+      <p className="text-xs text-slate-500">{filterLabel}</p>
+      <p className="text-xs text-slate-500 mb-4">
         Dựa trên các đơn hàng đã giao (DA_GIAO), tính theo tổng doanh thu.
       </p>
 
       {isLoading ? (
         <div className="h-[280px] flex items-center justify-center">
-          <p className="text-slate-400 text-sm animate-pulse">
+          <p className="text-slate-500 text-sm animate-pulse">
             Đang tải dữ liệu...
           </p>
         </div>
       ) : isError ? (
         <div className="h-[280px] flex items-center justify-center">
-          <p className="text-red-300 text-sm">
+          <p className="text-red-600 text-sm">
             Lỗi khi tải thống kê: {error?.message}
           </p>
         </div>
       ) : !hasData ? (
         <div className="h-[280px] flex items-center justify-center">
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-500 text-sm">
             Chưa có dữ liệu thương hiệu trong khoảng thời gian này.
           </p>
         </div>
@@ -78,7 +78,10 @@ function BieuDoThuongHieu({ nam, thang }) {
                 dataKey="value"
               >
                 {chartData.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
+                  <Cell
+                    key={index}
+                    fill={entry.color || "#22c55e" /* fallback xanh lá */}
+                  />
                 ))}
               </Pie>
               <Tooltip
@@ -87,11 +90,14 @@ function BieuDoThuongHieu({ nam, thang }) {
                   name || "Thương hiệu",
                 ]}
                 contentStyle={{
-                  backgroundColor: "#020617",
+                  backgroundColor: "#ffffff",
                   borderRadius: 12,
-                  border: "1px solid rgba(148,163,184,.35)",
+                  border: "1px solid #e2e8f0",
                   fontSize: 12,
+                  boxShadow: "0 12px 30px rgba(15,23,42,0.16)",
+                  color: "#0f172a",
                 }}
+                labelStyle={{ color: "#64748b", fontSize: 12 }}
               />
               <Legend
                 verticalAlign="bottom"

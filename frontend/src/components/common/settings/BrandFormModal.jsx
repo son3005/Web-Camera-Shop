@@ -1,4 +1,3 @@
-// src/components/common/settings/BrandFormModal.jsx
 import React, { useEffect, useState } from "react";
 
 export default function BrandFormModal({
@@ -31,7 +30,6 @@ export default function BrandFormModal({
     const logoTrim = logo.trim();
     const publicIdTrim = publicId.trim();
 
-    // --- FE validation khớp rule BE ---
     if (!maTrim || maTrim.length > 5) {
       alert("Mã thương hiệu bắt buộc và tối đa 5 ký tự.");
       return;
@@ -59,14 +57,14 @@ export default function BrandFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
-      <div className="w-full max-w-lg rounded-3xl bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 shadow-2xl border border-slate-200/70 dark:border-slate-700/70">
+      <div className="w-full max-w-lg rounded-3xl bg-white text-slate-900 shadow-2xl border border-slate-200">
         {/* header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/70 dark:border-slate-700/70">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <h3 className="text-lg font-semibold">
             {isEdit ? "Cập nhật thương hiệu" : "Thêm thương hiệu"}
           </h3>
           <button
-            className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white cursor-pointer"
+            className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 cursor-pointer transition"
             onClick={onClose}
             aria-label="Close"
           >
@@ -78,20 +76,19 @@ export default function BrandFormModal({
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
           {/* MÃ THƯƠNG HIỆU */}
           <div>
-            <label className="block text-sm mb-1 text-slate-700 dark:text-slate-200">
+            <label className="block text-sm mb-1 text-slate-700">
               Mã thương hiệu (tối đa 5 ký tự) *
             </label>
             <input
               value={ma}
               onChange={(e) => setMa(e.target.value.toUpperCase())}
               maxLength={5}
-              className="w-full rounded-lg px-3 py-2 bg-white/80 border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
-                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500
-                         dark:bg-slate-900/60 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className="w-full rounded-lg px-3 py-2 bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
+                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
               placeholder="VD: TH001"
             />
             {isEdit && (
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-slate-500">
                 Lưu ý: Nếu thay đổi mã, mã mới phải là duy nhất.
               </p>
             )}
@@ -99,46 +96,43 @@ export default function BrandFormModal({
 
           {/* TÊN THƯƠNG HIỆU */}
           <div>
-            <label className="block text-sm mb-1 text-slate-700 dark:text-slate-200">
+            <label className="block text-sm mb-1 text-slate-700">
               Tên thương hiệu *
             </label>
             <input
               value={ten}
               onChange={(e) => setTen(e.target.value)}
               maxLength={100}
-              className="w-full rounded-lg px-3 py-2 bg-white/80 border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
-                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500
-                         dark:bg-slate-900/60 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className="w-full rounded-lg px-3 py-2 bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
+                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
               placeholder="VD: Samsung"
             />
           </div>
 
           {/* LOGO URL */}
           <div>
-            <label className="block text-sm mb-1 text-slate-700 dark:text-slate-200">
+            <label className="block text-sm mb-1 text-slate-700">
               Logo URL (tuỳ chọn)
             </label>
             <input
               value={logo}
               onChange={(e) => setLogo(e.target.value)}
-              className="w-full rounded-lg px-3 py-2 bg-white/80 border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
-                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500
-                         dark:bg-slate-900/60 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className="w-full rounded-lg px-3 py-2 bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
+                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
               placeholder="https://..."
             />
           </div>
 
           {/* PUBLIC ID */}
           <div>
-            <label className="block text-sm mb-1 text-slate-700 dark:text-slate-200">
+            <label className="block text-sm mb-1 text-slate-700">
               Cloudinary public_id (tuỳ chọn)
             </label>
             <input
               value={publicId}
               onChange={(e) => setPublicId(e.target.value)}
-              className="w-full rounded-lg px-3 py-2 bg-white/80 border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
-                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500
-                         dark:bg-slate-900/60 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className="w-full rounded-lg px-3 py-2 bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
+                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
               placeholder="abc_xyz_123"
             />
           </div>
@@ -148,15 +142,14 @@ export default function BrandFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer
-                         dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+              className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer transition"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-400 hover:to-slate-500 shadow-md hover:shadow-lg disabled:opacity-60 cursor-pointer"
+              className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-400 hover:to-slate-500 shadow-md hover:shadow-lg disabled:opacity-60 cursor-pointer transition"
             >
               {loading ? "Đang lưu..." : isEdit ? "Lưu" : "Thêm"}
             </button>

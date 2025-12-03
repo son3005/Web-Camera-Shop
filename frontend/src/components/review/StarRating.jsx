@@ -15,17 +15,19 @@ export default function StarRating({
       {stars.map((s) => (
         <button
           key={s}
-          type={isInteractive ? "button" : "button"}
+          type="button"
           disabled={!isInteractive}
           onClick={isInteractive ? () => onChange(s) : undefined}
-          className={isInteractive ? "hover:scale-105 transition" : ""}
+          className={
+            isInteractive
+              ? "cursor-pointer hover:scale-110 transition-transform disabled:cursor-default"
+              : "cursor-default"
+          }
         >
           <Star
             size={size}
             className={
-              s <= value
-                ? "fill-amber-400 text-amber-400"
-                : "text-slate-300 dark:text-slate-600"
+              s <= value ? "fill-amber-400 text-amber-400" : "text-slate-300"
             }
           />
         </button>

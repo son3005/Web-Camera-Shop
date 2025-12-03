@@ -1,9 +1,10 @@
 // src/components/common/Inventory/TableRow.jsx
+
 import React, { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import ActionMenu from "./ActionMenu";
 
-// Format VNĐ
+// Hàm format số tiền VNĐ
 const formatVnd = (value) => {
   const n = Number(value);
   if (!n || Number.isNaN(n)) return "N/A";
@@ -15,34 +16,35 @@ const formatVnd = (value) => {
   );
 };
 
+// Badge trạng thái tồn kho
 const StockStatusBadge = ({ quantity }) => {
   if (typeof quantity !== "number" || isNaN(quantity)) {
     return (
-      <span className="px-2 py-1 text-xs font-semibold text-slate-800 bg-slate-300 rounded-full dark:bg-slate-600 dark:text-slate-300">
+      <span className="px-2 py-1 text-xs font-semibold text-slate-700 bg-slate-200 rounded-full">
         Không rõ
       </span>
     );
   }
   if (quantity > 10)
     return (
-      <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full dark:bg-green-500/20 dark:text-green-300">
+      <span className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full">
         Còn hàng
       </span>
     );
   if (quantity > 0)
     return (
-      <span className="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full dark:bg-yellow-500/20 dark:text-yellow-300">
+      <span className="px-2 py-1 text-xs font-semibold text-amber-700 bg-amber-100 rounded-full">
         Sắp hết
       </span>
     );
   return (
-    <span className="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full dark:bg-red-500/20 dark:text-red-300">
+    <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
       Hết hàng
     </span>
   );
 };
 
-// map status raw -> 3 trạng thái
+// Chuẩn hóa trạng thái raw -> 3 trạng thái chính
 const normalizeStatusKey = (raw) => {
   if (typeof raw === "boolean") return raw ? "dang_ban" : "ngung_ban";
 
@@ -56,6 +58,7 @@ const normalizeStatusKey = (raw) => {
   return "ngung_ban";
 };
 
+// Tính trạng thái kinh doanh tổng từ sản phẩm + các biến thể
 const getBusinessStatus = (item) => {
   const variants = item?.cac_bien_the || [];
 
@@ -88,7 +91,7 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
 
   const variants = item?.cac_bien_the || [];
 
-  // 🔥 FIX CHÍNH — tồn kho = tổng so_luong_nhap - so_luong_ban
+  // Tồn kho tổng = sum(so_luong_nhap - so_luong_ban)
   const totalStock =
     variants.reduce((total, variant) => {
       const nhap = Number(variant.so_luong_nhap || 0);
@@ -96,6 +99,7 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
       return total + (nhap - ban);
     }, 0) || 0;
 
+  // Giá thấp nhất trong các biến thể
   const minPrice =
     variants.reduce((min, variant) => {
       const price = Number(variant.gia_ban || 0);
@@ -105,35 +109,40 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
   const businessStatus = getBusinessStatus(item);
 
   return (
-    <tr className="border-b border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/70 transition-colors h-[61px]">
-      <td className="px-4 py-3 font-semibold text-sky-600 dark:text-sky-400">
-        {item.id}
-      </td>
+    <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors h-[61px]">
+      {/* ID */}
+      <td className="px-4 py-3 font-semibold text-sky-600">{item.id}</td>
 
-      <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">
+      {/* Tên sản phẩm */}
+      <td className="px-4 py-3 font-semibold text-slate-800">
         {item.ten_san_pham}
       </td>
 
-      <td className="px-4 py-3 capitalize text-slate-700 dark:text-slate-200">
+      {/* Thương hiệu */}
+      <td className="px-4 py-3 capitalize text-slate-700">
         {item.thuong_hieu?.ten_thuong_hieu || "—"}
       </td>
 
-      <td className="px-4 py-3 text-center text-slate-800 dark:text-slate-100">
+      {/* Giá tối thiểu */}
+      <td className="px-4 py-3 text-center text-slate-800">
         {minPrice > 0 && minPrice < Infinity
           ? `Từ ${formatVnd(minPrice)}`
           : "N/A"}
       </td>
 
-      <td className="px-4 py-3 text-center font-medium text-slate-800 dark:text-slate-100">
+      {/* Số lượng tồn tổng */}
+      <td className="px-4 py-3 text-center font-medium text-slate-800">
         {totalStock}
       </td>
 
+      {/* Badge tồn kho */}
       <td className="px-4 py-3 text-center">
         <StockStatusBadge quantity={totalStock} />
       </td>
 
+      {/* Trạng thái kinh doanh */}
       <td className="px-4 py-3 text-center">
-        <span className="text-xs font-semibold">
+        <span className="inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
           {businessStatus === "dang_ban"
             ? "Đang bán"
             : businessStatus === "sap_ban"
@@ -142,11 +151,12 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
         </span>
       </td>
 
+      {/* Hành động (menu 3 chấm) */}
       <td className="px-4 py-3 text-center">
         <div className="relative flex justify-center">
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="p-2 rounded-full hover:bg-slate-100 transition cursor-pointer"
           >
             <MoreHorizontal size={20} />
           </button>

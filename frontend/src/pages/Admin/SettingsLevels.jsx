@@ -76,34 +76,34 @@ export default function SettingsLevels() {
   const rows = useMemo(() => list, [list]);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-slate-50/40 min-h-screen">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+        <h2 className="text-2xl font-semibold text-slate-900">
           Quản lý Cấp độ
         </h2>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-slate-600 px-4 py-2 text-white hover:from-emerald-400 hover:to-slate-500 shadow-md hover:shadow-lg cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-slate-600 px-4 py-2 text-white hover:from-emerald-400 hover:to-slate-500 shadow-md hover:shadow-lg cursor-pointer transition"
         >
           <Plus className="w-4 h-4" />
           Thêm cấp độ
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-700/60 backdrop-blur-xl shadow-lg">
-        <table className="w-full text-sm text-slate-800 dark:text-slate-100">
-          <thead className="bg-slate-100/80 dark:bg-slate-900/70">
+      <div className="overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-lg">
+        <table className="w-full text-sm text-slate-800">
+          <thead className="bg-slate-100/80">
             <tr>
-              <th className="px-4 py-3 text-left w-16 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <th className="px-4 py-3 text-left w-16 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 ID
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Mã
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Tên cấp độ
               </th>
-              <th className="px-4 py-3 text-right w-40 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <th className="px-4 py-3 text-right w-40 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Hành động
               </th>
             </tr>
@@ -117,10 +117,7 @@ export default function SettingsLevels() {
               </tr>
             ) : isError ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-6 text-center text-red-500 dark:text-red-400"
-                >
+                <td colSpan={4} className="px-4 py-6 text-center text-red-500">
                   Lỗi tải dữ liệu
                 </td>
               </tr>
@@ -128,7 +125,7 @@ export default function SettingsLevels() {
               <tr>
                 <td
                   colSpan={4}
-                  className="px-4 py-6 text-center text-slate-500 dark:text-slate-400"
+                  className="px-4 py-6 text-center text-slate-500"
                 >
                   Chưa có dữ liệu.
                 </td>
@@ -137,7 +134,7 @@ export default function SettingsLevels() {
               rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-t border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors"
+                  className="border-t border-slate-200 hover:bg-slate-50/80 transition-colors"
                 >
                   <td className="px-4 py-3">{row.id}</td>
                   <td className="px-4 py-3">{row.ma_cap_do}</td>
@@ -145,18 +142,18 @@ export default function SettingsLevels() {
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                        className="p-2 rounded-full hover:bg-slate-100 cursor-pointer transition"
                         title="Sửa"
                         onClick={() => openEdit(row)}
                       >
-                        <Pencil className="w-4 h-4 text-emerald-500 dark:text-emerald-300" />
+                        <Pencil className="w-4 h-4 text-emerald-500" />
                       </button>
                       <button
-                        className="p-2 rounded-full hover:bg-rose-50 dark:hover:bg-rose-900/40 cursor-pointer"
+                        className="p-2 rounded-full hover:bg-rose-50 cursor-pointer transition"
                         title="Xóa"
                         onClick={() => handleDelete(row)}
                       >
-                        <Trash2 className="w-4 h-4 text-rose-500 dark:text-rose-300" />
+                        <Trash2 className="w-4 h-4 text-rose-500" />
                       </button>
                     </div>
                   </td>
@@ -167,12 +164,11 @@ export default function SettingsLevels() {
         </table>
 
         {/* Pagination */}
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-200">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 text-slate-700">
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(p - 1, 1))}
-            className="px-3 py-1 rounded-lg bg-white/80 border border-slate-300 hover:bg-slate-50 disabled:opacity-50 cursor-pointer
-                       dark:bg-slate-900/70 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="px-3 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition"
           >
             Trước
           </button>
@@ -186,8 +182,7 @@ export default function SettingsLevels() {
                 Math.min(p + 1, pagination.pages || Number.MAX_SAFE_INTEGER)
               )
             }
-            className="px-3 py-1 rounded-lg bg-white/80 border border-slate-300 hover:bg-slate-50 disabled:opacity-50 cursor-pointer
-                       dark:bg-slate-900/70 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="px-3 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition"
           >
             Sau
           </button>

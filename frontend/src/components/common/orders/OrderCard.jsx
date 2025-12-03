@@ -1,5 +1,4 @@
 // src/components/common/orders/OrderCard.jsx
-
 import React from "react";
 import OrderStatusBadge from "./OrderStatusBadge";
 
@@ -30,7 +29,7 @@ export default function OrderCard({
   onClick,
   onCancel,
   onRequestReturn,
-  onReview, // 🔹 callback mở modal đánh giá
+  onReview, // callback mở modal đánh giá
 }) {
   const handleCardClick = () => {
     onClick?.(order);
@@ -53,10 +52,10 @@ export default function OrderCard({
 
   return (
     <div
-      className="border border-slate-200 rounded-2xl px-4 py-3 bg-white hover:shadow-sm cursor-pointer transition-shadow flex justify-between gap-4"
+      className="border border-slate-200 rounded-2xl px-4 py-3 bg-white/95 hover:bg-emerald-50/60 hover:border-emerald-300 hover:shadow-md hover:-translate-y-[1px] cursor-pointer transition-all flex justify-between gap-4"
       onClick={handleCardClick}
     >
-      {/* LEFT: info */}
+      {/* LEFT: thông tin đơn hàng */}
       <div className="flex-1">
         <div className="flex items-center gap-3">
           <p className="font-semibold text-sm">
@@ -86,11 +85,12 @@ export default function OrderCard({
 
         <div className="mt-2 flex items-center gap-2">
           <span className="text-xs text-slate-500">Trạng thái:</span>
+          {/* Badge đã đổi style: chỉ chữ + chấm màu */}
           <OrderStatusBadge trang_thai={order.trang_thai} />
         </div>
       </div>
 
-      {/* RIGHT: total + actions */}
+      {/* RIGHT: tổng tiền + action */}
       <div className="flex flex-col items-end justify-between gap-2">
         <div className="text-right">
           <p className="text-xs text-slate-500">Tổng thanh toán:</p>
@@ -101,7 +101,7 @@ export default function OrderCard({
           {canCancel(order.trang_thai) && (
             <button
               onClick={handleCancel}
-              className="px-3 py-1 rounded-full border border-red-400 text-red-600 hover:bg-red-50"
+              className="px-3 py-1.5 rounded-lg border border-red-500 text-red-600 bg-white hover:bg-red-50 hover:text-red-700 hover:shadow-sm transition-colors"
             >
               Hủy đơn
             </button>
@@ -109,11 +109,10 @@ export default function OrderCard({
 
           {canRequestReturn(order.trang_thai) && (
             <>
-              {/* 🔸 Nút Đánh giá nằm ngoài, cạnh nút yêu cầu đổi/trả */}
               {onReview && (
                 <button
                   onClick={handleReview}
-                  className="px-3 py-1 rounded-full border border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                  className="px-3 py-1.5 rounded-lg border border-emerald-500 text-emerald-600 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:shadow-sm transition-colors"
                 >
                   Đánh giá
                 </button>
@@ -121,7 +120,7 @@ export default function OrderCard({
 
               <button
                 onClick={handleRequestReturn}
-                className="px-3 py-1 rounded-full border border-amber-400 text-amber-700 hover:bg-amber-50"
+                className="px-3 py-1.5 rounded-lg border border-amber-500 text-amber-700 bg-white hover:bg-amber-50 hover:text-amber-800 hover:shadow-sm transition-colors"
               >
                 Yêu cầu đổi/trả
               </button>

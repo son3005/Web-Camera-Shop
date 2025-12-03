@@ -2,6 +2,7 @@
 import React, { useRef, useEffect } from "react";
 import { X, ArrowDownUp, SlidersHorizontal, Boxes } from "lucide-react";
 
+// Button sắp xếp
 const SortButton = ({ onClick, isActive, children }) => (
   <button
     type="button"
@@ -13,22 +14,23 @@ const SortButton = ({ onClick, isActive, children }) => (
       ${
         isActive
           ? "bg-gradient-to-r from-emerald-500 to-slate-600 text-white shadow-md shadow-emerald-500/30 border-transparent scale-[1.02]"
-          : "bg-white/80 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200 border-slate-200/60 dark:border-slate-600/60 hover:bg-slate-50 dark:hover:bg-slate-700"
+          : "bg-white/80 text-slate-700 border-slate-200 hover:bg-slate-50"
       }`}
   >
     {children}
   </button>
 );
 
+// Checkbox trong bộ lọc
 const CheckboxOption = ({ label, checked, onChange }) => (
-  <label className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-slate-50/80 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+  <label className="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-slate-50/80 hover:bg-slate-100 transition">
     <input
       type="checkbox"
       className="h-4 w-4 rounded accent-emerald-500 cursor-pointer"
       checked={checked}
       onChange={onChange}
     />
-    <span className="text-slate-700 dark:text-slate-200">{label}</span>
+    <span className="text-slate-700">{label}</span>
   </label>
 );
 
@@ -54,6 +56,7 @@ const FilterPopup = ({
 
   const popupRef = useRef(null);
 
+  // Chặn click bên trong popup bị propagate ra ngoài
   useEffect(() => {
     const handleClick = (e) => {
       if (popupRef.current && popupRef.current.contains(e.target)) {
@@ -67,19 +70,19 @@ const FilterPopup = ({
   return (
     <div
       ref={popupRef}
-      className="absolute top-full right-0 mt-2 w-[320px] rounded-2xl border border-slate-200/60 dark:border-slate-700/60
-                bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl shadow-emerald-500/10
+      className="absolute top-full right-0 mt-2 w-[320px] rounded-2xl border border-slate-200
+                bg-white/95 backdrop-blur-xl shadow-2xl shadow-emerald-500/10
                 transition-all z-50 flex flex-col"
     >
       {/* Header */}
-      <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-        <h3 className="text-base font-semibold flex items-center gap-2 text-slate-800 dark:text-slate-200">
+      <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 className="text-base font-semibold flex items-center gap-2 text-slate-800">
           <SlidersHorizontal size={18} /> Bộ lọc & Sắp xếp
         </h3>
         <button
           type="button"
           onClick={onClose}
-          className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+          className="p-2 rounded-full hover:bg-slate-100 transition cursor-pointer"
         >
           <X size={18} />
         </button>
@@ -89,7 +92,7 @@ const FilterPopup = ({
       <div className="p-4 space-y-5 max-h-[60vh] overflow-y-auto scrollbar-thin">
         {/* Trạng thái kinh doanh */}
         <div>
-          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
+          <h4 className="font-medium text-slate-700 mb-2">
             Trạng thái kinh doanh
           </h4>
           <div className="grid grid-cols-2 gap-2">
@@ -113,9 +116,7 @@ const FilterPopup = ({
 
         {/* Danh mục */}
         <div>
-          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Danh mục
-          </h4>
+          <h4 className="font-medium text-slate-700 mb-2">Danh mục</h4>
           <div className="max-h-32 overflow-y-auto space-y-2">
             {danhMucList.length > 0 ? (
               danhMucList.map((danhMuc) => (
@@ -138,9 +139,7 @@ const FilterPopup = ({
 
         {/* Thương hiệu */}
         <div>
-          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Thương hiệu
-          </h4>
+          <h4 className="font-medium text-slate-700 mb-2">Thương hiệu</h4>
           <div className="max-h-32 overflow-y-auto space-y-2">
             {thuongHieuList.length > 0 ? (
               thuongHieuList.map((thuongHieu) => (
@@ -163,7 +162,7 @@ const FilterPopup = ({
 
         {/* Trạng thái tồn kho */}
         <div>
-          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+          <h4 className="font-medium text-slate-700 mb-2 flex items-center gap-2">
             <Boxes size={16} /> Tồn kho
           </h4>
           <div className="grid grid-cols-2 gap-2">
@@ -193,7 +192,7 @@ const FilterPopup = ({
 
         {/* Sắp xếp */}
         <div>
-          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+          <h4 className="font-medium text-slate-700 mb-2 flex items-center gap-2">
             <ArrowDownUp size={16} /> Sắp xếp theo
           </h4>
           <div className="grid grid-cols-2 gap-2">
@@ -226,9 +225,7 @@ const FilterPopup = ({
 
         {/* Khoảng giá */}
         <div>
-          <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Khoảng giá (VNĐ)
-          </h4>
+          <h4 className="font-medium text-slate-700 mb-2">Khoảng giá (VNĐ)</h4>
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -237,9 +234,7 @@ const FilterPopup = ({
               onChange={(e) =>
                 handleRangeChange("priceRange", "min", e.target.value || "")
               }
-              className="w-[100px] px-2 py-1.5 rounded-lg border border-slate-200/60 dark:border-slate-600/60
-                        bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-slate-200
-                        placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              className="w-[100px] px-2 py-1.5 rounded-lg border border-slate-200 bg-white/80 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
             <span className="text-slate-500">-</span>
             <input
@@ -249,20 +244,18 @@ const FilterPopup = ({
               onChange={(e) =>
                 handleRangeChange("priceRange", "max", e.target.value || "")
               }
-              className="w-[100px] px-2 py-1.5 rounded-lg border border-slate-200/60 dark:border-slate-600/60
-                        bg-white/80 dark:bg-slate-800/70 text-slate-800 dark:text-slate-200
-                        placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              className="w-[100px] px-2 py-1.5 rounded-lg border border-slate-200 bg-white/80 text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-emerald-500/15 to-slate-600/15 backdrop-blur-lg flex gap-3 rounded-b-2xl">
+      <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-emerald-500/10 to-slate-600/10 backdrop-blur-lg flex gap-3 rounded-b-2xl">
         <button
           type="button"
           onClick={onReset}
-          className="flex-1 py-2 rounded-lg font-medium bg-white/90 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
+          className="flex-1 py-2 rounded-lg font-medium bg-white/90 text-slate-800 hover:bg-slate-50 transition cursor-pointer"
         >
           Xóa lọc
         </button>

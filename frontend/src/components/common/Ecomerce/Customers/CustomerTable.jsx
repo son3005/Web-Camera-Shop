@@ -5,11 +5,11 @@ import { fetchCustomers } from "../../../../api/customerApi";
 import CustomerRow from "./CustomerRow";
 
 /**
- * Bảng danh sách khách hàng
- * Nhận props từ trang Pages/Admin/Customers.jsx:
+ * Bảng danh sách khách hàng (dùng riêng)
+ * Nhận props:
  * - page, setPage
  * - search, activeFilters
- * - onOpenDetail(customer)
+ * - onOpenDetail(customerId)
  */
 const ITEMS_PER_PAGE = 10;
 
@@ -41,18 +41,18 @@ export default function CustomerTable({
   });
 
   return (
-    <div className="w-full bg-white/80 dark:bg-slate-800/70 rounded-2xl border border-slate-200/60 dark:border-slate-700/50 overflow-hidden">
-      {/* Table header */}
-      <div className="px-5 py-4 border-b border-black/10 dark:border-white/10">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+    <div className="w-full bg-white/90 rounded-2xl border border-emerald-50 shadow-lg overflow-hidden">
+      {/* Header nhỏ của bảng */}
+      <div className="px-5 py-4 border-b border-slate-200/80">
+        <h3 className="text-lg font-bold text-slate-900">
           Danh sách khách hàng
         </h3>
       </div>
 
-      {/* Table */}
+      {/* Table chính */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-black/5 dark:bg-white/5">
+          <thead className="bg-slate-50">
             <tr>
               {[
                 "Mã KH",
@@ -65,7 +65,7 @@ export default function CustomerTable({
               ].map((h) => (
                 <th
                   key={h}
-                  className={`px-4 py-3 font-bold uppercase tracking-wider text-xs text-slate-700 dark:text-slate-300 ${
+                  className={`px-4 py-3 font-bold uppercase tracking-wider text-xs text-slate-700 ${
                     h === "Khách hàng" || h === "Liên hệ"
                       ? "text-left"
                       : "text-center"
@@ -77,6 +77,7 @@ export default function CustomerTable({
             </tr>
           </thead>
           <tbody>
+            {/* Các trạng thái tải dữ liệu */}
             {isLoading ? (
               <tr>
                 <td colSpan={7} className="p-8 text-center text-slate-500">
@@ -86,7 +87,7 @@ export default function CustomerTable({
             ) : isError ? (
               <tr>
                 <td colSpan={7} className="p-8 text-center text-red-500">
-                  Lỗi: {error.message}
+                  Lỗi: {error?.message}
                 </td>
               </tr>
             ) : items.length === 0 ? (
@@ -104,12 +105,14 @@ export default function CustomerTable({
                 />
               ))
             )}
+
+            {/* Hàng trống để bảng đều chiều cao */}
             {!isLoading &&
               !isError &&
               emptyRows.map((_, i) => (
                 <tr
                   key={`empty-${i}`}
-                  className="border-b border-black/5 dark:border-white/5 h-[64px]"
+                  className="border-b border-slate-100 h-[64px]"
                 >
                   <td colSpan={7}></td>
                 </tr>
@@ -119,8 +122,8 @@ export default function CustomerTable({
       </div>
 
       {/* Pagination */}
-      <div className="px-5 py-4 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <span className="text-sm text-slate-800 dark:text-slate-400 font-medium">
+      <div className="px-5 py-4 border-t border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <span className="text-sm text-slate-700 font-medium">
           Hiển thị {items.length > 0 ? (page - 1) * ITEMS_PER_PAGE + 1 : 0} -{" "}
           {(page - 1) * ITEMS_PER_PAGE + items.length} trên tổng {total}
         </span>
@@ -128,17 +131,17 @@ export default function CustomerTable({
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1 || isFetching}
-            className="px-3 py-1.5 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-md bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-emerald-300 disabled:opacity-50 transition"
           >
             Trước
           </button>
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+          <span className="text-sm font-bold text-slate-800">
             Trang {page} / {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages || isFetching}
-            className="px-3 py-1.5 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-md bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-emerald-300 disabled:opacity-50 transition"
           >
             Sau
           </button>

@@ -47,8 +47,8 @@ function BieuDoDoanhThu({ nam, thang }) {
 
   if (isLoading) {
     return (
-      <div className="bg-[#071824] rounded-2xl border border-slate-700/60 p-6 h-[360px] flex items-center justify-center">
-        <p className="text-slate-400 text-sm animate-pulse">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 h-[360px] flex items-center justify-center shadow-sm">
+        <p className="text-slate-500 text-sm animate-pulse">
           Đang tải dữ liệu doanh thu...
         </p>
       </div>
@@ -57,8 +57,8 @@ function BieuDoDoanhThu({ nam, thang }) {
 
   if (isError) {
     return (
-      <div className="bg-[#071824] rounded-2xl border border-red-500/40 p-6 h-[360px] flex items-center justify-center">
-        <p className="text-red-300 text-sm">
+      <div className="bg-white rounded-2xl border border-red-400/40 p-6 h-[360px] flex items-center justify-center shadow-sm">
+        <p className="text-red-600 text-sm">
           Lỗi khi tải thống kê doanh thu: {error?.message}
         </p>
       </div>
@@ -67,30 +67,31 @@ function BieuDoDoanhThu({ nam, thang }) {
 
   if (!chartData.length || !hasData) {
     return (
-      <div className="bg-[#071824] rounded-2xl border border-slate-700/60 p-6 h-[360px] flex flex-col justify-center items-center text-center">
-        <h3 className="text-base font-semibold text-slate-50 mb-2">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 h-[360px] flex flex-col justify-center items-center text-center shadow-sm">
+        <h3 className="text-base font-semibold text-slate-900 mb-2">
           Doanh thu &amp; Lợi nhuận
         </h3>
-        <p className="text-sm text-slate-400 mb-1">
+        <p className="text-sm text-slate-500 mb-1">
           {filterLabel}. Không có dữ liệu doanh thu phù hợp với bộ lọc hiện tại.
         </p>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-slate-400 mt-1">
           (Backend chỉ thống kê các đơn hàng{" "}
-          <span className="font-semibold">DA_GIAO</span> và thanh toán{" "}
-          <span className="font-semibold">DA_THANH_TOAN</span>.)
+          <span className="font-semibold text-slate-700">DA_GIAO</span> và thanh
+          toán{" "}
+          <span className="font-semibold text-slate-700">DA_THANH_TOAN</span>.)
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#071824] rounded-2xl border border-slate-700/60 p-6">
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-semibold text-slate-50">
+          <h3 className="text-base font-semibold text-slate-900">
             Doanh thu &amp; Lợi nhuận
           </h3>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             {filterLabel}. Dựa trên các đơn đã giao và đã thanh toán thành công.
           </p>
         </div>
@@ -100,42 +101,49 @@ function BieuDoDoanhThu({ nam, thang }) {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={chartData}
-            margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+            margin={{ top: 10, right: 20, left: 0, bottom: 30 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}
-              stroke="#1e293b"
-              opacity={0.4}
+              stroke="#e5e7eb"
+              opacity={0.8}
             />
             <XAxis
               dataKey="nhan"
               tickLine={false}
               axisLine={false}
-              tick={{ fill: "#9ca3af", fontSize: 12 }}
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+              tickMargin={8}
             />
             <YAxis
               tickLine={false}
               axisLine={false}
-              tick={{ fill: "#9ca3af", fontSize: 12 }}
+              tick={{ fill: "#6b7280", fontSize: 12 }}
               tickFormatter={(value) =>
                 value >= 1_000_000
                   ? `${Math.round(value / 1_000_000)}M`
                   : `${Math.round(value / 1_000)}k`
               }
             />
+
+            {/* Tooltip nền sáng, formatter đúng kiểu Recharts */}
             <Tooltip
               contentStyle={{
-                backgroundColor: "#020617",
+                backgroundColor: "#ffffff",
                 borderRadius: 12,
-                border: "1px solid rgba(148, 163, 184, 0.35)",
+                border: "1px solid #e2e8f0",
+                fontSize: 12,
+                boxShadow: "0 12px 30px rgba(15,23,42,0.16)",
+                color: "#0f172a",
               }}
-              labelStyle={{ color: "#e5e7eb", fontSize: 12 }}
+              labelStyle={{ color: "#64748b", fontSize: 12 }}
               formatter={(value, name) => [
                 `${Number(value).toLocaleString("vi-VN")} ₫`,
                 name === "tongDoanhThu" ? "Doanh thu" : "Lợi nhuận",
               ]}
             />
+
             <Legend
               verticalAlign="top"
               height={24}
@@ -147,11 +155,11 @@ function BieuDoDoanhThu({ nam, thang }) {
 
             <defs>
               <linearGradient id="doanhThuGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
+                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.9} />
                 <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
               </linearGradient>
               <linearGradient id="loiNhuanGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8} />
+                <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.9} />
                 <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.05} />
               </linearGradient>
             </defs>
@@ -159,14 +167,14 @@ function BieuDoDoanhThu({ nam, thang }) {
             <Area
               type="monotone"
               dataKey="tongDoanhThu"
-              stroke="#22c55e"
+              stroke="#16a34a"
               strokeWidth={2}
               fill="url(#doanhThuGradient)"
             />
             <Area
               type="monotone"
               dataKey="loiNhuan"
-              stroke="#38bdf8"
+              stroke="#0ea5e9"
               strokeWidth={2}
               fill="url(#loiNhuanGradient)"
             />

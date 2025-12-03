@@ -1,4 +1,4 @@
-// src/pages/admin/SlideshowPage.jsx
+// src/pages/Admin/SlideshowPage.jsx
 // Quản lý ảnh trình chiếu cho homepage
 
 import { useState } from "react";
@@ -105,13 +105,14 @@ export default function SlideshowPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6 bg-slate-50/40 min-h-screen">
+      {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
             Quản lý ảnh trình chiếu
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             Thêm / chỉnh sửa các banner xuất hiện ở trang chủ.
           </p>
         </div>
@@ -119,24 +120,24 @@ export default function SlideshowPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[2fr,1.4fr] gap-6">
         {/* Danh sách ảnh */}
-        <div className="surface-panel p-4 md:p-5">
+        <div className="rounded-3xl border border-slate-200 bg-white shadow-lg p-4 md:p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-base font-semibold text-slate-900">
               Danh sách ảnh trình chiếu
             </h2>
           </div>
 
           {isLoading ? (
-            <div className="h-40 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div className="h-40 rounded-xl bg-slate-100 animate-pulse" />
           ) : slides.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-500">
               Chưa có ảnh trình chiếu nào. Hãy thêm một ảnh ở form bên phải.
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+              <table className="min-w-full text-sm text-slate-800">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <tr className="border-b border-slate-200">
                     <th className="py-2 pr-2 text-left text-slate-500 font-medium">
                       Ảnh
                     </th>
@@ -149,7 +150,7 @@ export default function SlideshowPage() {
                     <th className="py-2 px-2 text-center text-slate-500 font-medium">
                       Vị trí
                     </th>
-                    <th className="py-2 pl-2 text-center text-slate-500 font-medium">
+                    <th className="py-2 px-2 text-center text-slate-500 font-medium">
                       Trạng thái
                     </th>
                     <th className="py-2 pl-2 text-right text-slate-500 font-medium">
@@ -161,10 +162,10 @@ export default function SlideshowPage() {
                   {slides.map((slide) => (
                     <tr
                       key={slide.id}
-                      className="border-b border-slate-100 dark:border-slate-800 last:border-none"
+                      className="border-b border-slate-100 last:border-none"
                     >
                       <td className="py-2 pr-2">
-                        <div className="w-20 h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        <div className="w-20 h-12 rounded-lg overflow-hidden bg-slate-100">
                           {slide.hinh_anh_url && (
                             <img
                               src={slide.hinh_anh_url}
@@ -175,27 +176,27 @@ export default function SlideshowPage() {
                         </div>
                       </td>
                       <td className="py-2 px-2 align-top">
-                        <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-2">
+                        <div className="font-medium text-slate-900 line-clamp-2">
                           {slide.tieu_de}
                         </div>
                       </td>
                       <td className="py-2 px-2 align-top">
-                        <div className="text-xs text-emerald-600 dark:text-emerald-300 break-all">
+                        <div className="text-xs text-emerald-600 break-all">
                           {slide.lien_ket || "—"}
                         </div>
                       </td>
                       <td className="py-2 px-2 text-center align-top">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-xs font-semibold">
                           {slide.vi_tri ?? "-"}
                         </span>
                       </td>
                       <td className="py-2 px-2 text-center align-top">
                         <button
                           onClick={() => handleToggleActive(slide)}
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition ${
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition cursor-pointer ${
                             slide.trang_thai
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/40"
-                              : "bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-slate-50 text-slate-500 border-slate-200"
                           }`}
                         >
                           {slide.trang_thai ? "Đang hiển thị" : "Đang ẩn"}
@@ -204,13 +205,13 @@ export default function SlideshowPage() {
                       <td className="py-2 pl-2 text-right align-top space-x-2">
                         <button
                           onClick={() => handleEdit(slide)}
-                          className="text-xs px-2.5 py-1 rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                          className="text-xs px-2.5 py-1 rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 cursor-pointer transition"
                         >
                           Sửa
                         </button>
                         <button
                           onClick={() => handleDelete(slide)}
-                          className="text-xs px-2.5 py-1 rounded-full border border-rose-300 text-rose-600 hover:bg-rose-50 dark:border-rose-500/60 dark:text-rose-300 dark:hover:bg-rose-500/10 transition"
+                          className="text-xs px-2.5 py-1 rounded-full border border-rose-300 text-rose-600 hover:bg-rose-50 cursor-pointer transition"
                         >
                           Xoá
                         </button>
@@ -224,13 +225,13 @@ export default function SlideshowPage() {
         </div>
 
         {/* Form thêm / sửa */}
-        <div className="surface-panel p-4 md:p-5 space-y-4">
+        <div className="rounded-3xl border border-slate-200 bg-white shadow-lg p-4 md:p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              <h2 className="text-base font-semibold text-slate-900">
                 {editing ? "Chỉnh sửa ảnh trình chiếu" : "Thêm ảnh trình chiếu"}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Ảnh phải có tỷ lệ ngang (khoảng 3:1) để hiển thị đẹp trên
                 homepage.
               </p>
@@ -239,7 +240,7 @@ export default function SlideshowPage() {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="text-xs px-2.5 py-1 rounded-full border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                className="text-xs px-2.5 py-1 rounded-full border border-slate-300 text-slate-600 hover:bg-slate-100 cursor-pointer transition"
               >
                 Thêm mới
               </button>
@@ -248,25 +249,23 @@ export default function SlideshowPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 text-sm">
             <div className="space-y-1">
-              <label className="font-medium text-slate-800 dark:text-slate-200">
-                Tiêu đề
-              </label>
+              <label className="font-medium text-slate-800">Tiêu đề</label>
               <input
                 type="text"
                 {...register("tieu_de")}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/70 text-sm"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/70 text-sm"
                 placeholder="Ví dụ: Siêu sale máy ảnh cuối tuần"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-medium text-slate-800 dark:text-slate-200">
+              <label className="font-medium text-slate-800">
                 Liên kết (khi click banner)
               </label>
               <input
                 type="text"
                 {...register("lien_ket")}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/70 text-sm"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/70 text-sm"
                 placeholder="/products, /products/123 hoặc URL ngoài"
               />
               <p className="text-xs text-slate-400">
@@ -277,14 +276,14 @@ export default function SlideshowPage() {
 
             <div className="flex gap-3">
               <div className="space-y-1">
-                <label className="font-medium text-slate-800 dark:text-slate-200">
+                <label className="font-medium text-slate-800">
                   Vị trí hiển thị
                 </label>
                 <input
                   type="number"
                   min={1}
                   {...register("vi_tri")}
-                  className="w-24 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/70 text-sm"
+                  className="w-24 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/70 text-sm"
                 />
               </div>
               <div className="flex items-end gap-2">
@@ -292,12 +291,9 @@ export default function SlideshowPage() {
                   type="checkbox"
                   id="trang_thai"
                   {...register("trang_thai")}
-                  className="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                 />
-                <label
-                  htmlFor="trang_thai"
-                  className="text-sm text-slate-700 dark:text-slate-200"
-                >
+                <label htmlFor="trang_thai" className="text-sm text-slate-700">
                   Hiển thị trên trang chủ
                 </label>
               </div>
@@ -305,14 +301,12 @@ export default function SlideshowPage() {
 
             {!editing && (
               <div className="space-y-1">
-                <label className="font-medium text-slate-800 dark:text-slate-200">
-                  Chọn ảnh
-                </label>
+                <label className="font-medium text-slate-800">Chọn ảnh</label>
                 <input
                   type="file"
                   accept="image/*"
                   {...register("file")}
-                  className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                  className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
                 />
                 <p className="text-xs text-slate-400">
                   Kích thước khuyến nghị: 1600×500 hoặc tương đương (tỷ lệ 3:1).
@@ -323,7 +317,7 @@ export default function SlideshowPage() {
             {previewUrl && (
               <div className="mt-2">
                 <p className="text-xs text-slate-500 mb-1">Xem trước:</p>
-                <div className="w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="w-full rounded-xl overflow-hidden bg-slate-100">
                   <img
                     src={previewUrl}
                     alt="Preview"
@@ -337,7 +331,7 @@ export default function SlideshowPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || createMutation.isPending}
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium shadow-md shadow-emerald-500/30 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium shadow-md shadow-emerald-500/30 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition"
               >
                 {editing ? "Lưu thay đổi" : "Thêm ảnh trình chiếu"}
               </button>

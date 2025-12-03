@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 
-// Khớp với mock API hiện tại
+// Danh sách trạng thái có trong hệ thống
 const ALL_STATUSES = ["Active", "Returning", "Blocked"];
 
 /**
@@ -20,24 +20,24 @@ export default function CustomerFilterMenu({
 }) {
   const [temp, setTemp] = useState(initialFilters);
 
-  // bật/tắt 1 trạng thái
+  // Bật/tắt 1 trạng thái
   const toggle = (name) => {
     const set = new Set(temp.statuses);
     set.has(name) ? set.delete(name) : set.add(name);
     setTemp((p) => ({ ...p, statuses: Array.from(set) }));
   };
 
-  // set khoảng (dateRange/priceRange)
+  // Cập nhật range (dateRange / priceRange)
   const setRange = (group, field, value) => {
     setTemp((p) => ({ ...p, [group]: { ...p[group], [field]: value } }));
   };
 
-  // bật/tắt sort
+  // Bật/tắt sort: nếu đang chọn thì trả về "default"
   const toggleSort = (key, val) => {
     setTemp((p) => ({ ...p, [key]: p[key] === val ? "default" : val }));
   };
 
-  // Reset về default (ĐÃ đổi spend* -> price*)
+  // Reset về giá trị mặc định
   const reset = () =>
     setTemp({
       statuses: [],
@@ -47,35 +47,39 @@ export default function CustomerFilterMenu({
       dateRange: { start: "", end: "" },
     });
 
+  // Áp dụng filter tạm => filter chính
   const apply = () => {
-    onApply(temp); // truyền đúng keys mà API kỳ vọng
+    onApply(temp);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-[1000] flex justify-end">
+      {/* Overlay mờ */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-sm bg-white dark:bg-slate-800 shadow-2xl p-6 flex flex-col">
-        <div className="flex justify-between items-center pb-4 border-b border-black/10 dark:border-white/10">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Lọc & Sắp xếp
-          </h3>
+
+      {/* Panel lọc bên phải */}
+      <div className="relative w-full max-w-sm bg-white shadow-2xl p-6 flex flex-col border-l border-slate-200">
+        {/* Header */}
+        <div className="flex justify-between items-center pb-4 border-b border-slate-200/80">
+          <h3 className="text-lg font-bold text-slate-900">Lọc & Sắp xếp</h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
+        {/* Nội dung filter */}
         <div className="flex-1 overflow-y-auto space-y-6 py-6 pr-2 -mr-2">
           {/* Trạng thái */}
           <div>
-            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <div className="text-sm font-semibold text-slate-700">
               Trạng thái
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2">
@@ -83,10 +87,10 @@ export default function CustomerFilterMenu({
                 <button
                   key={s}
                   onClick={() => toggle(s)}
-                  className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                  className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                     temp.statuses.includes(s)
-                      ? "bg-emerald-500 border-emerald-500 text-white"
-                      : "bg-transparent border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-500 text-white shadow-sm"
+                      : "bg-white border-slate-200 hover:bg-slate-50"
                   }`}
                 >
                   {s}
@@ -97,26 +101,26 @@ export default function CustomerFilterMenu({
 
           {/* Sắp xếp theo ngày */}
           <div>
-            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <div className="text-sm font-semibold text-slate-700">
               Sắp xếp theo ngày
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2">
               <button
                 onClick={() => toggleSort("dateSort", "desc")}
-                className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                   temp.dateSort === "desc"
-                    ? "bg-emerald-500 border-emerald-500 text-white"
-                    : "bg-transparent border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-500 text-white shadow-sm"
+                    : "bg-white border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 Mới nhất
               </button>
               <button
                 onClick={() => toggleSort("dateSort", "asc")}
-                className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                   temp.dateSort === "asc"
-                    ? "bg-emerald-500 border-emerald-500 text-white"
-                    : "bg-transparent border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-500 text-white shadow-sm"
+                    : "bg-white border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 Cũ nhất
@@ -126,26 +130,26 @@ export default function CustomerFilterMenu({
 
           {/* Sắp xếp theo tổng chi */}
           <div>
-            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <div className="text-sm font-semibold text-slate-700">
               Sắp xếp theo tổng chi
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2">
               <button
                 onClick={() => toggleSort("priceSort", "asc")}
-                className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                   temp.priceSort === "asc"
-                    ? "bg-emerald-500 border-emerald-500 text-white"
-                    : "bg-transparent border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-500 text-white shadow-sm"
+                    : "bg-white border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 Thấp → Cao
               </button>
               <button
                 onClick={() => toggleSort("priceSort", "desc")}
-                className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                   temp.priceSort === "desc"
-                    ? "bg-emerald-500 border-emerald-500 text-white"
-                    : "bg-transparent border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-500 text-white shadow-sm"
+                    : "bg-white border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 Cao → Thấp
@@ -155,7 +159,7 @@ export default function CustomerFilterMenu({
 
           {/* Khoảng ngày tạo */}
           <div>
-            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <div className="text-sm font-semibold text-slate-700">
               Khoảng ngày tạo
             </div>
             <div className="flex items-center gap-2 mt-2">
@@ -163,21 +167,21 @@ export default function CustomerFilterMenu({
                 type="date"
                 value={temp.dateRange.start}
                 onChange={(e) => setRange("dateRange", "start", e.target.value)}
-                className="w-1/2 p-2 bg-black/5 dark:bg-white/10 border border-slate-300/50 dark:border-slate-700 rounded-lg text-sm"
+                className="w-1/2 p-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
               />
               <input
                 type="date"
                 value={temp.dateRange.end}
                 onChange={(e) => setRange("dateRange", "end", e.target.value)}
                 min={temp.dateRange.start}
-                className="w-1/2 p-2 bg-black/5 dark:bg-white/10 border border-slate-300/50 dark:border-slate-700 rounded-lg text-sm"
+                className="w-1/2 p-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
               />
             </div>
           </div>
 
           {/* Khoảng chi tiêu */}
           <div>
-            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <div className="text-sm font-semibold text-slate-700">
               Khoảng chi tiêu (đ)
             </div>
             <div className="flex items-center gap-2 mt-2">
@@ -186,7 +190,7 @@ export default function CustomerFilterMenu({
                 placeholder="Từ"
                 value={temp.priceRange?.min ?? ""}
                 onChange={(e) => setRange("priceRange", "min", e.target.value)}
-                className="w-1/2 p-2 bg-black/5 dark:bg-white/10 border border-slate-300/50 dark:border-slate-700 rounded-lg text-sm"
+                className="w-1/2 p-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
               />
               <input
                 type="number"
@@ -194,23 +198,23 @@ export default function CustomerFilterMenu({
                 value={temp.priceRange?.max ?? ""}
                 min={temp.priceRange?.min ?? ""}
                 onChange={(e) => setRange("priceRange", "max", e.target.value)}
-                className="w-1/2 p-2 bg-black/5 dark:bg-white/10 border border-slate-300/50 dark:border-slate-700 rounded-lg text-sm"
+                className="w-1/2 p-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
               />
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex gap-2 pt-4 border-t border-black/10 dark:border-white/10">
+        {/* Footer nút hành động */}
+        <div className="flex gap-2 pt-4 border-t border-slate-200/80">
           <button
             onClick={reset}
-            className="w-1/2 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 font-semibold text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="w-1/2 py-2.5 rounded-lg border border-slate-300 bg-white font-semibold text-sm text-slate-700 hover:bg-slate-50 transition"
           >
             Thiết lập lại
           </button>
           <button
             onClick={apply}
-            className="w-1/2 py-2.5 rounded-lg bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
+            className="w-1/2 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold text-sm hover:from-emerald-600 hover:to-teal-600 shadow-md transition"
           >
             Áp dụng
           </button>

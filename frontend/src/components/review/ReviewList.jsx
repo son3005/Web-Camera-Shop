@@ -7,7 +7,7 @@ export default function ReviewList({ reviews = [] }) {
 
   if (reviews.length === 0) {
     return (
-      <div className="surface-panel p-4 text-sm text-slate-500 dark:text-slate-300">
+      <div className="bg-white/95 border border-slate-200 rounded-2xl p-4 text-sm text-slate-500">
         Chưa có đánh giá nào cho sản phẩm này.
       </div>
     );
@@ -26,7 +26,7 @@ export default function ReviewList({ reviews = [] }) {
 
         let userName = rawName || "Người dùng ẩn danh";
 
-        // 🔁 Nếu là chính user đang đăng nhập thì override theo profile hiện tại
+        // Nếu là chính user đang đăng nhập thì override theo profile hiện tại
         if (authUser && r.nguoi_dung_id && authUser.id === r.nguoi_dung_id) {
           userName =
             authUser.ho_ten ||
@@ -38,12 +38,12 @@ export default function ReviewList({ reviews = [] }) {
         return (
           <div
             key={r.id}
-            className="surface-panel p-4 flex flex-col gap-2 text-sm"
+            className="bg-white/95 border border-slate-200 rounded-2xl p-4 flex flex-col gap-2 text-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="font-semibold">{userName}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="font-semibold text-slate-900">{userName}</p>
+                <p className="text-xs text-slate-500">
                   {r.ngay_tao
                     ? new Date(r.ngay_tao).toLocaleString("vi-VN")
                     : ""}
@@ -53,7 +53,7 @@ export default function ReviewList({ reviews = [] }) {
             </div>
 
             {r.binh_luan && (
-              <p className="text-slate-700 dark:text-slate-200 whitespace-pre-line">
+              <p className="text-slate-700 whitespace-pre-line">
                 {r.binh_luan}
               </p>
             )}

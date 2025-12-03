@@ -16,7 +16,7 @@ export default function Customers() {
   const [detailId, setDetailId] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // giống Orders: activeFilters chỉ lưu khi bấm "Áp dụng"
+  // Filters được áp dụng (giống Orders)
   const [activeFilters, setActiveFilters] = useState({
     statuses: [],
     priceSort: "default",
@@ -25,6 +25,7 @@ export default function Customers() {
     dateRange: { start: "", end: "" },
   });
 
+  // ===== Lấy danh sách khách + stats =====
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["customers", page, q, activeFilters],
     queryFn: () =>
@@ -48,20 +49,24 @@ export default function Customers() {
   };
 
   return (
-    <div className="w-full">
-      <CustomerOverview stats={stats} />
+    <div className="p-6 min-h-screen bg-gradient-to-br from-emerald-50 via-white to-slate-100 text-slate-800">
+      {/* Overview cards */}
+      <div className="max-w-7xl mx-auto mb-4">
+        <CustomerOverview stats={stats} />
+      </div>
 
-      <div className="w-full mx-auto bg-white/80 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-slate-700 overflow-hidden">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-5 border-b border-black/10 dark:border-white/10">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+      <div className="max-w-7xl mx-auto bg-white/90 backdrop-blur-xl rounded-3xl shadow-lg border border-emerald-50 overflow-hidden">
+        {/* Header: tiêu đề + search + filter */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-5 border-b border-slate-200/80">
+          <h1 className="text-2xl font-bold text-slate-900">
             Quản lý Khách hàng
           </h1>
           <div className="flex items-center gap-3 w-full sm:w-auto">
+            {/* Ô tìm kiếm */}
             <div className="relative flex-grow sm:flex-grow-0">
               <Search
                 size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
                 value={q}
@@ -70,20 +75,22 @@ export default function Customers() {
                   setPage(1);
                 }}
                 placeholder="Tìm theo tên, email, SĐT, mã KH…"
-                className="w-full sm:w-72 bg-black/5 dark:bg-white/10 border border-transparent rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full sm:w-72 bg-white border border-slate-200 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
               />
             </div>
+
+            {/* Nút mở filter */}
             <div className="relative">
               <button
                 onClick={() => setIsFilterOpen(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2 text-slate-800 dark:text-slate-200 bg-slate-500/10 hover:bg-slate-500/20 text-sm font-semibold rounded-lg"
+                className="flex items-center justify-center gap-2 px-4 py-2 text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-sm font-semibold rounded-lg transition"
               >
                 <Filter size={16} /> Lọc & Sắp xếp
               </button>
               {isFilterOpen && (
                 <FilterMenu
                   initialFilters={activeFilters}
-                  onApply={handleApplyFilters} // ✅ ĐÚNG PROP
+                  onApply={handleApplyFilters}
                   onClose={() => setIsFilterOpen(false)}
                 />
               )}
@@ -91,10 +98,10 @@ export default function Customers() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Bảng khách hàng */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-black/5 dark:bg.white/5 dark:bg-white/5">
+            <thead className="bg-slate-50">
               <tr>
                 {[
                   "Mã KH",
@@ -107,7 +114,7 @@ export default function Customers() {
                 ].map((h) => (
                   <th
                     key={h}
-                    className={`px-4 py-3 font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider text-xs ${
+                    className={`px-4 py-3 font-bold text-slate-700 uppercase tracking-wider text-xs ${
                       h === "Khách hàng" || h === "Liên hệ"
                         ? "text-left"
                         : "text-center"
@@ -119,6 +126,7 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
+              {/* Các trạng thái dữ liệu */}
               {isLoading ? (
                 <tr>
                   <td colSpan="7" className="text-center p-8 text-slate-500">
@@ -128,7 +136,7 @@ export default function Customers() {
               ) : isError ? (
                 <tr>
                   <td colSpan="7" className="text-center p-8 text-red-500">
-                    Lỗi: {error.message}
+                    Lỗi: {error?.message}
                   </td>
                 </tr>
               ) : items.length === 0 ? (
@@ -156,14 +164,16 @@ export default function Customers() {
                   />
                 ))
               )}
+
+              {/* Hàng trống để bảng đều */}
               {!isLoading &&
                 items.length < PAGE_SIZE &&
                 Array.from({ length: PAGE_SIZE - items.length }).map((_, i) => (
                   <tr
                     key={`empty-${i}`}
-                    className="border-b border-black/5 dark:border-white/5 h-[69px]"
+                    className="border-b border-slate-100 h-[69px]"
                   >
-                    <td colSpan="7"></td>
+                    <td colSpan="7" />
                   </tr>
                 ))}
             </tbody>
@@ -171,8 +181,8 @@ export default function Customers() {
         </div>
 
         {/* Pagination */}
-        <div className="px-5 py-4 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <span className="text-sm text-slate-800 dark:text-slate-400 font-medium">
+        <div className="px-5 py-4 border-t border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <span className="text-sm text-slate-700 font-medium">
             Hiển thị {items.length > 0 ? (page - 1) * PAGE_SIZE + 1 : 0} -{" "}
             {(page - 1) * PAGE_SIZE + items.length} trên tổng {total}
           </span>
@@ -180,17 +190,17 @@ export default function Customers() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-md bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-emerald-300 disabled:opacity-50 transition"
             >
               Trước
             </button>
-            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            <span className="text-sm font-bold text-slate-800">
               Trang {page} / {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1.5 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-md bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-emerald-300 disabled:opacity-50 transition"
             >
               Sau
             </button>
@@ -198,6 +208,7 @@ export default function Customers() {
         </div>
       </div>
 
+      {/* Modal chi tiết khách hàng */}
       {detailId && (
         <CustomerDetailsModal
           customerId={detailId}

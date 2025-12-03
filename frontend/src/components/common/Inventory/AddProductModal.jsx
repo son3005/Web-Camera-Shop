@@ -9,6 +9,7 @@ import { useProducts } from "../../../hooks/useProducts";
 import { useCatalogs } from "../../../hooks/useCatalogs";
 import { useToast } from "../../../hooks/useToast";
 
+// Map dữ liệu trạng thái từ backend về 3 option của form
 const mapBackendStatusToForm = (raw) => {
   if (typeof raw === "boolean") return raw ? "dang_ban" : "ngung_ban";
   if (typeof raw === "string") {
@@ -21,6 +22,7 @@ const mapBackendStatusToForm = (raw) => {
   return "ngung_ban";
 };
 
+// Map từ form về enum backend
 const mapFormStatusToBackend = (raw) => {
   if (raw === "sap_ban") return "sap_ban";
   if (raw === "ngung_ban" || raw === false) return "ngung_ban";
@@ -33,14 +35,16 @@ const AddProductModal = ({ mode, productId, onClose }) => {
   const { useGetAllDanhMuc, useGetAllThuongHieu, useGetAllCapDo } =
     useCatalogs();
 
+  // toast
   const toastHook = useToast();
   const showSuccess =
     toastHook?.success || toastHook?.toast?.success || (() => {});
   const showError = toastHook?.error || toastHook?.toast?.error || (() => {});
 
-  // các biến thể bị xóa (đã tồn tại trong DB) để gửi lên backend
+  // Lưu danh sách id biến thể đã xóa để gửi cho BE
   const [deletedVariantIds, setDeletedVariantIds] = useState([]);
 
+  // Load danh mục / thương hiệu / cấp độ (lấy nhiều 1 lần)
   const { data: danhMucData } = useGetAllDanhMuc({ page: 1, per_page: 100 });
   const { data: thuongHieuData } = useGetAllThuongHieu({
     page: 1,
@@ -48,6 +52,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
   });
   const { data: capDoData } = useGetAllCapDo({ page: 1, per_page: 100 });
 
+  // Nếu mode edit thì gọi API lấy chi tiết
   const { data: productDetail } = useGetSanPhamById(productId, {
     enabled: mode === "edit" && !!productId,
   });
@@ -55,7 +60,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
   const createMutation = useCreateSanPham();
   const updateMutation = useUpdateSanPham();
 
-  // ✅ DEFAULT VALUES KHÔNG CÒN SỐ LƯỢNG
+  // Khởi tạo form mặc định
   const methods = useForm({
     defaultValues: {
       ten_san_pham: "",
@@ -85,7 +90,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     formState: { errors },
   } = methods;
 
-  // ✅ FILL DATA khi EDIT – map theo backend (nested danh_muc / thuong_hieu / cap_do)
+  // Fill dữ liệu khi edit
   useEffect(() => {
     if (mode === "edit" && productDetail) {
       setDeletedVariantIds([]);
@@ -116,7 +121,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
                 }
               })()
             : productDetail.thong_so_ky_thuat || {},
-        // ✅ KHÔNG ĐƯA so_luong VÀO FORM (backend không có field này)
         bien_the_san_phams: (productDetail.cac_bien_the || []).map((v) => ({
           id: v.id,
           id_in_db: v.id,
@@ -137,8 +141,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     }
   }, [mode, productDetail, reset]);
 
-  // ✅ Chuẩn hóa dữ liệu form -> backend (SanPhamCreate / SanPhamUpdate)
-  //    Không còn gửi so_luong vào biến thể
+  // Chuẩn hóa trước khi gửi BE
   const normalizeForBackend = (formData) => {
     const thongSoObj = formData.thong_so_ky_thuat || {};
 
@@ -161,7 +164,6 @@ const AddProductModal = ({ mode, productId, onClose }) => {
         mau: v.mau || "",
         gia_ban: v.gia_ban ? Number(v.gia_ban) : 0,
         trang_thai_kich_hoat: mapFormStatusToBackend(v.trang_thai_kich_hoat),
-        // ✅ KHÔNG gửi so_luong nữa – backend hiện không có trường này
         hinh_anhs: (v.hinh_anhs || []).map((img, j) => ({
           ...(img.id ? { id: img.id } : {}),
           alt_text: img.alt_text || img?.file?.name || `Ảnh ${j + 1}`,
@@ -172,12 +174,13 @@ const AddProductModal = ({ mode, productId, onClose }) => {
               : j === 0,
           ...(img.url ? { url: img.url } : {}),
           ...(img.public_id ? { public_id: img.public_id } : {}),
-          ...(img.file ? { file: img.file } : {}), // 🔥 giữ file để adminProductApi chuyển qua FormData
+          ...(img.file ? { file: img.file } : {}),
         })),
       })),
     };
   };
 
+  // Submit form
   const onSubmit = async (data) => {
     const payload = normalizeForBackend(data);
     console.log("📦 payload gửi BE:", payload);
@@ -206,39 +209,42 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     createMutation.isPending || updateMutation.isPending || false;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    // Overlay che toàn màn hình
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <FormProvider {...methods}>
+        {/* Form chính */}
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="relative w-full max-w-7xl max-h-[95vh] flex flex-col rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/60 dark:border-slate-700/60 shadow-2xl"
+          className="relative w-full max-w-7xl max-h-[95vh] flex flex-col rounded-3xl bg-white/96 border border-emerald-50 shadow-2xl"
         >
-          {/* header */}
-          <div className="flex justify-between items-center p-5 bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200/60 dark:border-slate-700/60">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50">
+          {/* Header modal */}
+          <div className="flex justify-between items-center p-5 bg-slate-50/90 border-b border-emerald-50">
+            <h2 className="text-2xl font-bold text-slate-900">
               {mode === "add" ? "Thêm Sản Phẩm Mới" : "Cập Nhật Sản Phẩm"}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="p-2 rounded-full text-slate-500 hover:bg-slate-100 transition cursor-pointer"
             >
               <X size={24} />
             </button>
           </div>
 
-          {/* body */}
+          {/* Thân form: chia 2 cột – thông tin + thông số */}
           <div className="flex-grow p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-7 space-y-6">
+              {/* Hàng các field select/ input cơ bản */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* tên */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Tên sản phẩm *
                   </label>
                   <input
                     type="text"
                     {...register("ten_san_pham")}
-                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/80 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/90 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
                   />
                   <p className="text-red-500 text-xs h-4">
                     {errors.ten_san_pham?.message}
@@ -247,12 +253,12 @@ const AddProductModal = ({ mode, productId, onClose }) => {
 
                 {/* danh mục */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Danh mục *
                   </label>
                   <select
                     {...register("danh_muc_id")}
-                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/80 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-700/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/90 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 cursor-pointer transition-colors"
                   >
                     <option value="">Chọn danh mục</option>
                     {(danhMucData?.data || []).map((dm) => (
@@ -265,12 +271,12 @@ const AddProductModal = ({ mode, productId, onClose }) => {
 
                 {/* thương hiệu */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Thương hiệu *
                   </label>
                   <select
                     {...register("thuong_hieu_id")}
-                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/80 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-700/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/90 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 cursor-pointer transition-colors"
                   >
                     <option value="">Chọn thương hiệu</option>
                     {(thuongHieuData?.data || []).map((th) => (
@@ -283,12 +289,12 @@ const AddProductModal = ({ mode, productId, onClose }) => {
 
                 {/* cấp độ */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Cấp độ
                   </label>
                   <select
                     {...register("cap_do_id")}
-                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/80 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-700/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/90 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/70 hover:bg-slate-50 cursor-pointer transition-colors"
                   >
                     <option value="">Chọn cấp độ</option>
                     {(capDoData?.data || []).map((cd) => (
@@ -300,7 +306,7 @@ const AddProductModal = ({ mode, productId, onClose }) => {
                 </div>
               </div>
 
-              {/* ✅ VariantManager KHÔNG còn số lượng */}
+              {/* Quản lý các biến thể */}
               <VariantManager
                 control={control}
                 register={register}
@@ -313,11 +319,13 @@ const AddProductModal = ({ mode, productId, onClose }) => {
               />
             </div>
 
+            {/* Cột thông số kỹ thuật */}
             <div className="lg:col-span-5">
               <PropertyForm control={control} readOnly={false} />
             </div>
           </div>
 
+          {/* Mô tả sản phẩm (editor) */}
           <div className="p-6 pt-0">
             <Controller
               name="mo_ta"
@@ -331,12 +339,12 @@ const AddProductModal = ({ mode, productId, onClose }) => {
             />
           </div>
 
-          {/* footer */}
-          <div className="flex justify-end gap-4 p-5 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/80 dark:bg-slate-900/80">
+          {/* Footer: nút Hủy / Lưu */}
+          <div className="flex justify-end gap-4 p-5 border-t border-emerald-50 bg-slate-50/90">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 rounded-lg text-sm font-medium bg-white/90 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="px-6 py-2 rounded-lg text-sm font-medium bg-white/95 text-slate-700 border border-slate-200 hover:bg-slate-50 transition cursor-pointer"
             >
               Hủy
             </button>
