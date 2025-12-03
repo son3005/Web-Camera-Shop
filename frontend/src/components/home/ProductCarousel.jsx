@@ -1,25 +1,51 @@
 // src/components/home/ProductCarousel.jsx
-// Carousel sản phẩm dùng Swiper, lấy dữ liệu từ getProducts()
+// Carousel sản phẩm dùng Swiper, map thẳng API backend:
+// - mode="list"    -> getProducts (có sort, filter)
+// - mode="featured"-> getFeaturedProducts
+// - mode="newest"  -> getNewestProducts
 
 import { useQuery } from "@tanstack/react-query";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
-import { getProducts } from "../../api/productApi";
+
+import {
+  getProducts,
+  getFeaturedProducts,
+  getNewestProducts,
+} from "../../api/productApi";
 import ProductCard from "../common/ProductCard";
 
 export default function ProductCarousel({
   title = "Sản phẩm",
   sort = "",
   carouselId = "default",
+  mode = "list", // "list" | "featured" | "newest"
+  limit = 12,
 }) {
   const { data, isLoading } = useQuery({
-    queryKey: ["products-carousel", { sort }],
-    queryFn: () => getProducts({ sort, limit: 12 }),
+    queryKey: ["products-carousel", { mode, sort, limit }],
+    queryFn: () => {
+      if (mode === "featured") {
+        // Sản phẩm nổi bật
+        return getFeaturedProducts(limit);
+      }
+      if (mode === "newest") {
+        // Sản phẩm mới nhất
+        return getNewestProducts(limit);
+      }
+      // Mặc định: danh sách thường với sort
+      return getProducts({ sort, limit });
+    },
   });
 
-  const products = data?.items || [];
+  // Dữ liệu trả về:
+  // - featured/newest: array sản phẩm đã normalize
+  // - list: { items: [...] }
+  const products =
+    mode === "list" ? data?.items || [] : Array.isArray(data) ? data : [];
+
   const prevId = `carousel-prev-${carouselId}`;
   const nextId = `carousel-next-${carouselId}`;
 

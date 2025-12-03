@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { User, MapPin, History, Star, Save, Plus } from "lucide-react";
 
@@ -24,6 +25,9 @@ import {
   useCancelCustomerOrder,
   useReturnCustomerOrder,
 } from "../hooks/useCustomerOrders";
+
+import { taoDanhGia } from "../api/reviewApi";
+import ReviewForm from "../components/review/ReviewForm";
 
 // 🔹 Component đơn hàng
 import OrderCard from "../components/common/orders/OrderCard";
@@ -52,18 +56,15 @@ const calcGrandTotal = (order) =>
 const canCancel = (status) => ["cho_xac_nhan", "da_xac_nhan"].includes(status);
 const canRequestReturn = (status) => status === "da_giao";
 
-// -------------------------------------------------------
-// COMPONENT CHÍNH
-// -------------------------------------------------------
 export default function AccountPage() {
   const authUser = useSelector((state) => state.auth.user);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("orders"); // cho tiện test
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // =====================
   // PROFILE
-  // =====================
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -71,15 +72,11 @@ export default function AccountPage() {
     email: "",
     so_dien_thoai: "",
   });
-
   const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // =====================
   // ADDRESS
-  // =====================
   const [addresses, setAddresses] = useState([]);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
-
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [isEditAddress, setIsEditAddress] = useState(false);
   const [addressForm, setAddressForm] = useState({
@@ -93,9 +90,7 @@ export default function AccountPage() {
     la_mac_dinh: false,
   });
 
-  // =====================
-  // ORDERS (React Query)
-  // =====================
+  // ORDERS
   const {
     data: orders = [],
     isLoading: loadingOrders,
@@ -106,10 +101,6 @@ export default function AccountPage() {
   const cancelOrderMutation = useCancelCustomerOrder();
   const returnOrderMutation = useReturnCustomerOrder();
 
-  // chọn đơn để xem chi tiết (null = xem danh sách)
-  const [selectedOrder, setSelectedOrder] = useState(null);
-
-  // state cho modal
   const [cancelTarget, setCancelTarget] = useState(null);
   const [returnTarget, setReturnTarget] = useState(null);
 
@@ -166,9 +157,7 @@ export default function AccountPage() {
     }
   };
 
-  // =====================
-  // REVIEWS (ĐÁNH GIÁ CỦA TÔI)
-  // =====================
+  // REVIEWS (của tôi)
   const [reviewPage, setReviewPage] = useState(1);
 
   const {
@@ -192,7 +181,6 @@ export default function AccountPage() {
   const deleteReviewMutation = useDeleteReview();
   const [deletingReviewId, setDeletingReviewId] = useState(null);
 
-  // mở trang chi tiết sản phẩm từ 1 review
   const handleOpenProductFromReview = (rv) => {
     const productId = rv?.san_pham?.id || rv?.san_pham_id;
     if (!productId) return;
@@ -205,6 +193,9 @@ export default function AccountPage() {
       setDeletingReviewId(rv.id);
       await deleteReviewMutation.mutateAsync(rv.id);
       alert("Đã xóa đánh giá.");
+      queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["review-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["reviews"] });
     } catch (err) {
       const msg =
         err?.response?.data?.error ||
@@ -218,9 +209,70 @@ export default function AccountPage() {
     }
   };
 
-  // =====================
-  // LOAD PROFILE
-  // =====================
+  // ===== TẠO ĐÁNH GIÁ TỪ ĐƠN ĐÃ GIAO =====
+  const [reviewTarget, setReviewTarget] = useState(null); // {order, item}
+
+  const reviewMutation = useMutation({
+    mutationFn: ({ chi_tiet_don_hang_id, diem_danh_gia, binh_luan }) =>
+      taoDanhGia({ chi_tiet_don_hang_id, diem_danh_gia, binh_luan }),
+    onSuccess: () => {
+      alert("Đã gửi đánh giá, cảm ơn bạn!");
+      setReviewTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["review-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-orders"] });
+    },
+    onError: (err) => {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "Không thể gửi đánh giá. Vui lòng thử lại.";
+      alert(msg);
+      console.error(err);
+    },
+  });
+
+  const handleOpenReview = (order, item) => {
+    if (order.trang_thai !== "da_giao") {
+      alert("Chỉ có thể đánh giá các sản phẩm thuộc đơn hàng đã giao.");
+      return;
+    }
+    setReviewTarget({ order, item });
+  };
+
+  const handleSubmitReviewFromOrder = (values) => {
+    if (!reviewTarget?.item?.id) return;
+    reviewMutation.mutate({
+      chi_tiet_don_hang_id: reviewTarget.item.id,
+      diem_danh_gia: values.diem_danh_gia,
+      binh_luan: values.binh_luan,
+    });
+  };
+
+  // 🔸 Review từ nút ngoài trên OrderCard (chọn sản phẩm chưa đánh giá đầu tiên)
+  const handleOpenReviewFromCard = (order) => {
+    if (order.trang_thai !== "da_giao") return;
+
+    const items = order.items || [];
+    const firstNotReviewed = items.find((item) => {
+      const reviewed =
+        item.da_danh_gia ||
+        item.co_danh_gia ||
+        item.danh_gia_id ||
+        item.review_id;
+      return !reviewed;
+    });
+
+    if (!firstNotReviewed) {
+      alert("Tất cả sản phẩm trong đơn này đã được đánh giá.");
+      return;
+    }
+
+    setReviewTarget({ order, item: firstNotReviewed });
+  };
+
+  // PROFILE load
   useEffect(() => {
     async function load() {
       try {
@@ -240,9 +292,7 @@ export default function AccountPage() {
     load();
   }, []);
 
-  // =====================
-  // LOAD ADDRESS
-  // =====================
+  // ADDRESS load
   const refreshAddresses = async () => {
     try {
       const res = await layDanhSachDiaChi();
@@ -259,12 +309,8 @@ export default function AccountPage() {
     refreshAddresses();
   }, []);
 
-  // =============================================================
-  // 📌 LƯU PROFILE
-  // =============================================================
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-
     try {
       const updated = await capNhatThongTin({
         ho_ten: profileForm.ho_ten,
@@ -280,9 +326,7 @@ export default function AccountPage() {
     }
   };
 
-  // =============================================================
-  // 📌 ADDRESS HANDLERS
-  // =============================================================
+  // ADDRESS handlers (giữ nguyên như trước)
   const handleOpenAddAddress = () => {
     setIsEditAddress(false);
     setAddressForm({
@@ -354,9 +398,7 @@ export default function AccountPage() {
     }
   };
 
-  // -------------------------------------------------------
-  // RENDER
-  // -------------------------------------------------------
+  // ====================== RENDER ======================
   return (
     <div className="min-h-screen bg-slate-50 py-6">
       <div className="container mx-auto px-4">
@@ -408,7 +450,7 @@ export default function AccountPage() {
 
           {/* CONTENT */}
           <div className="col-span-12 md:col-span-9">
-            {/* ================= PROFILE ================= */}
+            {/* PROFILE */}
             {activeTab === "profile" && (
               <div className="p-6 bg-white rounded-xl shadow-sm">
                 <h2 className="text-lg font-bold mb-4">Thông tin cá nhân</h2>
@@ -491,7 +533,7 @@ export default function AccountPage() {
               </div>
             )}
 
-            {/* ================= ADDRESS ================= */}
+            {/* ADDRESS */}
             {activeTab === "address" && (
               <div className="p-6 bg-white rounded-xl shadow-sm">
                 <div className="flex justify-between items-center mb-4">
@@ -504,7 +546,6 @@ export default function AccountPage() {
                   </button>
                 </div>
 
-                {/* FORM */}
                 {showAddressForm && (
                   <form
                     onSubmit={handleSubmitAddress}
@@ -606,7 +647,6 @@ export default function AccountPage() {
                   </form>
                 )}
 
-                {/* LIST */}
                 {loadingAddresses ? (
                   <p>Đang tải...</p>
                 ) : addresses.length === 0 ? (
@@ -663,7 +703,7 @@ export default function AccountPage() {
               </div>
             )}
 
-            {/* ================= ORDERS ================= */}
+            {/* ORDERS */}
             {activeTab === "orders" && (
               <div className="p-6 bg-white rounded-xl shadow-sm">
                 {!selectedOrder ? (
@@ -688,6 +728,7 @@ export default function AccountPage() {
                             onClick={() => setSelectedOrder(od)}
                             onCancel={handleOpenCancel}
                             onRequestReturn={handleOpenReturn}
+                            onReview={handleOpenReviewFromCard} // 🔹 Nút đánh giá ngoài card
                           />
                         ))}
                       </div>
@@ -695,7 +736,6 @@ export default function AccountPage() {
                   </>
                 ) : (
                   <>
-                    {/* HEADER chi tiết */}
                     <div className="flex justify-between items-center mb-3">
                       <div>
                         <h2 className="text-lg font-bold">
@@ -745,41 +785,69 @@ export default function AccountPage() {
                       </div>
                     </div>
 
-                    {/* DANH SÁCH SẢN PHẨM */}
+                    {/* DANH SÁCH SẢN PHẨM TRONG ĐƠN */}
                     <div className="border rounded-xl p-4 mb-4">
                       <h3 className="font-semibold mb-3">Sản phẩm</h3>
                       <div className="divide-y">
-                        {(selectedOrder.items || []).map((item) => (
-                          <div
-                            key={
-                              item.id ||
-                              `${item.bien_the_san_pham_id}-${item.ten_san_pham_luc_mua}`
-                            }
-                            className="py-3 flex justify-between text-sm"
-                          >
-                            <div className="max-w-[70%]">
-                              <p className="font-medium">
-                                {item.ten_san_pham_luc_mua}
-                              </p>
-                              {item.ten_bien_the_luc_mua && (
-                                <p className="text-xs text-slate-500">
-                                  {item.ten_bien_the_luc_mua}
+                        {(selectedOrder.items || []).map((item) => {
+                          const reviewed =
+                            item.da_danh_gia ||
+                            item.co_danh_gia ||
+                            item.danh_gia_id ||
+                            item.review_id;
+
+                          return (
+                            <div
+                              key={
+                                item.id ||
+                                `${item.bien_the_san_pham_id}-${item.ten_san_pham_luc_mua}`
+                              }
+                              className="py-3 flex justify-between text-sm gap-4"
+                            >
+                              <div className="max-w-[70%]">
+                                <p className="font-medium">
+                                  {item.ten_san_pham_luc_mua}
                                 </p>
-                              )}
-                              <p className="text-xs text-slate-500">
-                                Số lượng: {item.so_luong}
-                              </p>
+                                {item.ten_bien_the_luc_mua && (
+                                  <p className="text-xs text-slate-500">
+                                    {item.ten_bien_the_luc_mua}
+                                  </p>
+                                )}
+                                <p className="text-xs text-slate-500">
+                                  Số lượng: {item.so_luong}
+                                </p>
+
+                                {selectedOrder.trang_thai === "da_giao" && (
+                                  <div className="mt-1">
+                                    {reviewed ? (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Đã đánh giá
+                                      </span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleOpenReview(selectedOrder, item)
+                                        }
+                                        className="text-xs text-emerald-600 hover:underline"
+                                      >
+                                        Đánh giá sản phẩm
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-slate-500">
+                                  Đơn giá: {fmtVND(item.don_gia_luc_mua)}
+                                </p>
+                                <p className="font-semibold">
+                                  {fmtVND(item.so_luong * item.don_gia_luc_mua)}
+                                </p>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-xs text-slate-500">
-                                Đơn giá: {fmtVND(item.don_gia_luc_mua)}
-                              </p>
-                              <p className="font-semibold">
-                                {fmtVND(item.so_luong * item.don_gia_luc_mua)}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -807,7 +875,7 @@ export default function AccountPage() {
               </div>
             )}
 
-            {/* ================= REVIEWS ================= */}
+            {/* REVIEWS TAB */}
             {activeTab === "reviews" && (
               <div className="p-6 bg-white rounded-xl shadow-sm">
                 <h2 className="text-lg font-bold mb-4">Đánh giá sản phẩm</h2>
@@ -908,7 +976,6 @@ export default function AccountPage() {
                       })}
                     </div>
 
-                    {/* Phân trang đánh giá */}
                     {myReviewsPagination.pages > 1 && (
                       <div className="flex justify-center gap-2 mt-4">
                         {Array.from({
@@ -957,13 +1024,44 @@ export default function AccountPage() {
         loading={returnOrderMutation.isLoading}
         order={returnTarget}
       />
+
+      {/* Modal đánh giá sản phẩm */}
+      {reviewTarget && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-4">
+            <h3 className="text-base font-semibold mb-2">
+              Đánh giá sản phẩm đã mua
+            </h3>
+            <p className="text-xs text-slate-500 mb-2">
+              Đơn hàng #{reviewTarget.order.ma_don_hang} •{" "}
+              {reviewTarget.item.ten_san_pham_luc_mua}
+              {reviewTarget.item.ten_bien_the_luc_mua &&
+                ` (${reviewTarget.item.ten_bien_the_luc_mua})`}
+            </p>
+
+            <ReviewForm
+              onSubmit={handleSubmitReviewFromOrder}
+              submitting={reviewMutation.isLoading}
+            />
+
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => setReviewTarget(null)}
+                disabled={reviewMutation.isLoading}
+                className="text-xs text-slate-500 hover:underline"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// -------------------------------------------------------
-// COMPONENTS NHỎ
-// -------------------------------------------------------
+// ===== COMPONENT PHỤ =====
 function MenuButton({ active, onClick, icon, label }) {
   return (
     <button
@@ -981,7 +1079,6 @@ function MenuButton({ active, onClick, icon, label }) {
   );
 }
 
-// Hàng sao nhỏ dùng trong tab "Đánh giá sản phẩm"
 function MiniStarRow({ value = 0 }) {
   const stars = [1, 2, 3, 4, 5];
   return (

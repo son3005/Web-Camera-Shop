@@ -9,7 +9,6 @@ import {
   Box,
   CreditCard,
   ChevronDown,
-  Users,
 } from "lucide-react";
 
 // ======================= MENU STRUCTURE =======================
@@ -39,16 +38,16 @@ const menuItems = [
       { id: "orders", path: "/admin/orders", label: "Đặt hàng" },
       { id: "customers", path: "/admin/customers", label: "Khách hàng" },
       { id: "suppliers", path: "/admin/suppliers", label: "Nhà cung cấp" },
-      // 🔥 Thêm menu Đánh giá
+      // 🔥 Đánh giá
       { id: "reviews", path: "/admin/reviews", label: "Đánh giá sản phẩm" },
     ],
   },
 
-  // Cài đặt: Thương hiệu / Danh mục / Cấp độ
+  // Cài đặt: Thương hiệu / Danh mục / Cấp độ / Ảnh trình chiếu
   {
     id: "settings",
     icon: Settings,
-    label: "Cài đặt",
+    label: "Tùy biến",
     submenu: [
       {
         id: "settings-brands",
@@ -65,25 +64,16 @@ const menuItems = [
         path: "/admin/settings/levels",
         label: "Cấp độ",
       },
+      {
+        id: "settings-slideshow",
+        path: "/admin/settings/slideshow",
+        label: "Ảnh trình chiếu",
+      },
     ],
-  },
-
-  {
-    id: "transactions",
-    path: "/admin/transactions",
-    icon: CreditCard,
-    label: "Giao dịch",
   },
 ];
 
 function Sidebar({ collapsed }) {
-  const admin = {
-    name: "Sci Nguyen",
-    role: "Administrator",
-    avatar:
-      "https://i.pinimg.com/1200x/1e/d0/2f/1ed02f1396fcf5662d0345aaeb408f18.jpg",
-  };
-
   const { pathname } = useLocation();
 
   // mở sẵn "Kinh doanh"; mở thêm "Cài đặt" nếu đang ở /admin/settings/*
@@ -217,27 +207,7 @@ function Sidebar({ collapsed }) {
           );
         })}
       </nav>
-
-      {/* Footer admin box */}
-      {!collapsed && (
-        <div className="p-4 border-t border-slate-200/50 dark:border-slate-800">
-          <div className="flex items-center space-x-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <img
-              src={admin.avatar}
-              alt="admin"
-              className="w-10 h-10 rounded-full ring-2 ring-emerald-500"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 dark:text-white truncate">
-                {admin.name}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                {admin.role}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ĐÃ BỎ FOOTER ADMIN BOX */}
     </div>
   );
 }
