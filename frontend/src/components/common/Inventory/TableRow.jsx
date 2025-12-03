@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import ActionMenu from "./ActionMenu";
 
-// ✅ format tiền VNĐ gọn: 333333.00 -> 333.333 VNĐ
+// Format VNĐ
 const formatVnd = (value) => {
   const n = Number(value);
   if (!n || Number.isNaN(n)) return "N/A";
@@ -42,48 +42,22 @@ const StockStatusBadge = ({ quantity }) => {
   );
 };
 
-// 3 trạng thái kinh doanh: đang bán / sắp bán / ngừng bán
-const SellingStatusBadge = ({ status }) => {
-  if (status === "sap_ban") {
-    return (
-      <span className="px-2 py-1 text-xs font-semibold text-amber-800 bg-amber-200 rounded-full dark:bg-amber-500/20 dark:text-amber-300">
-        Sắp bán
-      </span>
-    );
-  }
-  if (status === "ngung_ban") {
-    return (
-      <span className="px-2 py-1 text-xs font-semibold text-slate-800 bg-slate-300 rounded-full dark:bg-slate-600 dark:text-slate-300">
-        Ngừng bán
-      </span>
-    );
-  }
-  // mặc định coi là đang bán
-  return (
-    <span className="px-2 py-1 text-xs font-semibold text-cyan-800 bg-cyan-200 rounded-full dark:bg-cyan-500/20 dark:text-cyan-300">
-      Đang bán
-    </span>
-  );
-};
-
-// map raw status => "dang_ban" | "sap_ban" | "ngung_ban"
+// map status raw -> 3 trạng thái
 const normalizeStatusKey = (raw) => {
-  if (typeof raw === "boolean") {
-    return raw ? "dang_ban" : "ngung_ban";
-  }
+  if (typeof raw === "boolean") return raw ? "dang_ban" : "ngung_ban";
+
   if (typeof raw === "string") {
     const v = raw.trim().toUpperCase();
-    if (["DANG_BAN", "ACTIVE", "DANGBAN"].includes(v)) return "dang_ban";
-    if (["SAP_BAN", "SAPPHANH", "SAPBAN", "COMING_SOON"].includes(v))
-      return "sap_ban";
+    if (["DANG_BAN", "ACTIVE"].includes(v)) return "dang_ban";
+    if (["SAP_BAN", "COMING_SOON"].includes(v)) return "sap_ban";
     if (["NGUNG_BAN", "AN", "INACTIVE"].includes(v)) return "ngung_ban";
   }
+
   return "ngung_ban";
 };
 
 const getBusinessStatus = (item) => {
-  const variants =
-    item?.cac_bien_the || item?.bien_the_san_phams || item?.variants || [];
+  const variants = item?.cac_bien_the || [];
 
   let raw =
     item.trang_thai_kich_hoat !== undefined &&
@@ -95,7 +69,6 @@ const getBusinessStatus = (item) => {
     return normalizeStatusKey(raw);
   }
 
-  // nếu không có trạng thái ở sản phẩm, nhìn xuống biến thể:
   let hasActive = false;
   let hasComing = false;
 
@@ -113,22 +86,19 @@ const getBusinessStatus = (item) => {
 const TableRow = ({ item, onDelete, onView, onEdit }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const variants =
-    item?.cac_bien_the || item?.bien_the_san_phams || item?.variants || [];
+  const variants = item?.cac_bien_the || [];
 
+  // 🔥 FIX CHÍNH — tồn kho = tổng so_luong_nhap - so_luong_ban
   const totalStock =
-    variants.reduce(
-      (total, variant) =>
-        total +
-        (typeof variant.so_luong === "number"
-          ? variant.so_luong
-          : variant.so_luong_ton || 0),
-      0
-    ) || 0;
+    variants.reduce((total, variant) => {
+      const nhap = Number(variant.so_luong_nhap || 0);
+      const ban = Number(variant.so_luong_ban || 0);
+      return total + (nhap - ban);
+    }, 0) || 0;
 
   const minPrice =
     variants.reduce((min, variant) => {
-      const price = variant.gia_ban || 0;
+      const price = Number(variant.gia_ban || 0);
       return price > 0 && price < min ? price : min;
     }, Infinity) || 0;
 
@@ -139,28 +109,37 @@ const TableRow = ({ item, onDelete, onView, onEdit }) => {
       <td className="px-4 py-3 font-semibold text-sky-600 dark:text-sky-400">
         {item.id}
       </td>
+
       <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">
         {item.ten_san_pham}
       </td>
+
       <td className="px-4 py-3 capitalize text-slate-700 dark:text-slate-200">
-        {item.thuong_hieu?.ten_thuong_hieu || item.ten_thuong_hieu || "—"}
+        {item.thuong_hieu?.ten_thuong_hieu || "—"}
       </td>
+
       <td className="px-4 py-3 text-center text-slate-800 dark:text-slate-100">
         {minPrice > 0 && minPrice < Infinity
           ? `Từ ${formatVnd(minPrice)}`
           : "N/A"}
       </td>
+
       <td className="px-4 py-3 text-center font-medium text-slate-800 dark:text-slate-100">
         {totalStock}
       </td>
-      {/* trạng thái sản phẩm (còn/sắp hết/hết) */}
+
       <td className="px-4 py-3 text-center">
         <StockStatusBadge quantity={totalStock} />
       </td>
 
-      {/* trạng thái kinh doanh (3 trạng thái) */}
       <td className="px-4 py-3 text-center">
-        <SellingStatusBadge status={businessStatus} />
+        <span className="text-xs font-semibold">
+          {businessStatus === "dang_ban"
+            ? "Đang bán"
+            : businessStatus === "sap_ban"
+            ? "Sắp bán"
+            : "Ngừng bán"}
+        </span>
       </td>
 
       <td className="px-4 py-3 text-center">

@@ -1,42 +1,102 @@
-// src/router/index.jsx
 import React, { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
+import AdminRoutes from "./AdminRoutes";
+import MainLayout from "../layouts/MainLayout";
 
-// --- Import Layout gốc ---
-import App from "../App"; // Component gốc chứa <Outlet/> và ToastContainer
+const HomePage = lazy(() => import("../pages/HomePage"));
+const ProductListPage = lazy(() => import("../pages/ProductListPage"));
+const ProductDetailPage = lazy(() => import("../pages/ProductDetailPage"));
+const CartPage = lazy(() => import("../pages/CartPage"));
+const CheckoutPage = lazy(() => import("../pages/CheckoutPage"));
 
-// --- Import các cấu hình route con ---
-import AdminRoutes from "./AdminRoutes"; // Object cấu hình route admin
-import MainRoutes from "./MainRoutes"; // Object cấu hình route public
-
-// --- Lazy load các trang Auth (không dùng layout) ---
 const DangNhap = lazy(() => import("../pages/Dangnhap"));
-const DangKy = lazy(() => import("../pages/Dangky")); // Giả sử có trang Dangky
+const DangKy = lazy(() => import("../pages/Dangky"));
 const QuenMatKhau = lazy(() => import("../pages/Quenmatkhau"));
 const DoiMatKhau = lazy(() => import("../pages/Doimatkhau"));
+const ChinhSachPage = lazy(() => import("../pages/ChinhSachPage"));
+const LienHePage = lazy(() => import("../pages/LienHePage"));
+
+
+const Fallback = <div className="container mx-auto px-4 py-10">Đang tải…</div>;
+
 
 const router = createBrowserRouter([
+  AdminRoutes,
   {
-    // Route gốc sử dụng App layout
     path: "/",
-    element: <App />, // App chứa <Outlet/>
-    children: [MainRoutes, AdminRoutes],
-  },
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: (
+          <Suspense fallback={Fallback}>
+            <HomePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "products",
+        element: (
+          <Suspense fallback={Fallback}>
+            <ProductListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "products/:productId",
+        element: (
+          <Suspense fallback={Fallback}>
+            <ProductDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "cart",
+        element: (
+          <Suspense fallback={Fallback}>
+            <CartPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "checkout",
+        element: (
+          <Suspense fallback={Fallback}>
+            <CheckoutPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "chinh-sach",
+        element: (
+          <Suspense fallback={Fallback}>
+            <ChinhSachPage />
+          </Suspense>
+        ),
+      },
 
-  // --- Các route không dùng layout chung (App layout) ---
-  // Ví dụ: Trang đăng nhập, đăng ký...
+      {
+        path: "lien-he",
+        element: (
+          <Suspense fallback={Fallback}>
+            <LienHePage />
+          </Suspense>
+        ),
+      },
+    ],
+  },
   {
     path: "/dangnhap",
     element: (
-      <Suspense fallback={<div>Đang tải...</div>}>
+      <Suspense fallback={Fallback}>
         <DangNhap />
       </Suspense>
     ),
   },
   {
-    path: "/dangky", // Ví dụ
+    path: "/dangky",
     element: (
-      <Suspense fallback={<div>Đang tải...</div>}>
+      <Suspense fallback={Fallback}>
         <DangKy />
       </Suspense>
     ),
@@ -44,19 +104,28 @@ const router = createBrowserRouter([
   {
     path: "/quenmatkhau",
     element: (
-      <Suspense fallback={<div>Đang tải...</div>}>
+      <Suspense fallback={Fallback}>
         <QuenMatKhau />
       </Suspense>
     ),
   },
   {
-    path: "/doimatkhau/:token", // Sửa lại tên route nếu cần
+    path: "/doimatkhau/:token",
     element: (
-      <Suspense fallback={<div>Đang tải...</div>}>
+      <Suspense fallback={Fallback}>
         <DoiMatKhau />
       </Suspense>
     ),
   },
+
+
+  // Có thể thêm trang 404 nếu cần
+  // {
+  //   path: "*",
+  //   element: <NotFoundPage />,
+  // },
+
+
 ]);
 
 export default router;

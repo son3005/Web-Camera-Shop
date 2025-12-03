@@ -51,6 +51,23 @@ const getStatusLabel = (raw) => {
   return "Ngừng bán";
 };
 
+// ✅ helper tính tồn kho 1 biến thể
+const getVariantStock = (variant) => {
+  if (!variant) return 0;
+
+  // ưu tiên các field tồn kho trực tiếp nếu backend có
+  if (typeof variant.so_luong_ton === "number") return variant.so_luong_ton;
+  if (typeof variant.so_luong === "number") return variant.so_luong;
+  if (typeof variant.ton_kho === "number") return variant.ton_kho;
+  if (typeof variant.stock === "number") return variant.stock;
+
+  // fallback: so_luong_nhap - so_luong_ban
+  const nhap = Number(variant.so_luong_nhap ?? 0);
+  const ban = Number(variant.so_luong_ban ?? 0);
+  const q = nhap - ban;
+  return q > 0 ? q : 0;
+};
+
 const VariantManager = ({
   control,
   register,
@@ -100,11 +117,8 @@ const VariantManager = ({
                   label="Số lượng tồn"
                   type="number"
                   readOnly={true}
-                  defaultValue={
-                    typeof variant.so_luong_ton === "number"
-                      ? variant.so_luong_ton
-                      : variant.so_luong
-                  }
+                  // 🔥 dùng helper tính tồn kho: so_luong_ton / so_luong / stock / (so_luong_nhap - so_luong_ban)
+                  defaultValue={getVariantStock(variant)}
                 />
               </div>
               <div>
@@ -131,10 +145,10 @@ const VariantManager = ({
   });
 
   const handleAddVariant = () => {
+    // ✅ KHÔNG có field so_luong khi thêm mới
     append({
       ten_bien_the: "",
       gia_ban: 0,
-      so_luong: 0,
       trang_thai_kich_hoat: "dang_ban", // mặc định đang bán
       mau: "",
       hinh_anhs: [],
@@ -189,8 +203,8 @@ const VariantManager = ({
               />
             </div>
 
-            {/* Hàng 2: giá + số lượng + trạng thái (select) */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Hàng 2: giá + trạng thái (KHÔNG còn Số lượng) */}
+            <div className="grid grid-cols-2 gap-4">
               <FormInput
                 label="Giá bán"
                 type="number"
@@ -198,15 +212,8 @@ const VariantManager = ({
                 register={register}
                 errors={errors?.bien_the_san_phams?.[index]?.gia_ban}
               />
-              <FormInput
-                label="Số lượng"
-                type="number"
-                name={`bien_the_san_phams.${index}.so_luong`}
-                register={register}
-                errors={errors?.bien_the_san_phams?.[index]?.so_luong}
-              />
 
-              {/* ✅ Trạng thái biến thể: 3 lựa chọn, không nhập số */}
+              {/* ✅ Trạng thái biến thể: 3 lựa chọn */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
                   Trạng thái

@@ -1,4 +1,4 @@
-// src/components/common/Inventory/AddProduct/PropertyForm.jsx
+// src/components/common/Inventory/PropertyForm.jsx
 import React from "react";
 import { useController, useFormContext } from "react-hook-form";
 import { propertyGroups } from "./productProperties";
@@ -52,11 +52,6 @@ const PropertyForm = ({ control, properties = {}, readOnly = false }) => {
   const formProperties = formContext?.watch?.("thong_so_ky_thuat");
 
   const displayProperties = readOnly ? properties : formProperties || {};
-
-  console.log("PropertyForm - ReadOnly:", readOnly);
-  console.log("PropertyForm - Properties from props:", properties);
-  console.log("PropertyForm - Properties from form:", formProperties);
-  console.log("PropertyForm - Display properties:", displayProperties);
 
   return (
     <div className="space-y-4">

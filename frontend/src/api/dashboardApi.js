@@ -1,75 +1,17 @@
 // src/api/dashboardApi.js
+// =======================================================
+// API Dashboard — map với backend Thống Kê
+// - Stats:     GET /api/thong-ke/tong-hop
+// - Doanh thu: GET /api/thong-ke/doanh-thu?nam=YYYY
+// - Thương hiệu: GET /api/thong-ke/phan-bo-thuong-hieu
+// - Recent orders / Top products / Activity feed: mock
+// =======================================================
 
-// --- DỮ LIỆU MOCK TẬP TRUNG ---
+import apiClient from "./apiClient";
 
-// Dữ liệu cho StatsGrid (Thống kê)
-const statsData = [
-  {
-    title: "Total Revenue",
-    value: "$124.563",
-    change: "+12.5%",
-    trend: "up",
-    icon: "DollarSign",
-    color: "from-emerald-500 to-teal-600",
-    bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
-    textColor: "text-emerald-600 dark:text-emerald-400",
-  },
-  {
-    title: "Active Users",
-    value: "8,549",
-    change: "+9.2%",
-    trend: "up",
-    icon: "Users",
-    color: "from-blue-500 to-indigo-600",
-    bgColor: "bg-blue-50 dark:bg-blue-900/20",
-    textColor: "text-blue-600 dark:text-blue-400",
-  },
-  {
-    title: "Total Orders",
-    value: "2,847",
-    change: "+15.3%",
-    trend: "up",
-    icon: "LucideShoppingCart",
-    color: "from-purple-500 to-pink-600",
-    bgColor: "bg-purple-50 dark:bg-purple-900/20",
-    textColor: "text-purple-600 dark:text-purple-400",
-  },
-  {
-    title: "Page Views",
-    value: "35,928",
-    change: "-3.8%",
-    trend: "down",
-    icon: "LucideEye",
-    color: "from-orange-500 to-amber-600",
-    bgColor: "bg-orange-50 dark:bg-orange-900/20",
-    textColor: "text-orange-600 dark:text-orange-400",
-  },
-];
+// ================== MOCK CHO PHẦN CHƯA CÓ API ==================
 
-// Dữ liệu cho RevenueChart (Biểu đồ doanh thu)
-const revenueChartData = [
-  { month: "Jan", revenue: 45000, expenses: 32000 },
-  { month: "Feb", revenue: 52000, expenses: 38000 },
-  { month: "Mar", revenue: 48000, expenses: 35000 },
-  { month: "Apr", revenue: 61000, expenses: 42000 },
-  { month: "May", revenue: 55000, expenses: 40000 },
-  { month: "Jun", revenue: 67000, expenses: 45000 },
-  { month: "Jul", revenue: 72000, expenses: 48000 },
-  { month: "Sep", revenue: 69000, expenses: 46000 },
-  { month: "Oct", revenue: 78000, expenses: 52000 },
-  { month: "Nov", revenue: 82000, expenses: 50000 },
-  { month: "Dec", revenue: 89000, expenses: 56000 },
-];
-
-// Dữ liệu cho SaleChart (Biểu đồ tròn)
-const saleChartData = [
-  { name: "Sony", value: 45, color: "#3b82f6" },
-  { name: "Canon", value: 30, color: "#8b5cf6" },
-  { name: "Fujifilm", value: 15, color: "#10b981" },
-  { name: "Other", value: 10, color: "#f59e0b" },
-];
-
-// Dữ liệu cho Top Products
+// Dữ liệu cho Top Products (mock)
 const topProductsData = [
   {
     name: "Sony A7 IV Camera",
@@ -106,37 +48,9 @@ const topProductsData = [
     trend: "down",
     change: "-3.7%",
   },
-  {
-    name: "GoPro Hero 12",
-    sale: 190,
-    revenue: "$142,000",
-    trend: "down",
-    change: "-3.7%",
-  },
-  {
-    name: "GoPro Hero 12",
-    sale: 190,
-    revenue: "$142,000",
-    trend: "down",
-    change: "-3.7%",
-  },
-  {
-    name: "GoPro Hero 12",
-    sale: 190,
-    revenue: "$142,000",
-    trend: "down",
-    change: "-3.7%",
-  },
-  {
-    name: "GoPro Hero 12",
-    sale: 190,
-    revenue: "$142,000",
-    trend: "down",
-    change: "-3.7%",
-  },
 ];
 
-// Dữ liệu gốc cho tất cả đơn hàng (Recent Orders)
+// Dữ liệu gốc cho tất cả đơn hàng (Recent Orders) — mock
 const allOrdersData = [
   {
     id: "#1001",
@@ -236,7 +150,7 @@ const allOrdersData = [
   },
 ];
 
-// Dữ liệu gốc cho tất cả hoạt động (Activity Feed)
+// Dữ liệu gốc cho tất cả hoạt động (Activity Feed) — mock
 const allActivitiesData = [
   {
     id: 1,
@@ -340,73 +254,144 @@ const allActivitiesData = [
   },
 ];
 
-// --- HÀM GIẢ LẬP API ---
-
-// Hàm helper để giả lập độ trễ mạng
 const simulateDelay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// API cho các ô thống kê
+// ================== 1. THỐNG KÊ TỔNG HỢP ==================
 export const fetchDashboardStats = async () => {
-  await simulateDelay(500);
-  return statsData;
+  const res = await apiClient.get("/thong-ke/tong-hop");
+  const body = res.data || {};
+  const d = body.data || body.thong_ke || body;
+
+  const doanhThu = Number(d.doanh_thu_thang_nay || 0);
+  const donHang = Number(d.don_hang_thang_nay || 0);
+  const userMoi = Number(d.nguoi_dung_moi_thang_nay || 0);
+  const tongUser = Number(d.tong_so_tai_khoan || 0);
+
+  return [
+    {
+      title: "Doanh thu tháng này",
+      value: doanhThu.toLocaleString("vi-VN") + "₫",
+      change: "+0%",
+      trend: "up",
+      icon: "DollarSign",
+      color: "from-emerald-500 to-teal-600",
+      bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+      textColor: "text-emerald-600 dark:text-emerald-400",
+    },
+    {
+      title: "Đơn hàng trong tháng",
+      value: donHang.toLocaleString("vi-VN"),
+      change: "+0%",
+      trend: "up",
+      icon: "LucideShoppingCart",
+      color: "from-purple-500 to-pink-600",
+      bgColor: "bg-purple-50 dark:bg-purple-900/20",
+      textColor: "text-purple-600 dark:text-purple-400",
+    },
+    {
+      title: "Người dùng mới",
+      value: userMoi.toLocaleString("vi-VN"),
+      change: "+0%",
+      trend: "up",
+      icon: "Users",
+      color: "from-blue-500 to-indigo-600",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20",
+      textColor: "text-blue-600 dark:text-blue-400",
+    },
+    {
+      title: "Tổng số tài khoản",
+      value: tongUser.toLocaleString("vi-VN"),
+      change: "+0%",
+      trend: "up",
+      icon: "LucideEye",
+      color: "from-orange-500 to-amber-600",
+      bgColor: "bg-orange-50 dark:bg-orange-900/20",
+      textColor: "text-orange-600 dark:text-orange-400",
+    },
+  ];
 };
 
-// API cho biểu đồ doanh thu
+// ================== 2. BIỂU ĐỒ DOANH THU ==================
 export const fetchRevenueChartData = async () => {
-  await simulateDelay(1200);
-  return revenueChartData;
+  const nam = new Date().getFullYear();
+  const res = await apiClient.get("/thong-ke/doanh-thu", {
+    params: { nam },
+  });
+  const body = res.data || {};
+  const arr = body.data || body.thong_ke || [];
+
+  return arr.map((item) => {
+    const thang = item.thang ?? null;
+    const label = thang ? `T${thang}` : String(item.nam || "");
+    const tongDoanhThu = Number(item.tong_doanh_thu || 0);
+    const loiNhuan = Number(item.loi_nhuan || 0);
+
+    return {
+      month: label,
+      revenue: tongDoanhThu,
+      // Giả định "expenses" = doanh thu - lợi nhuận (nếu âm thì 0)
+      expenses: Math.max(tongDoanhThu - loiNhuan, 0),
+    };
+  });
 };
 
-// API cho biểu đồ tròn
+// ================== 3. BIỂU ĐỒ TRÒN THƯƠNG HIỆU ==================
+const BRAND_COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
+
 export const fetchSaleChartData = async () => {
-  await simulateDelay(800);
-  return saleChartData;
+  const res = await apiClient.get("/thong-ke/phan-bo-thuong-hieu");
+  const body = res.data || {};
+  const arr = body.data || body.thong_ke || body.thuong_hieu || [];
+
+  const total = arr.reduce(
+    (sum, item) => sum + Number(item.so_luong_san_pham || 0),
+    0
+  );
+
+  if (!total) {
+    // fallback rỗng
+    return [];
+  }
+
+  return arr.map((item, idx) => {
+    const count = Number(item.so_luong_san_pham || 0);
+    const percent = Math.round((count * 100) / total);
+    return {
+      name: item.ten_thuong_hieu || "Khác",
+      value: percent,
+      color: BRAND_COLORS[idx % BRAND_COLORS.length],
+    };
+  });
 };
 
-// API cho bảng Top Products (thường không cần phân trang)
+// ================== 4. TOP PRODUCTS (mock) ==================
 export const fetchTopProducts = async () => {
-  await simulateDelay(1100);
+  await simulateDelay(500);
   return topProductsData;
 };
 
-/**
- * API lấy danh sách đơn hàng CÓ PHÂN TRANG.
- * @param {object} params - Tham số cho API.
- * @param {number} params.page - Số trang hiện tại.
- * @param {number} params.limit - Số lượng item trên mỗi trang.
- * @returns {Promise<object>} - Trả về object chứa danh sách đơn hàng và tổng số trang.
- */
+// ================== 5. RECENT ORDERS (mock, có phân trang) ==================
 export const fetchPaginatedOrders = async ({ page = 1, limit = 10 }) => {
-  await simulateDelay(900);
+  await simulateDelay(400);
 
-  // Logic phân trang: Cắt mảng dữ liệu lớn để trả về đúng trang
   const start = (page - 1) * limit;
   const end = page * limit;
   const paginatedData = allOrdersData.slice(start, end);
 
-  // Trả về dữ liệu của trang hiện tại và tổng số trang
   return {
     orders: paginatedData,
     totalPages: Math.ceil(allOrdersData.length / limit),
   };
 };
 
-/**
- * API lấy danh sách hoạt động CÓ PHÂN TRANG.
- * @param {object} params - Tham số cho API.
- * @param {number} params.page - Số trang hiện tại.
- * @param {number} params.limit - Số lượng item trên mỗi trang.
- * @returns {Promise<object>} - Trả về object chứa danh sách hoạt động và tổng số trang.
- */
+// ================== 6. ACTIVITY FEED (mock, có phân trang) ==================
 export const fetchPaginatedActivities = async ({ page = 1, limit = 6 }) => {
-  await simulateDelay(800);
+  await simulateDelay(400);
 
-  // Logic phân trang
   const start = (page - 1) * limit;
   const end = page * limit;
   const paginatedData = allActivitiesData.slice(start, end);
 
-  // Trả về dữ liệu và tổng số trang
   return {
     activities: paginatedData,
     totalPages: Math.ceil(allActivitiesData.length / limit),

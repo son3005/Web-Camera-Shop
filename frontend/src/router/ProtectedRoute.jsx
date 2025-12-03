@@ -7,8 +7,6 @@ import { useSelector } from "react-redux";
 import { Navigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 
-// Component này nhận `children` (là layout/trang cần bảo vệ)
-// và `adminOnly` (prop để chỉ định có yêu cầu quyền admin hay không)
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, token } = useSelector((state) => state.auth);
   const location = useLocation(); // Lấy vị trí hiện tại để quay lại sau login
@@ -27,10 +25,9 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 
   // 2. Nếu route yêu cầu quyền admin (adminOnly=true)
   if (adminOnly) {
-    // backend trả về 'quan_tri_vien' → mình convert sang lowercase để chắc chắn
     const role = (user?.vai_tro || "").toLowerCase();
     if (role !== "quan_tri_vien") {
-      alert("Bạn không có quyền truy cập trang này!");
+      toast.error("Bạn không có quyền truy cập trang này!");
       return <Navigate to="/" replace />;
     }
   }

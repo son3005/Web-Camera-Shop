@@ -9,6 +9,7 @@ import {
   Box,
   CreditCard,
   ChevronDown,
+  Users,
 } from "lucide-react";
 
 // ======================= MENU STRUCTURE =======================
@@ -21,12 +22,12 @@ const menuItems = [
   },
   { id: "inventory", path: "/admin/inventory", icon: Box, label: "Sản phẩm" },
 
-  // Phiếu thu đứng riêng
+  // Phiếu nhập đứng riêng
   {
-    id: "phieu-thu",
-    path: "/admin/phieu-thu",
+    id: "phieu-nhap",
+    path: "/admin/phieu-nhap",
     icon: CreditCard,
-    label: "Phiếu thu",
+    label: "Phiếu nhập",
   },
 
   // Nhánh Kinh doanh
@@ -37,6 +38,7 @@ const menuItems = [
     submenu: [
       { id: "orders", path: "/admin/orders", label: "Đặt hàng" },
       { id: "customers", path: "/admin/customers", label: "Khách hàng" },
+      { id: "suppliers", path: "/admin/suppliers", label: "Nhà cung cấp" },
       // 🔥 Thêm menu Đánh giá
       { id: "reviews", path: "/admin/reviews", label: "Đánh giá sản phẩm" },
     ],

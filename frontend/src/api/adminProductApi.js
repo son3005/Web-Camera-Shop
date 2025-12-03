@@ -2,34 +2,55 @@
 // ============================================================
 // API sản phẩm cho ADMIN
 // - Dùng chung apiClient (base: http://localhost:5000/api)
-// - CRUD sản phẩm
-// - Tự build FormData đúng format backend: product + images[i][j]
+// - CRUD sản phẩm (theo backend mới /api/san-pham)
+// - Build FormData đúng format backend: "product" + images[...] (nhiều kiểu key)
 // ============================================================
 
 import apiClient from "./apiClient";
 
 /**
  * Nhận object sản phẩm đã chuẩn hóa (đã là cac_bien_the)
- * và chuyển sang FormData theo đúng tài liệu backend:
- * - field "product": JSON string
- * - ảnh: images[i][j]
+ * và chuyển sang FormData:
+ * - field "product": JSON string (⚠️ KHÔNG chứa File)
+ * - ảnh: images[0], images[0][], images[0][0] ... để backend bắt được
  */
 export const buildProductFormData = (product = {}) => {
   const formData = new FormData();
 
-  // 1. json chính
-  formData.append("product", JSON.stringify(product));
-
-  // 2. ảnh cho từng biến thể
   const variants = Array.isArray(product.cac_bien_the)
     ? product.cac_bien_the
     : [];
 
+  // 🔹 Tạo bản JSON sạch (không có field file)
+  const productForJson = {
+    ...product,
+    cac_bien_the: variants.map((v) => ({
+      ...v,
+      hinh_anhs: (v.hinh_anhs || []).map((img) => {
+        if (!img) return {};
+        const { file, ...rest } = img; // loại file ra khỏi JSON
+        return rest;
+      }),
+    })),
+  };
+
+  // 1. JSON chính
+  formData.append("product", JSON.stringify(productForJson));
+
+  // 2. Ảnh cho từng biến thể
   variants.forEach((variant, i) => {
+    const idx = i; // index biến thể
+
     (variant.hinh_anhs || []).forEach((img, j) => {
-      // FE của bạn đang gắn File vào img.file
       if (img && img.file instanceof File) {
-        formData.append(`images[${i}][${j}]`, img.file);
+        const file = img.file;
+        // Gửi dưới 3 kiểu key khác nhau cho chắc chắn
+        formData.append(`images[${idx}]`, file); // kiểu 1: images[0]
+        formData.append(`images[${idx}][]`, file); // kiểu 2: images[0][]
+        formData.append(`images[${idx}][${j}]`, file); // kiểu 3: images[0][0]
+
+        // Nếu muốn debug:
+        // console.log("FormData file key:", `images[${idx}]`, file.name);
       }
     });
   });
@@ -40,7 +61,6 @@ export const buildProductFormData = (product = {}) => {
 /* =========================================================
    1. LẤY DANH SÁCH
    GET /api/san-pham
-   dùng cho trang admin list
    ========================================================= */
 export const fetchProducts = async (filters = {}) => {
   const params = new URLSearchParams();
@@ -48,38 +68,38 @@ export const fetchProducts = async (filters = {}) => {
   params.set("page", String(filters.page || 1));
   params.set("per_page", String(filters.per_page || 10));
 
-  if (filters.search) params.search = filters.search;
-  if (filters.min_price) params.min_price = filters.min_price;
-  if (filters.max_price) params.max_price = filters.max_price;
+  if (filters.search) params.set("search", filters.search);
+  if (filters.min_price) params.set("min_price", String(filters.min_price));
+  if (filters.max_price) params.set("max_price", String(filters.max_price));
 
-  if (filters.sort_by_price) params.sort_by_price = filters.sort_by_price;
-  if (filters.sort_by_name) params.sort_by_name = filters.sort_by_name;
+  if (filters.sort_by_price) params.set("sort_by_price", filters.sort_by_price);
+  if (filters.sort_by_name) params.set("sort_by_name", filters.sort_by_name);
 
   // thương hiệu
   if (Array.isArray(filters.thuong_hieu_ids)) {
     filters.thuong_hieu_ids.forEach((id) =>
-      params.append("thuong_hieu_ids", id)
+      params.append("thuong_hieu_ids", String(id))
     );
   }
+
   // danh mục
   if (Array.isArray(filters.danh_muc_ids)) {
-    filters.danh_muc_ids.forEach((id) => params.append("danh_muc_ids", id));
-  }
-  // cấp độ
-  if (Array.isArray(filters.cap_do_ids)) {
-    filters.cap_do_ids.forEach((id) => params.append("cap_do_ids", id));
+    filters.danh_muc_ids.forEach((id) =>
+      params.append("danh_muc_ids", String(id))
+    );
   }
 
-  // ✅ TRẠNG THÁI KINH DOANH
-  // backend của bạn trong tài liệu phần sản phẩm thường dùng field "trang_thai"
-  // nên mình gửi đúng key này
+  // cấp độ
+  if (Array.isArray(filters.cap_do_ids)) {
+    filters.cap_do_ids.forEach((id) => params.append("cap_do_ids", String(id)));
+  }
+
   if (filters.trang_thai) {
-    // "dang_ban" | "ngung_ban"
     params.set("trang_thai", filters.trang_thai);
   }
 
   const { data } = await apiClient.get("/san-pham", { params });
-  return data; // {data: [...], pagination: {...}}
+  return data;
 };
 
 /* =========================================================
@@ -93,12 +113,12 @@ export const fetchProductById = async (id) => {
 
 /* =========================================================
    3. TẠO MỚI
-   POST /api/san-pham
+   POST /api/san-pham/
    ========================================================= */
 export const createProduct = async (normalizedProduct) => {
   const formData = buildProductFormData(normalizedProduct);
 
-  const { data } = await apiClient.post("/san-pham", formData, {
+  const { data } = await apiClient.post("/san-pham/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
@@ -120,15 +140,16 @@ export const updateProduct = async (id, normalizedProduct) => {
 };
 
 /* =========================================================
-    ĐỔI TRẠNG THÁI NHANH
-   (nhiều backend sẽ có /san-pham/{id} và nhận JSON bình thường)
-   mình gửi tối giản { trang_thai: "..."} để bật/tắt
+   4.1. ĐỔI TRẠNG THÁI NHANH
    ========================================================= */
 export const updateProductStatus = async (id, trang_thai) => {
-  // nếu backend bạn CHỈ nhận PUT multipart thì phải đổi, còn nếu nhận JSON thì ok
-  const { data } = await apiClient.put(`/san-pham/${id}`, {
-    trang_thai,
+  const formData = new FormData();
+  formData.append("product", JSON.stringify({ trang_thai }));
+
+  const { data } = await apiClient.put(`/san-pham/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
+
   return data;
 };
 
