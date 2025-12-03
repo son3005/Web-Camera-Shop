@@ -37,6 +37,7 @@ class DonHangAoResponse(BaseModel):
     trang_thai: str = Field(default="cho_thanh_toan", description="Trạng thái đơn hàng")
     payment_url: Optional[str] = Field(None, description="URL thanh toán PayOS")
     ma_giao_dich_payos: Optional[str] = Field(None, description="Mã giao dịch PayOS")
+    gio_hang_id: Optional[int] = Field(None, description="ID giỏ hàng")
     items_enriched: List[Dict[str, Any]] = Field(default_factory=list, description="Danh sách sản phẩm đầy đủ thông tin")
     
     model_config = ConfigDict(from_attributes=True)

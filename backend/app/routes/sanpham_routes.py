@@ -5,6 +5,7 @@ from flask import jsonify, current_app, request
 from pydantic import BaseModel, Field
 from flask_openapi3 import APIBlueprint
 from werkzeug.exceptions import BadRequest, NotFound
+
 from ..extensions import db
 from ..services.cloudinary_service import delete_image_task
 from ..services.sanpham_service import SanPhamService
@@ -12,7 +13,7 @@ from ..models.sanpham import SanPham, BienTheSanPham
 from ..schemas.sanpham import (
     SanPhamCreate, SanPhamUpdate, SanPhamResponse,
     BienTheSanPhamCreate, BienTheSanPhamResponse, BienTheSanPhamUpdate, SanPhamListResponse,
-    HinhAnhCreate, HinhAnhUpdate, HinhAnhResponse, SanPhamBasicListResponse, BienTheBasicListResponse
+    HinhAnhCreate, HinhAnhUpdate, HinhAnhResponse, SanPhamBasicListResponse, BienTheBasicResponse, BienTheBasicListResponse
 )
 from ..services.upload_service import UploadService
 from ..schemas.path_models import *  

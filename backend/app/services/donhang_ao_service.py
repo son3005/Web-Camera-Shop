@@ -72,7 +72,7 @@ class DonHangAoService:
             # Tính tổng tiền từ items_enriched (đã có đơn giá)
             tong_tien = Decimal('0.0')
             for item in items_enriched:
-                don_gia_item = Decimal(item['don_gia'])  # Sửa: lấy từ items_enriched
+                don_gia_item = Decimal(item['don_gia'])
                 tong_tien += don_gia_item * item['so_luong']
 
             tong_tien += Decimal(str(don_hang_data.get('phi_van_chuyen', 2000)))
@@ -93,6 +93,7 @@ class DonHangAoService:
                 "phi_van_chuyen": Decimal(str(don_hang_data.get('phi_van_chuyen', 2000))),
                 "ghi_chu": don_hang_data.get('ghi_chu'),
                 "items": don_hang_data['items'],
+                "gio_hang_id": don_hang_data.get('gio_hang_id', None)
             }
             
             don_hang_ao = DonHangAoResponse(**response_data)

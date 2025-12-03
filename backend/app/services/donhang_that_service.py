@@ -30,16 +30,21 @@ class DonHangThatService:
             ma_don_hang = self.tao_ma_don_hang()
             
             # Xử lý địa chỉ giao
-            dia_chi_giao_hoan_chinh = self.xu_ly_dia_chi_giao(
+            dia_chi_giao_hoan_chinh, co_id_dia_chi = self.xu_ly_dia_chi_giao(
                 don_hang_ao.id_dia_chi, 
-                don_hang_ao.dia_chi_giao
+                don_hang_ao.dia_chi_giao,
+                don_hang_ao.id_nguoi_dung
             )
-            
+            dia_chi_id = None
+            if co_id_dia_chi:
+                dia_chi_id = don_hang_ao.id_dia_chi
+
+
             # Tạo đơn hàng
             don_hang = DonHang(
                 ma_don_hang=ma_don_hang,
                 nguoi_dung_id=don_hang_ao.id_nguoi_dung,
-                dia_chi_id=don_hang_ao.id_dia_chi,
+                dia_chi_id=dia_chi_id,
                 ten_nguoi_nhan=don_hang_ao.ten_nguoi_nhan,
                 so_dien_thoai_nguoi_nhan=don_hang_ao.so_dien_thoai_nguoi_nhan,
                 dia_chi_giao=dia_chi_giao_hoan_chinh,
@@ -61,6 +66,17 @@ class DonHangThatService:
                     don_gia_luc_mua=item['don_gia'],
                     so_luong=item['so_luong']
                 )
+                if don_hang_ao.gio_hang_id is not None:
+                    from ..models.giohang_dathang import ChiTietGioHang
+                    gio_hang_chi_tiet = ChiTietGioHang.query.filter_by(
+                        gio_hang_id=don_hang_ao.gio_hang_id,
+                        bien_the_san_pham_id=item['id_bien_the']
+                    ).first()
+                    
+                    if gio_hang_chi_tiet:
+                        gio_hang_chi_tiet.so_luong -= item['so_luong']
+                        if gio_hang_chi_tiet.so_luong <= 0:
+                            self.db.session.delete(gio_hang_chi_tiet)
                 self.db.session.add(chi_tiet)
             
             # Tạo thanh toán
@@ -92,42 +108,43 @@ class DonHangThatService:
             # Nếu có lỗi, giải phóng lock
             kho_service.giai_phong_lock(don_hang_ao.items_enriched)
             raise e
-    
-    def xu_ly_dia_chi_giao(self, id_dia_chi: Optional[int], dia_chi_giao: str) -> str:
+    def xu_ly_dia_chi_giao(self, id_dia_chi: Optional[int], dia_chi_giao: str, id_nguoi_dung: Optional[int] = None) -> tuple[str, bool]:
         """Xử lý địa chỉ giao hàng hoàn chỉnh"""
-        if id_dia_chi:
+        if id_dia_chi and id_nguoi_dung is not None:
             from ..models.nguoidung import DiaChi
-            dia_chi = DiaChi.query.get(id_dia_chi)
+            dia_chi = DiaChi.query.filter_by(id=id_dia_chi, nguoi_dung_id=id_nguoi_dung).first()
             if dia_chi:
                 # THÊM KIỂM TRA NULL CHO CÁC TRƯỜNG
                 tinh_thanh = dia_chi.tinh_thanh or ""
                 phuong_xa = dia_chi.phuong_xa or ""
                 dia_chi_cu_the = dia_chi.dia_chi_cu_the or ""
-                return f"{tinh_thanh}, {phuong_xa}, {dia_chi_cu_the}".strip(", ")
-        
-        return dia_chi_giao
+                dia_chi_giao = f"{tinh_thanh}, {phuong_xa}, {dia_chi_cu_the}".strip(", ")
+                return dia_chi_giao, True
+
+        return dia_chi_giao, False
     
     def tao_don_hang_that_truc_tiep(self, don_hang_data: Dict, kho_service: KhoService) -> Dict:
         """
         Tạo đơn hàng thật trực tiếp (cho COD) không qua đơn hàng ảo
         """
-        from ..models.giohang_dathang import DonHang, ChiTietDonHang, ThanhToan
+        from ..models.giohang_dathang import DonHang, ChiTietDonHang, ThanhToan, ChiTietGioHang
         
         try:
             # Tạo mã đơn hàng
             ma_don_hang = self.tao_ma_don_hang()
             
             # Xử lý địa chỉ giao
-            dia_chi_giao_hoan_chinh = self.xu_ly_dia_chi_giao(
+            dia_chi= self.xu_ly_dia_chi_giao(
                 don_hang_data.get('id_dia_chi'), 
-                don_hang_data['dia_chi_giao']
+                don_hang_data['dia_chi_giao'],
+                don_hang_data['id_nguoi_dung']
             )
-            
+            dia_chi_giao_hoan_chinh, co_dia_chi_id = dia_chi   
             # Tạo đơn hàng
             don_hang = DonHang(
                 ma_don_hang=ma_don_hang,
                 nguoi_dung_id=don_hang_data['id_nguoi_dung'],
-                dia_chi_id=don_hang_data.get('id_dia_chi'),
+                dia_chi_id= don_hang_data.get('id_dia_chi') if co_dia_chi_id else None,
                 ten_nguoi_nhan=don_hang_data['ten_nguoi_nhan'],
                 so_dien_thoai_nguoi_nhan=don_hang_data['so_dien_thoai_nguoi_nhan'],
                 dia_chi_giao=dia_chi_giao_hoan_chinh,
@@ -149,6 +166,17 @@ class DonHangThatService:
                     don_gia_luc_mua=item['don_gia'],
                     so_luong=item['so_luong']
                 )
+                if don_hang_data.get('gio_hang_id'):
+                    gio_hang_chi_tiet = ChiTietGioHang.query.filter_by(
+                        gio_hang_id=don_hang_data['gio_hang_id'],
+                        bien_the_san_pham_id=item['id_bien_the']
+                    ).first()
+                    
+                    if gio_hang_chi_tiet:
+                        gio_hang_chi_tiet.so_luong -= item['so_luong']
+                        if gio_hang_chi_tiet.so_luong <= 0:
+                            self.db.session.delete(gio_hang_chi_tiet)
+
                 self.db.session.add(chi_tiet)
             
             # Tạo thanh toán COD

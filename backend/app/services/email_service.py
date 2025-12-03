@@ -103,3 +103,109 @@ def send_email(to_email: str, subject: str, template: str, data: dict):
     except Exception as e:
         print(f"Lỗi gửi email: {e}")
         return False
+    
+def send_email_xac_nhan(to_email: str, subject: str, template: str, data: dict):
+    """Gửi email sử dụng template"""
+    try:
+        template_content = f"""
+        <!doctype html>
+        <html lang="vi">
+        <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Thông báo từ Camera Store</title>
+        <style>
+            body {{
+            background-color: #f9fafb;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            }}
+            .wrapper {{
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            }}
+            .header {{
+            background-color: #1d4ed8;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            }}
+            .content {{
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.8;
+            }}
+            .box {{
+            background-color: #f3f4f6;
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 16px;
+            border: 1px solid #e5e7eb;
+            }}
+            .item {{
+            margin: 8px 0;
+            font-weight: 600;
+            color: #374151;
+            }}
+            .reason {{
+            color: #ef4444;
+            font-weight: bold;
+            }}
+            .footer {{
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            padding: 16px;
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            }}
+        </style>
+        </head>
+        <body>
+
+        <div class="wrapper">
+            <div class="header">
+            Thông báo từ Camera Shop
+            </div>
+
+            <div class="content">
+            Xin chào,<br/>
+            Dưới đây là thông tin liên quan đến đơn hàng của bạn:
+            <div class="box">
+                <div class="item">Mã đơn hàng: <strong>{data.get('ma_don_hang', '')}</strong></div>
+                <div class="item reason">Chúng tôi đã xác nhận đơn hàng của bạn. Cảm ơn bạn đã sử dụng dịch vụ của Camera Shop.</div>
+            </div>
+            </div>
+
+            <div class="footer">
+            Camera Shop — Cảm ơn bạn đã sử dụng dịch vụ.
+            </div>
+        </div>
+
+        </body>
+        </html>
+        """
+
+        
+        msg = EmailMessage(
+            subject=subject,
+            body=template_content,
+            from_email=current_app.config['MAIL_DEFAULT_SENDER'],
+            to=[to_email],
+        )
+        msg.content_subtype = "html"
+        msg.send()
+        
+        return True
+    except Exception as e:
+        print(f"Lỗi gửi email: {e}")
+        return False
