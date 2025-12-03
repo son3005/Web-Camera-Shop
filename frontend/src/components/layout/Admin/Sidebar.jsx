@@ -9,6 +9,7 @@ import {
   Box,
   CreditCard,
   ChevronDown,
+  Users,
 } from "lucide-react";
 
 // ======================= MENU STRUCTURE =======================
@@ -22,10 +23,14 @@ const menuItems = [
   { id: "inventory", path: "/admin/inventory", icon: Box, label: "Sản phẩm" },
 
   // Phiếu nhập đứng riêng
+  // Phiếu nhập đứng riêng
   {
     id: "phieu-nhap",
     path: "/admin/phieu-nhap",
+    id: "phieu-nhap",
+    path: "/admin/phieu-nhap",
     icon: CreditCard,
+    label: "Phiếu nhập",
     label: "Phiếu nhập",
   },
 

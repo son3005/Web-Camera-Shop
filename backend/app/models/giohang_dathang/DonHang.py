@@ -49,8 +49,8 @@ class DonHang(db.Model):
     phi_van_chuyen = db.Column(db.Numeric(10), default=0)
     ghi_chu = db.Column(db.Text, nullable=True)
     ly_do = db.Column(db.Text, nullable=True)
-    ngay_tao = db.Column(db.DateTime,  server_default=db.func.now())
-    ngay_cap_nhat = db.Column(db.DateTime,  server_default=db.func.now(), onupdate=db.func.now())
+    ngay_tao = db.Column(db.DateTime,  default=datetime.utcnow)
+    ngay_cap_nhat = db.Column(db.DateTime,  default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # --- Mối quan hệ ---
     nguoi_dung = db.relationship('NguoiDung', back_populates='don_hangs')

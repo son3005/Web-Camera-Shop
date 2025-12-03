@@ -101,7 +101,7 @@ def tao_don_hang_ao():
         current_user = get_jwt_identity()
         
         # Validate dữ liệu đầu vào
-        required_fields = ['ten_nguoi_nhan', 'so_dien_thoai_nguoi_nhan', 'dia_chi_giao', 'phuong_thuc_thanh_toan', 'items']
+        required_fields = ['ten_nguoi_nhan', 'so_dien_thoai_nguoi_nhan', 'dia_chi_giao', 'phuong_thuc_thanh_toan', 'items',"gio_hang_id"]
         for field in required_fields:
             if field not in body:
                 return jsonify({"error": f"Thiếu trường bắt buộc: {field}"}), 400
@@ -133,7 +133,8 @@ def tao_don_hang_ao():
                     'ghi_chu': body.get('ghi_chu'),
                     'items': body['items'],
                     'items_enriched': items_enriched,
-                    'tong_tien': Decimal('0.0')  # Sẽ được tính trong service
+                    'tong_tien': Decimal('0.0'),
+                    'gio_hang_id': body.get('gio_hang_id', None)
                 }
                 
                 # Tính tổng tiền

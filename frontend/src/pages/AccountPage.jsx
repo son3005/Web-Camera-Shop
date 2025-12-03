@@ -580,7 +580,7 @@ export default function AccountPage() {
                       />
 
                       <input
-                        placeholder="Địa chỉ cụ thể"
+                        placeholder="Số nhà và tên đường"
                         className="ui-input col-span-2"
                         value={addressForm.dia_chi_cu_the}
                         onChange={(e) =>

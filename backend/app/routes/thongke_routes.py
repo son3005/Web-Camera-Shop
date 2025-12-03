@@ -1,3 +1,4 @@
+import datetime
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from ..services.thongke_service import ThongKeService
@@ -191,28 +192,16 @@ def thong_ke_nguoi_dung_dang_nhap():
             'message': f'Lỗi khi lấy thống kê đăng nhập: {str(e)}'
         }), 500
 
-@thong_ke_api.route('/danh-gia', methods=['GET'])
+    
+@thong_ke_api.route('/danh-sach-loi-nhuan-doanh-thu', methods=['GET'])
 @admin_required
-def thong_ke_danh_gia():
-    """Thống kê đánh giá theo năm hoặc tháng/năm"""
+def danh_sach_loi_nhuan_doanh_thu():
+    """Lấy danh sách lợi nhuận và doanh thu theo khoảng thời gian"""
     try:
-        nam = request.args.get('nam', type=int)
-        thang = request.args.get('thang', type=int)
+        start_date = request.args.get('start_date', None)
+        end_date = request.args.get('end_date', None)
         
-        # Validate input
-        if thang is not None and (thang < 1 or thang > 12):
-            return jsonify({
-                'success': False,
-                'message': 'Tháng không hợp lệ. Vui lòng nhập giá trị từ 1 đến 12.'
-            }), 400
-            
-        if nam is not None and nam <= 0:
-            return jsonify({
-                'success': False,
-                'message': 'Năm không hợp lệ. Vui lòng nhập giá trị dương.'
-            }), 400
-        
-        data = ThongKeService.thong_ke_danh_gia(nam, thang)
+        data = ThongKeService.lay_danh_sach_loi_nhuan_doanh_thu(start_date, end_date)
         
         return jsonify({
             'success': True,
@@ -222,5 +211,47 @@ def thong_ke_danh_gia():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Lỗi khi lấy thống kê đánh giá: {str(e)}'
+            'message': f'Lỗi khi lấy danh sách lợi nhuận và doanh thu: {str(e)}'
+        }), 500
+    
+@thong_ke_api.route('/danh-sach-danh-gia', methods=['GET'])
+@admin_required
+def danh_sach_danh_gia():
+    """Lấy danh sách đánh giá theo khoảng thời gian"""
+    try:
+        start_date = request.args.get('start_date', None)
+        end_date = request.args.get('end_date', None)
+        
+        data = ThongKeService.lay_danh_sach_danh_gia(start_date, end_date)
+        
+        return jsonify({
+            'success': True,
+            'data': data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Lỗi khi lấy danh sách đánh giá: {str(e)}'
+        }), 500
+    
+@thong_ke_api.route('/danh-sach-nguoi-dung-moi', methods=['GET'])
+@admin_required
+def danh_sach_nguoi_dung_moi():
+    """Lấy danh sách người dùng mới theo khoảng thời gian"""
+    try:
+        start_date = request.args.get('start_date', None)
+        end_date = request.args.get('end_date', None)
+        
+        data = ThongKeService.lay_danh_sach_nguoi_dung_moi(start_date, end_date)
+        
+        return jsonify({
+            'success': True,
+            'data': data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Lỗi khi lấy danh sách người dùng mới: {str(e)}'
         }), 500
