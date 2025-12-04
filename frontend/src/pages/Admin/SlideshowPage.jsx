@@ -112,9 +112,6 @@ export default function SlideshowPage() {
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
             Quản lý ảnh trình chiếu
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Thêm / chỉnh sửa các banner xuất hiện ở trang chủ.
-          </p>
         </div>
       </header>
 
@@ -131,7 +128,7 @@ export default function SlideshowPage() {
             <div className="h-40 rounded-xl bg-slate-100 animate-pulse" />
           ) : slides.length === 0 ? (
             <p className="text-sm text-slate-500">
-              Chưa có ảnh trình chiếu nào. Hãy thêm một ảnh ở form bên phải.
+              Chưa có ảnh trình chiếu nào. Hãy thêm một ảnh ở form bên dưới.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -231,10 +228,6 @@ export default function SlideshowPage() {
               <h2 className="text-base font-semibold text-slate-900">
                 {editing ? "Chỉnh sửa ảnh trình chiếu" : "Thêm ảnh trình chiếu"}
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Ảnh phải có tỷ lệ ngang (khoảng 3:1) để hiển thị đẹp trên
-                homepage.
-              </p>
             </div>
             {editing && (
               <button
@@ -266,12 +259,8 @@ export default function SlideshowPage() {
                 type="text"
                 {...register("lien_ket")}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/70 text-sm"
-                placeholder="/products, /products/123 hoặc URL ngoài"
+                placeholder="Dán đường dẫn"
               />
-              <p className="text-xs text-slate-400">
-                Có thể là đường dẫn nội bộ (ví dụ: /products/1) hoặc link ngoài
-                (https://...).
-              </p>
             </div>
 
             <div className="flex gap-3">
@@ -308,9 +297,6 @@ export default function SlideshowPage() {
                   {...register("file")}
                   className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
                 />
-                <p className="text-xs text-slate-400">
-                  Kích thước khuyến nghị: 1600×500 hoặc tương đương (tỷ lệ 3:1).
-                </p>
               </div>
             )}
 

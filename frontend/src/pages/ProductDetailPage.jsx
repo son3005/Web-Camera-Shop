@@ -22,6 +22,13 @@ const normalizeStatusKey = (raw) => {
   return "ngung_ban";
 };
 
+// Label biến thể: "Tên biến thể – Màu"
+const getVariantLabel = (v) => {
+  const baseName = v.ten_bien_the || v.name || "Biến thể";
+  const color = v.mau || v.ten_mau || v.color || "";
+  return color ? `${baseName} – ${color}` : baseName;
+};
+
 export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -282,8 +289,7 @@ export default function ProductDetailPage() {
                       }
                     `}
                   >
-                    {v.ten_bien_the || v.name} –{" "}
-                    {vnd(v.gia_ban || v.price || 0)}
+                    {getVariantLabel(v)}
                   </button>
                 ))}
               </div>
@@ -320,8 +326,6 @@ export default function ProductDetailPage() {
               Mua ngay
             </button>
           </div>
-
-          {/* Mô tả ngắn */}
 
           {selectedVariant && (
             <p className="text-sm text-slate-700">
