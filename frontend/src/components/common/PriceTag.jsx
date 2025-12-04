@@ -10,11 +10,9 @@ export default function PriceTag({
 
   return (
     <div className={`flex items-baseline gap-2 ${className}`}>
-      <span className="text-red-600 dark:text-rose-400 font-bold">
-        {fmt(price)}
-      </span>
+      <span className="text-rose-600 font-bold">{fmt(price)}</span>
       {showCompare && (
-        <span className="text-xs line-through text-gray-400">
+        <span className="text-xs line-through text-slate-400">
           {fmt(compareAt)}
         </span>
       )}

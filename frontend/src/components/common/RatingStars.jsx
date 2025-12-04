@@ -14,9 +14,7 @@ export default function RatingStars({ value = 0, count = 0, className = "" }) {
         const on = i < full || (i === full && half);
         return <span key={i}>{on ? "★" : "☆"}</span>;
       })}
-      <span className="text-xs text-gray-500 dark:text-slate-400">
-        ({count})
-      </span>
+      <span className="text-xs text-slate-500">({count})</span>
     </div>
   );
 }

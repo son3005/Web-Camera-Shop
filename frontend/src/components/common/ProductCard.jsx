@@ -1,6 +1,5 @@
 // src/components/common/ProductCard.jsx
 // Card sản phẩm dùng chung cho list, carousel
-// Nhận prop "p" = sản phẩm đã normalize từ productApi
 
 import { Link } from "react-router-dom";
 import PriceTag from "./PriceTag";
@@ -31,7 +30,7 @@ export default function ProductCard({ p }) {
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full grid place-items-center text-gray-400 dark:text-slate-500">
+            <div className="w-full h-full grid place-items-center text-slate-400">
               No image
             </div>
           )}
@@ -41,12 +40,12 @@ export default function ProductCard({ p }) {
         <div className="flex flex-col justify-between p-3 flex-1">
           <div>
             {p?.brand && (
-              <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">
+              <div className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
                 {p.brand}
               </div>
             )}
             <h3
-              className="text-base font-semibold leading-snug line-clamp-2 min-h-[40px] text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors"
+              className="text-base font-semibold leading-snug line-clamp-2 min-h-[40px] text-slate-900 group-hover:text-emerald-600 transition-colors"
               title={p?.name}
             >
               {p?.name}

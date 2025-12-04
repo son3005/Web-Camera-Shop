@@ -1,12 +1,9 @@
 // src/layouts/AdminLayout.jsx
-import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
-
+import { Outlet, ScrollRestoration } from "react-router-dom";
+import { useState } from "react";
 import Sidebar from "../components/layout/Admin/Sidebar";
-import Header from "../components/layout/Admin/Header";
 import "../assets/styles/AdminLayout.css";
 
-// Noise filter giữ nguyên
 const GrainyFilter = () => (
   <svg style={{ display: "none" }}>
     <filter id="noiseFilter">
@@ -23,33 +20,29 @@ const GrainyFilter = () => (
   </svg>
 );
 
-function AdminLayout() {
-  const [sidebarCollapsed, setSideBarCollapsed] = useState(false);
+export default function AdminLayout() {
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="admin-layout-container min-h-screen relative overflow-hidden">
+    <div className="admin-layout-container">
       <GrainyFilter />
 
-      <div className="flex h-screen overflow-hidden relative z-10">
-        {/* Sidebar */}
-        <Sidebar collapsed={sidebarCollapsed} />
+      <div className="relative z-10 min-h-screen flex">
+        {/* Sidebar cố định bên trái, width điều khiển bằng prop */}
+        <Sidebar
+          collapsed={collapsed}
+          onToggleCollapsed={() => setCollapsed((v) => !v)}
+        />
 
-        {/* Nội dung */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header
-            sidebarColapsed={sidebarCollapsed}
-            onToggleSidebar={() => setSideBarCollapsed(!sidebarCollapsed)}
-          />
-
-          <main className="flex-1 overflow-y-auto bg-transparent">
-            <div className="p-6">
-              <Outlet />
-            </div>
-          </main>
-        </div>
+        {/* Nội dung admin – luôn chiếm phần còn lại, không chồng lên sidebar */}
+        <main className="flex-1 overflow-x-hidden">
+          <div className="max-w-6xl mx-auto w-full px-4 py-6 md:px-6">
+            <Outlet />
+          </div>
+        </main>
       </div>
+
+      <ScrollRestoration />
     </div>
   );
 }
-
-export default AdminLayout;

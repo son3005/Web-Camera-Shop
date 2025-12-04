@@ -1,5 +1,5 @@
 // src/components/home/HeroCarousel.jsx
-// Banner slideshow dùng API ảnh trình chiếu (public) – chỉ dùng banner từ admin
+// Banner slideshow dùng API ảnh trình chiếu (public)
 
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -26,15 +26,15 @@ export default function HeroCarousel() {
   // =============== Đang tải ===============
   if (isLoading) {
     return (
-      <div className="relative rounded-3xl overflow-hidden shadow-xl h-40 md:h-64 lg:h-72 bg-slate-200 dark:bg-slate-800 animate-pulse" />
+      <div className="relative rounded-3xl overflow-hidden shadow-xl h-40 md:h-64 lg:h-72 bg-slate-200 animate-pulse" />
     );
   }
 
   // =============== Lỗi API ===============
   if (isError) {
     return (
-      <div className="relative rounded-3xl overflow-hidden shadow-xl flex items-center justify-center h-40 md:h-64 lg:h-72 bg-slate-900/80">
-        <p className="text-sm md:text-base text-slate-300">
+      <div className="relative rounded-3xl overflow-hidden shadow-xl flex items-center justify-center h-40 md:h-64 lg:h-72 bg-gradient-to-r from-rose-50 via-amber-50 to-emerald-50 border border-rose-100">
+        <p className="text-sm md:text-base text-slate-700">
           Không tải được banner. Vui lòng thử lại sau.
         </p>
       </div>
@@ -44,11 +44,11 @@ export default function HeroCarousel() {
   // =============== Không có banner nào trong DB ===============
   if (activeSlides.length === 0) {
     return (
-      <div className="relative rounded-3xl overflow-hidden shadow-xl flex flex-col items-center justify-center h-40 md:h-64 lg:h-72 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
-        <p className="text-base md:text-lg font-semibold text-slate-100">
+      <div className="relative rounded-3xl overflow-hidden shadow-xl flex flex-col items-center justify-center h-40 md:h-64 lg:h-72 bg-gradient-to-r from-emerald-50 via-emerald-100 to-sky-50 border border-emerald-100">
+        <p className="text-base md:text-lg font-semibold text-slate-900">
           Chưa có banner nào được cấu hình.
         </p>
-        <p className="mt-1 text-xs md:text-sm text-slate-400">
+        <p className="mt-1 text-xs md:text-sm text-slate-500">
           Hãy vào Admin &gt; Cài đặt &gt; Ảnh trình chiếu để thêm banner.
         </p>
       </div>
@@ -84,7 +84,7 @@ export default function HeroCarousel() {
                 className="w-full aspect-[3/1] object-cover"
                 loading={idx === 0 ? "eager" : "lazy"}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-transparent" />
               <div className="absolute inset-0 flex flex-col items-start justify-center px-6 md:px-10 lg:px-14 py-6 text-white">
                 {title && (
                   <h3 className="text-2xl md:text-3xl lg:text-4xl font-semibold drop-shadow max-w-xl">
@@ -95,7 +95,7 @@ export default function HeroCarousel() {
                   {subtitle}
                 </p>
                 {href && (
-                  <span className="mt-5 inline-flex items-center px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-sm md:text-base font-medium shadow-lg shadow-emerald-500/40 transition">
+                  <span className="mt-5 inline-flex items-center px-5 py-2.5 rounded-full btn-emerald shadow-lg shadow-emerald-500/40 text-sm md:text-base font-medium">
                     Khám phá ngay
                   </span>
                 )}
