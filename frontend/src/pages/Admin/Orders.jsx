@@ -1,5 +1,5 @@
 // src/pages/Admin/Orders.jsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   layDanhSachDonHangAdmin,
@@ -115,6 +115,10 @@ export default function Orders() {
     search: "",
   });
 
+  // Phân trang client-side
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+
   // Đơn đang được chọn để xem chi tiết
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -128,6 +132,11 @@ export default function Orders() {
   const [paymentForm, setPaymentForm] = useState({
     trang_thai_thanh_toan: "da_thanh_toan",
   });
+
+  // Theo dõi "đơn mới" so với lần load đầu tiên
+  const [hasInitialLoaded, setHasInitialLoaded] = useState(false);
+  const [lastSeenCount, setLastSeenCount] = useState(0);
+  const [newCount, setNewCount] = useState(0);
 
   // ======================= FETCH LIST =======================
   const {
@@ -166,6 +175,23 @@ export default function Orders() {
     },
   });
 
+  // Theo dõi số đơn mới (dựa theo length mảng orders)
+  useEffect(() => {
+    if (!orders) return;
+    const count = orders.length;
+
+    if (!hasInitialLoaded) {
+      setHasInitialLoaded(true);
+      setLastSeenCount(count);
+      setNewCount(0);
+      return;
+    }
+
+    if (count > lastSeenCount) {
+      setNewCount(count - lastSeenCount);
+    }
+  }, [orders, hasInitialLoaded, lastSeenCount]);
+
   // Lọc client-side theo ô search
   const filteredOrders = useMemo(() => {
     if (!filters.search) return orders || [];
@@ -178,6 +204,24 @@ export default function Orders() {
       );
     });
   }, [orders, filters.search]);
+
+  const totalItems = filteredOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / perPage) || 1);
+
+  // Cắt danh sách theo trang hiện tại
+  const paginatedOrders = useMemo(() => {
+    if (!filteredOrders || filteredOrders.length === 0) return [];
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return filteredOrders.slice(start, end);
+  }, [filteredOrders, page, perPage]);
+
+  // Nếu số đơn thay đổi mà trang hiện tại vượt quá tổng trang -> lùi về trang cuối
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
 
   // ======================= MUTATIONS =======================
   const updateStatusMutation = useMutation({
@@ -227,6 +271,7 @@ export default function Orders() {
       ...prev,
       [key]: value,
     }));
+    setPage(1); // đổi filter -> quay lại trang 1
   };
 
   const handleSubmitUpdateStatus = () => {
@@ -284,16 +329,30 @@ export default function Orders() {
     });
   };
 
+  // Đánh dấu đã xem đơn mới
+  const handleMarkNewSeen = () => {
+    if (!orders) return;
+    setLastSeenCount(orders.length);
+    setNewCount(0);
+  };
+
   // ======================= RENDER =======================
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-emerald-50 via-white to-slate-100 text-slate-800">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap mb-6 max-w-7xl mx-auto">
-        <div>
+        <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-slate-900">Đơn hàng</h1>
-          <p className="text-sm text-slate-500">
-            Quản lý toàn bộ đơn hàng trong hệ thống
-          </p>
+          {newCount > 0 && (
+            <button
+              type="button"
+              onClick={handleMarkNewSeen}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-xs shadow-sm hover:bg-emerald-600 transition"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-white" />
+              {newCount} đơn mới
+            </button>
+          )}
         </div>
 
         <button
@@ -415,82 +474,139 @@ export default function Orders() {
         <div className="grid grid-cols-12 gap-4">
           {/* Danh sách đơn */}
           <div className="col-span-12 xl:col-span-7 2xl:col-span-8">
-            <div className="bg-white/90 border border-emerald-50 rounded-3xl shadow-lg overflow-hidden">
+            <div className="bg-white/90 border border-emerald-50 rounded-3xl shadow-lg overflow-hidden flex flex-col">
               {isLoading ? (
                 <div className="p-6 text-center text-slate-500">
                   Đang tải danh sách đơn hàng...
                 </div>
-              ) : filteredOrders.length === 0 ? (
+              ) : totalItems === 0 ? (
                 <div className="p-6 text-center text-slate-500">
                   Không có đơn hàng nào phù hợp.
                 </div>
               ) : (
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50">
-                    <tr className="text-left">
-                      <th className="px-4 py-2">Mã đơn</th>
-                      <th className="px-4 py-2">Khách hàng</th>
-                      <th className="px-4 py-2">Thời gian</th>
-                      <th className="px-4 py-2 text-right">Tổng tiền</th>
-                      <th className="px-4 py-2">Trạng thái</th>
-                      <th className="px-4 py-2">Thanh toán</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredOrders.map((o) => {
-                      const statusInfo =
-                        ORDER_STATUS_MAP[o.trang_thai] ||
-                        ORDER_STATUS_MAP["cho_xac_nhan"];
-                      const paymentStatusInfo =
-                        PAYMENT_STATUS_MAP[o.thanh_toan?.trang_thai] ||
-                        PAYMENT_STATUS_MAP["cho_thanh_toan"];
+                <>
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-slate-50">
+                      <tr className="text-left">
+                        <th className="px-4 py-2">Mã đơn</th>
+                        <th className="px-4 py-2">Khách hàng</th>
+                        <th className="px-4 py-2">Thời gian</th>
+                        <th className="px-4 py-2 text-right">Tổng tiền</th>
+                        <th className="px-4 py-2">Trạng thái</th>
+                        <th className="px-4 py-2">Thanh toán</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedOrders.map((o) => {
+                        const statusInfo =
+                          ORDER_STATUS_MAP[o.trang_thai] ||
+                          ORDER_STATUS_MAP["cho_xac_nhan"];
+                        const paymentStatusInfo =
+                          PAYMENT_STATUS_MAP[o.thanh_toan?.trang_thai] ||
+                          PAYMENT_STATUS_MAP["cho_thanh_toan"];
 
-                      return (
-                        <tr
-                          key={o.id}
-                          className="hover:bg-emerald-50/70 cursor-pointer border-t border-slate-100 transition-colors"
-                          onClick={() => handleRowClick(o)}
+                        return (
+                          <tr
+                            key={o.id}
+                            className="hover:bg-emerald-50/70 cursor-pointer border-t border-slate-100 transition-colors"
+                            onClick={() => handleRowClick(o)}
+                          >
+                            <td className="px-4 py-2 font-mono text-xs">
+                              {o.ma_don_hang}
+                            </td>
+                            <td className="px-4 py-2">
+                              <div className="font-medium">
+                                {o.ten_nguoi_nhan}
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                {o.so_dien_thoai_nguoi_nhan}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-xs text-slate-500">
+                              {fmtDate(o.ngay_tao)}
+                            </td>
+                            <td className="px-4 py-2 text-right font-semibold">
+                              {fmtVND(o.thanh_toan?.so_tien || 0)}
+                            </td>
+                            <td className="px-4 py-2">
+                              {/* Trạng thái đơn: chỉ chữ màu + chấm nhỏ */}
+                              <span
+                                className={`inline-flex items-center gap-1 text-xs font-semibold ${statusInfo.className}`}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                {statusInfo.label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2">
+                              {/* Trạng thái thanh toán: chữ màu + chấm nhỏ */}
+                              <span
+                                className={`inline-flex items-center gap-1 text-xs font-semibold ${paymentStatusInfo.className}`}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                {paymentStatusInfo.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  {/* Footer phân trang */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 bg-slate-50/80 text-xs">
+                    <div className="text-slate-600">
+                      Hiển thị{" "}
+                      <span className="font-semibold">
+                        {totalItems === 0 ? 0 : (page - 1) * perPage + 1} –{" "}
+                        {Math.min(page * perPage, totalItems)}
+                      </span>{" "}
+                      trên <span className="font-semibold">{totalItems}</span>{" "}
+                      đơn hàng
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={page === 1}
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
                         >
-                          <td className="px-4 py-2 font-mono text-xs">
-                            {o.ma_don_hang}
-                          </td>
-                          <td className="px-4 py-2">
-                            <div className="font-medium">
-                              {o.ten_nguoi_nhan}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              {o.so_dien_thoai_nguoi_nhan}
-                            </div>
-                          </td>
-                          <td className="px-4 py-2 text-xs text-slate-500">
-                            {fmtDate(o.ngay_tao)}
-                          </td>
-                          <td className="px-4 py-2 text-right font-semibold">
-                            {fmtVND(o.thanh_toan?.so_tien || 0)}
-                          </td>
-                          <td className="px-4 py-2">
-                            {/* Trạng thái đơn: chỉ chữ màu + chấm nhỏ */}
-                            <span
-                              className={`inline-flex items-center gap-1 text-xs font-semibold ${statusInfo.className}`}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                              {statusInfo.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2">
-                            {/* Trạng thái thanh toán: chữ màu + chấm nhỏ */}
-                            <span
-                              className={`inline-flex items-center gap-1 text-xs font-semibold ${paymentStatusInfo.className}`}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                              {paymentStatusInfo.label}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          Trước
+                        </button>
+                        <span className="text-slate-600">
+                          Trang <span className="font-semibold">{page}</span> /{" "}
+                          {totalPages}
+                        </span>
+                        <button
+                          className="px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={page === totalPages}
+                          onClick={() =>
+                            setPage((p) => Math.min(totalPages, p + 1))
+                          }
+                        >
+                          Sau
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-500">Hiển thị</span>
+                        <select
+                          className="ui-input text-xs w-18"
+                          value={perPage}
+                          onChange={(e) => {
+                            setPerPage(Number(e.target.value) || 10);
+                            setPage(1);
+                          }}
+                        >
+                          <option value={10}>10</option>
+                          <option value={20}>20</option>
+                          <option value={50}>50</option>
+                        </select>
+                        <span className="text-slate-500">/ trang</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

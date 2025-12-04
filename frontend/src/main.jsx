@@ -4,12 +4,15 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Provider } from "react-redux";
-import { store } from "./redux/store";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import "./App.css";
-// import "./assets/styles/MainLayout.css";
 
+import { store } from "./redux/store";
 import router from "./router/index.jsx";
+
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+import "./App.css";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +21,21 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+
+        {/* ✅ Toast global – trang nào cũng xài được */}
+        <ToastContainer
+          position="bottom-right"
+          autoClose={4000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </Provider>

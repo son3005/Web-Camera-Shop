@@ -1,10 +1,4 @@
-// D:\Web-Camera-Shop\frontend\src\pages\Dangnhap.jsx
-// ---------------------------------------------------
-// Trang đăng nhập:
-//  - gọi /api/auth/login
-//  - lưu {user, token} vào redux + localStorage (3 key) để admin API dùng
-//  - điều hướng theo vai_tro hoặc về trang trước đó
-// ---------------------------------------------------
+//frontend\src\pages\Dangnhap.jsx
 
 import React from "react";
 import { FaEnvelope, FaLock, FaArrowRight } from "react-icons/fa";
@@ -34,11 +28,9 @@ export default function DangNhap() {
 
   const onSubmit = async (values) => {
     try {
-      // 1. Gọi backend /api/auth/login
-      const data = await login(values); // BE trả { user, token }
+      const data = await login(values);
       if (!data?.token) throw new Error("Token không hợp lệ");
 
-      // 2. Decode để lấy thêm info (role, id)
       let decoded = {};
       try {
         decoded = jwtDecode(data.token);
@@ -46,7 +38,6 @@ export default function DangNhap() {
         decoded = data.user || {};
       }
 
-      // 3. Chuẩn hoá user để lưu redux
       const userToStore = {
         id: decoded.sub || decoded.id || data.user?.id,
         email: decoded.email || data.user?.email,
@@ -54,30 +45,25 @@ export default function DangNhap() {
         vai_tro: decoded.vai_tro || data.user?.vai_tro,
       };
 
-      // 4. Lưu redux
       dispatch(datThongTinDangNhap({ user: userToStore, token: data.token }));
 
-      // 5. ❗ Lưu token vào localStorage dưới cả 3 tên để mọi chỗ đều đọc được
       localStorage.setItem("admin_token", data.token);
       localStorage.setItem("access_token", data.token);
       localStorage.setItem("token", data.token);
 
       toast.success("🎉 Đăng nhập thành công!", { position: "top-center" });
 
-      // 6. Điều hướng
       const role = (userToStore.vai_tro || "").toLowerCase();
       const from = location.state?.from?.pathname;
 
       if (from) {
         navigate(from, { replace: true });
       } else if (role === "quan_tri_vien" || role === "admin") {
-        // đi thẳng vào admin cho tiện test CRUD
         navigate("/admin/inventory", { replace: true });
       } else {
         navigate("/", { replace: true });
       }
     } catch (err) {
-      console.error("Đăng nhập lỗi:", err);
       toast.error(
         err?.response?.data?.error ||
           err?.message ||
@@ -94,12 +80,8 @@ export default function DangNhap() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${BG})` }}
-        aria-hidden
       />
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-emerald-600/40 to-slate-900/60"
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/40 to-slate-900/60" />
 
       <div
         className="
@@ -108,47 +90,51 @@ export default function DangNhap() {
           bg-white/5
         "
       >
+        {/* LEFT */}
         <div className="hidden md:flex w-1/2 relative items-center justify-center text-white">
           <div
             className="absolute inset-0 bg-cover bg-center opacity-30"
             style={{ backgroundImage: `url(${LoginImage})` }}
-            aria-hidden
           />
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-emerald-700/90 via-emerald-800/92 to-emerald-900/95"
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-gradient-to-b from-emerald-700/90 via-emerald-800/92 to-emerald-900/95" />
           <div className="relative z-10 px-10">
             <h1 className="text-4xl font-extrabold drop-shadow-md">
               Chào mừng trở lại 📷
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-emerald-50/90">
-              Đăng nhập để tiếp tục quản lý sản phẩm.
+              Đăng nhập để tiếp tục mua sắm.
             </p>
           </div>
         </div>
 
+        {/* RIGHT (FORM) */}
         <div className="w-full md:w-1/2 h-full bg-white/95 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-6 md:p-10">
           <h2 className="text-2xl font-extrabold text-center mb-6">
             Đăng nhập
           </h2>
 
-          <form
-            className="space-y-4"
-            onSubmit={handleSubmit(onSubmit)}
-            noValidate
-          >
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            {/* EMAIL */}
             <div>
               <label className="block text-sm font-medium mb-1">Email</label>
-              <div className="flex items-center ui-input">
-                <FaEnvelope className="mr-2 opacity-70" />
+
+              <div
+                className="
+                flex items-center gap-3 w-full px-4 py-3
+                rounded-xl bg-white/70 backdrop-blur-xl
+                border border-slate-200 shadow-sm
+                focus-within:ring-2 focus-within:ring-emerald-500
+                transition-all"
+              >
+                <FaEnvelope className="text-slate-600 text-lg" />
                 <input
                   type="email"
+                  className="flex-1 bg-transparent outline-none text-sm"
                   placeholder="Nhập email"
-                  className="flex-1 bg-transparent outline-none"
                   {...register("email")}
                 />
               </div>
+
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">
                   {errors.email.message}
@@ -156,17 +142,27 @@ export default function DangNhap() {
               )}
             </div>
 
+            {/* PASSWORD */}
             <div>
               <label className="block text-sm font-medium mb-1">Mật khẩu</label>
-              <div className="flex items-center ui-input">
-                <FaLock className="mr-2 opacity-70" />
+
+              <div
+                className="
+                flex items-center gap-3 w-full px-4 py-3
+                rounded-xl bg-white/70 backdrop-blur-xl
+                border border-slate-200 shadow-sm
+                focus-within:ring-2 focus-within:ring-emerald-500
+                transition-all"
+              >
+                <FaLock className="text-slate-600 text-lg" />
                 <input
                   type="password"
+                  className="flex-1 bg-transparent outline-none text-sm"
                   placeholder="Nhập mật khẩu"
-                  className="flex-1 bg-transparent outline-none"
                   {...register("mat_khau")}
                 />
               </div>
+
               {errors.mat_khau && (
                 <p className="text-red-500 text-sm mt-1">
                   {errors.mat_khau.message}
@@ -174,12 +170,11 @@ export default function DangNhap() {
               )}
             </div>
 
+            {/* BUTTON */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`btn-emerald w-full rounded-lg py-3 font-semibold ${
-                isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-              }`}
+              className="btn-emerald w-full rounded-lg py-3 font-semibold"
             >
               {isSubmitting ? (
                 "Đang đăng nhập..."
@@ -191,21 +186,16 @@ export default function DangNhap() {
             </button>
           </form>
 
+          {/* LINKS */}
           <div className="mt-4 text-center text-sm text-slate-600 dark:text-slate-300">
             Quên mật khẩu?{" "}
-            <a
-              href="/quenmatkhau"
-              className="text-emerald-600 dark:text-emerald-400 hover:underline"
-            >
+            <a href="/quenmatkhau" className="text-emerald-600 hover:underline">
               Khôi phục
             </a>
           </div>
           <div className="text-center text-sm text-slate-600 dark:text-slate-300">
             Chưa có tài khoản?{" "}
-            <a
-              href="/dangky"
-              className="text-emerald-600 dark:text-emerald-400 hover:underline"
-            >
+            <a href="/dangky" className="text-emerald-600 hover:underline">
               Đăng ký
             </a>
           </div>

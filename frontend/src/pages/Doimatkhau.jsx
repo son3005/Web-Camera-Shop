@@ -3,12 +3,14 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { resetPasswordSchema } from "../validation/loginSchema"; // ✅ import schema yup
+import { resetPasswordSchema } from "../validation/loginSchema";
 import { resetPassword } from "../api/authApi";
+
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// ⬇️ dùng lại ảnh nền giống trang đăng nhập/đăng ký
+import { FaLock, FaArrowRight } from "react-icons/fa";
+
 import BG from "../assets/images/BG.jpg";
 import LoginImage from "../assets/images/Login.jpg";
 
@@ -16,24 +18,23 @@ const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const dangnhap = "/dangnhap";
 
-  
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
-  } = useForm({
-    resolver: yupResolver(resetPasswordSchema),
-  });
+    watch,
+  } = useForm({ resolver: yupResolver(resetPasswordSchema) });
+
+  const matKhau = watch("mat_khau");
 
   const handleResetPassword = async (data) => {
     const { mat_khau, xac_nhan_mat_khau } = data;
 
-    
     if (mat_khau !== xac_nhan_mat_khau) {
-      toast.error("❌ Mật khẩu xác nhận không khớp!", { position: "top-center" });
+      toast.error("❌ Mật khẩu xác nhận không khớp!", {
+        position: "top-center",
+      });
       return;
     }
 
@@ -41,13 +42,12 @@ const ResetPassword = () => {
     try {
       await resetPassword(token, { mat_khau });
 
-      toast.success("✅ Đổi mật khẩu thành công! Hãy đăng nhập lại.", {
+      toast.success("🎉 Đổi mật khẩu thành công! Hãy đăng nhập lại.", {
         position: "top-center",
       });
 
-      setTimeout(() => navigate("/dangnhap"), 2000);
+      setTimeout(() => navigate("/dangnhap"), 1200);
     } catch (err) {
-      console.error("Lỗi đặt lại mật khẩu:", err);
       toast.error(err.response?.data?.error || "❌ Lỗi đổi mật khẩu!", {
         position: "top-center",
       });
@@ -57,48 +57,114 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-100 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       <ToastContainer />
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 border border-gray-200">
-        <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">
+
+      {/* Nền + overlay */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${BG})` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/40 to-slate-900/60" />
+
+      {/* CARD */}
+      <div
+        className="
+          relative z-10 w-full max-w-md p-8 rounded-2xl
+          bg-white/10 backdrop-blur-xl border border-white/20
+          shadow-2xl
+        "
+      >
+        <h2 className="text-2xl font-extrabold text-center mb-6 text-white drop-shadow">
           🔒 Đặt lại mật khẩu
         </h2>
 
-          <form onSubmit={handleSubmit(handleResetPassword)}>
-            {/* Mật khẩu mới */}
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-1">Mật khẩu mới</label>
+        <form
+          onSubmit={handleSubmit(handleResetPassword)}
+          className="space-y-4"
+        >
+          {/* Mật khẩu */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-white/90">
+              Mật khẩu mới
+            </label>
+
+            <div
+              className="
+                flex items-center gap-3 px-4 py-3
+                rounded-xl bg-white/70 backdrop-blur-xl
+                border border-slate-200 shadow-sm
+                focus-within:ring-2 focus-within:ring-emerald-500
+                transition-all
+              "
+            >
+              <FaLock className="text-slate-700 text-lg" />
               <input
                 type="password"
-                className="border rounded-lg w-full px-3 py-2 focus:ring-2 focus:ring-blue-300 outline-none"
+                className="flex-1 bg-transparent outline-none text-sm text-slate-900"
+                placeholder="Nhập mật khẩu mới"
                 {...register("mat_khau")}
               />
-              {errors.mat_khau && (
-                <p className="text-red-500 text-sm mt-1">{errors.mat_khau.message}</p>
-              )}
             </div>
-  
-            {/* Xác nhận mật khẩu */}
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-1">Xác nhận mật khẩu</label>
+
+            {errors.mat_khau && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.mat_khau.message}
+              </p>
+            )}
+          </div>
+
+          {/* Xác nhận mật khẩu */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-white/90">
+              Xác nhận mật khẩu
+            </label>
+
+            <div
+              className="
+                flex items-center gap-3 px-4 py-3
+                rounded-xl bg-white/70 backdrop-blur-xl
+                border border-slate-200 shadow-sm
+                focus-within:ring-2 focus-within:ring-emerald-500
+                transition-all
+              "
+            >
+              <FaLock className="text-slate-700 text-lg" />
               <input
                 type="password"
-                className="border rounded-lg w-full px-3 py-2 focus:ring-2 focus:ring-blue-300 outline-none"
+                className="flex-1 bg-transparent outline-none text-sm text-slate-900"
+                placeholder="Nhập lại mật khẩu"
                 {...register("xac_nhan_mat_khau")}
               />
-              {errors.xac_nhan_mat_khau && (
-                <p className="text-red-500 text-sm mt-1">{errors.xac_nhan_mat_khau.message}</p>
-              )}
             </div>
-  
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-semibold py-2.5 rounded-lg hover:shadow-xl hover:shadow-emerald-500/30 transition disabled:opacity-60"
-            >
-              {loading ? "Đang xử lý..." : "Xác nhận"}
-            </button>
-          </form>
+
+            {errors.xac_nhan_mat_khau && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.xac_nhan_mat_khau.message}
+              </p>
+            )}
+          </div>
+
+          {/* Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="
+              w-full rounded-lg py-3 mt-2 font-semibold text-white
+              bg-gradient-to-r from-emerald-500 to-emerald-700
+              hover:shadow-xl hover:shadow-emerald-500/30 transition
+              disabled:opacity-60
+            "
+          >
+            {loading ? (
+              "Đang xử lý..."
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                Xác nhận <FaArrowRight />
+              </span>
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );

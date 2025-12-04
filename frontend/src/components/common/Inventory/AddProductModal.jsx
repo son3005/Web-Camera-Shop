@@ -35,10 +35,8 @@ const AddProductModal = ({ mode, productId, onClose }) => {
   const { useGetAllDanhMuc, useGetAllThuongHieu, useGetAllCapDo } =
     useCatalogs();
 
-  // toast
+  // toast – chỉ dùng để show lỗi, success để hook lo (tránh bị 2 toast)
   const toastHook = useToast();
-  const showSuccess =
-    toastHook?.success || toastHook?.toast?.success || (() => {});
   const showError = toastHook?.error || toastHook?.toast?.error || (() => {});
 
   // Lưu danh sách id biến thể đã xóa để gửi cho BE
@@ -188,11 +186,10 @@ const AddProductModal = ({ mode, productId, onClose }) => {
     try {
       if (mode === "add") {
         await createMutation.mutateAsync(payload);
-        showSuccess("Thêm sản phẩm thành công");
       } else {
         await updateMutation.mutateAsync({ id: productId, ...payload });
-        showSuccess("Cập nhật sản phẩm thành công");
       }
+      // toast success để hook lo, ở đây chỉ đóng modal
       onClose();
     } catch (err) {
       console.error("❌ Lỗi khi lưu sản phẩm:", err);

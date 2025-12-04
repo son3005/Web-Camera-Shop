@@ -567,84 +567,80 @@ export default function CheckoutPage() {
     });
   };
 
-  // ================================
-  // UI
+  /// ================================
+  // UI — LIGHT THEME VERSION
   // ================================
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">
-              Thanh toán
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Kiểm tra lại sản phẩm và thông tin giao hàng trước khi đặt.
-            </p>
-          </div>
+    <div className="min-h-screen bg-emerald-50/40">
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        {/* HEADER */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">Thanh toán</h1>
+          <p className="text-slate-600 mt-1">
+            Kiểm tra sản phẩm và thông tin giao hàng trước khi xác nhận đơn.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[2fr,1.3fr] gap-6 lg:gap-8">
-          {/* Cột trái: Sản phẩm + Phương thức thanh toán */}
+        <div className="grid grid-cols-1 xl:grid-cols-[2fr,1.2fr] gap-8">
+          {/* LEFT COLUMN */}
           <div className="space-y-6">
-            {/* Box sản phẩm */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 lg:p-5">
-              <div className="flex items-center justify-between mb-4">
+            {/* SẢN PHẨM */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+              <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-slate-900">
                   Sản phẩm
                 </h2>
-                <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium">
+                <span className="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
                   {isCartCheckout ? `${cartItems.length} sản phẩm` : "Mua ngay"}
                 </span>
               </div>
 
-              {/* CHECKOUT TỪ GIỎ HÀNG */}
+              {/* --- CART MODE --- */}
               {isCartCheckout &&
                 cartItems.map((it) => (
                   <div
                     key={it.id}
-                    className="flex flex-col sm:flex-row sm:items-center gap-3 border-t border-slate-100 pt-3 mt-3"
+                    className="flex flex-col sm:flex-row sm:items-center gap-4 border-t border-slate-200 pt-4 mt-4"
                   >
-                    <div className="flex items-center gap-3 flex-1">
-                      <img
-                        src={it.hinh_anh}
-                        className="w-16 h-16 rounded-xl object-cover ring-1 ring-slate-100"
-                      />
-                      <div>
-                        <div className="font-medium text-slate-900 line-clamp-1">
-                          {it.ten_san_pham}
-                        </div>
-                        <div className="text-xs text-slate-500 mt-0.5">
-                          Biến thể: {it.ten_bien_the}
-                        </div>
-                        <div className="text-sm font-semibold text-emerald-600 mt-1">
-                          {Number(it.don_gia).toLocaleString("vi-VN")}₫
-                        </div>
+                    <img
+                      src={it.hinh_anh}
+                      className="w-20 h-20 rounded-xl object-cover ring-1 ring-slate-200"
+                    />
+
+                    <div className="flex-1">
+                      <div className="font-semibold text-slate-900">
+                        {it.ten_san_pham}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Biến thể: {it.ten_bien_the}
+                      </div>
+
+                      <div className="text-emerald-600 font-bold mt-1">
+                        {Number(it.don_gia).toLocaleString("vi-VN")}₫
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 sm:gap-1">
-                      {/* +/- trong trang thanh toán */}
-                      <div className="flex items-center border border-slate-200 rounded-full overflow-hidden bg-slate-50">
+                    {/* QUANTITY */}
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center rounded-full border border-slate-300 bg-slate-50 overflow-hidden">
                         <button
                           onClick={() => changeCartItemQty(it, -1)}
-                          className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100"
+                          className="w-9 h-9 flex items-center justify-center hover:bg-slate-100"
                         >
                           −
                         </button>
-                        <span className="w-10 text-center text-sm font-semibold">
+                        <span className="w-10 text-center font-semibold">
                           {it.so_luong}
                         </span>
                         <button
                           onClick={() => changeCartItemQty(it, 1)}
-                          className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100"
+                          className="w-9 h-9 flex items-center justify-center hover:bg-slate-100"
                         >
                           +
                         </button>
                       </div>
 
-                      <div className="text-xs text-slate-500">
+                      <div className="text-xs text-slate-600">
                         Tạm tính:{" "}
                         <span className="font-semibold text-slate-800">
                           {(Number(it.don_gia) * it.so_luong).toLocaleString(
@@ -657,63 +653,48 @@ export default function CheckoutPage() {
                   </div>
                 ))}
 
-              {/* CHECKOUT MUA NGAY (SINGLE) */}
+              {/* --- SINGLE MODE --- */}
               {!isCartCheckout && isSingleCheckout && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-t border-slate-100 pt-3 mt-3">
-                  {/* Bên trái: ảnh + thông tin */}
-                  <div className="flex items-center gap-3 flex-1">
-                    <img
-                      src={product.primaryImage}
-                      className="w-16 h-16 rounded-xl object-cover ring-1 ring-slate-100"
-                    />
-                    <div>
-                      <div className="font-medium text-slate-900 line-clamp-1">
-                        {product.name}
-                      </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
-                        Biến thể: {variant.ten_bien_the}
-                      </div>
-                      <div className="text-sm font-semibold text-emerald-600 mt-1">
-                        {Number(variant.gia_ban).toLocaleString("vi-VN")}₫
-                      </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-t border-slate-200 pt-4 mt-4">
+                  <img
+                    src={product.primaryImage}
+                    className="w-20 h-20 rounded-xl object-cover ring-1 ring-slate-200"
+                  />
+                  <div className="flex-1">
+                    <div className="font-semibold text-slate-900">
+                      {product.name}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      Biến thể: {variant.ten_bien_the}
+                    </div>
+
+                    <div className="text-emerald-600 font-bold mt-1">
+                      {Number(variant.gia_ban).toLocaleString("vi-VN")}₫
                     </div>
                   </div>
 
-                  {/* Bên phải: nút +/- + tạm tính (giống giỏ hàng) */}
-                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 sm:gap-1">
-                    <div className="flex items-center border border-slate-200 rounded-full overflow-hidden bg-slate-50">
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center rounded-full border border-slate-300 bg-slate-50 overflow-hidden">
                       <button
                         onClick={() => setSoLuong((v) => Math.max(1, v - 1))}
-                        className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100"
+                        className="w-9 h-9 flex items-center justify-center hover:bg-slate-100"
                       >
                         −
                       </button>
-                      <span className="w-10 text-center text-sm font-semibold">
+                      <span className="w-10 text-center font-semibold">
                         {soLuong}
                       </span>
                       <button
-                        onClick={() => {
-                          const stock = getVariantStock(variant);
-                          setSoLuong((v) => {
-                            const newQty = v + 1;
-                            if (stock != null && newQty > stock) {
-                              alert(
-                                `Sản phẩm chỉ còn ${stock} sản phẩm trong kho.`
-                              );
-                              return v;
-                            }
-                            return newQty;
-                          });
-                        }}
-                        className="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100"
+                        onClick={() => setSoLuong((v) => v + 1)}
+                        className="w-9 h-9 flex items-center justify-center hover:bg-slate-100"
                       >
                         +
                       </button>
                     </div>
 
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-600">
                       Tạm tính:{" "}
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-semibold">
                         {(Number(variant.gia_ban) * soLuong).toLocaleString(
                           "vi-VN"
                         )}
@@ -725,226 +706,220 @@ export default function CheckoutPage() {
               )}
             </div>
 
-            {/* Box phương thức thanh toán */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 lg:p-5 space-y-4">
+            {/* PAYMENT METHOD */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
               <h2 className="text-lg font-semibold text-slate-900">
                 Phương thức thanh toán
               </h2>
 
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-emerald-500 transition cursor-pointer bg-slate-50/60">
-                  <input
-                    type="radio"
-                    name="pm"
-                    className="w-4 h-4 accent-emerald-600"
-                    checked={form.phuong_thuc_thanh_toan === "cod"}
-                    onChange={() =>
-                      setForm((f) => ({
-                        ...f,
-                        phuong_thuc_thanh_toan: "cod",
-                      }))
-                    }
-                  />
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      Thanh toán khi nhận hàng (COD)
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      Bạn sẽ thanh toán tiền mặt cho shipper khi nhận hàng.
-                    </p>
+              <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-emerald-500 cursor-pointer bg-slate-50">
+                <input
+                  type="radio"
+                  name="pm"
+                  className="accent-emerald-600"
+                  checked={form.phuong_thuc_thanh_toan === "cod"}
+                  onChange={() =>
+                    setForm((f) => ({ ...f, phuong_thuc_thanh_toan: "cod" }))
+                  }
+                />
+                <div>
+                  <div className="font-semibold text-slate-900">
+                    Thanh toán khi nhận hàng (COD)
                   </div>
-                </label>
+                  <p className="text-xs text-slate-500">
+                    Trả tiền mặt sau khi nhận hàng từ shipper.
+                  </p>
+                </div>
+              </label>
 
-                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-emerald-500 transition cursor-pointer">
-                  <input
-                    type="radio"
-                    name="pm"
-                    className="w-4 h-4 accent-emerald-600"
-                    checked={form.phuong_thuc_thanh_toan === "payos_qr"}
-                    onChange={() =>
-                      setForm((f) => ({
-                        ...f,
-                        phuong_thuc_thanh_toan: "payos_qr",
-                      }))
-                    }
-                  />
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      Thanh toán online qua QR PayOS
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      Hỗ trợ quét mã QR bằng ứng dụng ngân hàng / ví điện tử.
-                    </p>
+              <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-emerald-500 cursor-pointer">
+                <input
+                  type="radio"
+                  name="pm"
+                  className="accent-emerald-600"
+                  checked={form.phuong_thuc_thanh_toan === "payos_qr"}
+                  onChange={() =>
+                    setForm((f) => ({
+                      ...f,
+                      phuong_thuc_thanh_toan: "payos_qr",
+                    }))
+                  }
+                />
+                <div>
+                  <div className="font-semibold text-slate-900">
+                    Thanh toán qua QR PayOS
                   </div>
-                </label>
-              </div>
+                  <p className="text-xs text-slate-500">
+                    Hỗ trợ mã QR ngân hàng / ví điện tử.
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
 
-          {/* Cột phải: Thông tin giao hàng + Tổng tiền */}
+          {/* RIGHT COLUMN — SHIPPING + TOTAL */}
           <div className="space-y-6">
-            {/* Box thông tin giao hàng */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 lg:p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Thông tin giao hàng
-                </h2>
-              </div>
+            {/* SHIPPING FORM */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Thông tin giao hàng
+              </h2>
 
-              {/* DROPDOWN ĐỊA CHỈ */}
+              {/* SAVED ADDRESSES – nổi bật + có tên + địa chỉ */}
               {addresses.length > 0 && (
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-600">
-                    Địa chỉ lưu sẵn
-                  </label>
+                <div className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wide">
+                        Địa chỉ đã lưu
+                      </p>
+                      <p className="text-[11px] text-emerald-800/80">
+                        Chọn một địa chỉ có sẵn, bạn vẫn có thể chỉnh sửa thông
+                        tin chi tiết ở bên dưới.
+                      </p>
+                    </div>
+
+                    {defaultAddress && (
+                      <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-100">
+                        Mặc định
+                      </span>
+                    )}
+                  </div>
+
                   <select
-                    className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     value={selectedAddressId}
                     onChange={(e) => setSelectedAddressId(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white border border-emerald-200 text-sm focus:ring-emerald-500 focus:outline-none"
                   >
-                    {addresses.map((addr) => (
-                      <option key={addr.id} value={String(addr.id)}>
-                        {(addr.ten_nguoi_nhan || addr.ho_ten || "Không tên") +
-                          " - " +
-                          getAddressString(addr)}
-                      </option>
-                    ))}
+                    {addresses.map((addr) => {
+                      const ten =
+                        addr.ten_nguoi_nhan ||
+                        addr.ho_ten ||
+                        addr.ten ||
+                        addr.full_name ||
+                        "Không tên";
+
+                      return (
+                        <option key={addr.id} value={String(addr.id)}>
+                          {`${ten} – ${getAddressString(addr)}`}
+                        </option>
+                      );
+                    })}
                     <option value="new">+ Thêm địa chỉ mới</option>
                   </select>
-                  <p className="text-[11px] text-slate-500">
-                    Bạn có thể chỉnh sửa bên dưới. Nếu khác với địa chỉ đã lưu,
-                    hệ thống sẽ tự tạo địa chỉ mới.
-                  </p>
                 </div>
               )}
 
-              {/* Ô nhập thông tin */}
-              <div className="space-y-3 mt-2">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-600">
-                    Tên người nhận
-                  </label>
-                  <input
-                    className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    name="ten_nguoi_nhan"
-                    placeholder="VD: Nguyễn Văn A"
-                    value={form.ten_nguoi_nhan}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-600">
-                    Số điện thoại
-                  </label>
-                  <input
-                    className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    name="so_dien_thoai_nguoi_nhan"
-                    placeholder="VD: 09xx xxx xxx"
-                    value={form.so_dien_thoai_nguoi_nhan}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-600">
-                    Số nhà và tên đường
-                  </label>
-                  <input
-                    className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    name="dia_chi_giao"
-                    placeholder="Số nhà, tên đường..."
-                    value={form.dia_chi_giao}
-                    onChange={handleChange}
-                  />
-                </div>
+              {/* FORM INPUTS */}
+              <div className="space-y-3">
+                <Field
+                  label="Tên người nhận"
+                  name="ten_nguoi_nhan"
+                  value={form.ten_nguoi_nhan}
+                  onChange={handleChange}
+                />
+                <Field
+                  label="Số điện thoại"
+                  name="so_dien_thoai_nguoi_nhan"
+                  value={form.so_dien_thoai_nguoi_nhan}
+                  onChange={handleChange}
+                />
+                <Field
+                  label="Địa chỉ giao"
+                  name="dia_chi_giao"
+                  value={form.dia_chi_giao}
+                  onChange={handleChange}
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-600">
-                      Phường / Xã
-                    </label>
-                    <input
-                      className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                      name="phuong_xa"
-                      placeholder="VD: Mỹ Thới"
-                      value={form.phuong_xa}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-600">
-                      Tỉnh / Thành phố
-                    </label>
-                    <input
-                      className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                      name="tinh_thanh"
-                      placeholder="VD: An Giang"
-                      value={form.tinh_thanh}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <Field
+                    label="Phường / Xã"
+                    name="phuong_xa"
+                    value={form.phuong_xa}
+                    onChange={handleChange}
+                  />
+                  <Field
+                    label="Tỉnh / Thành phố"
+                    name="tinh_thanh"
+                    value={form.tinh_thanh}
+                    onChange={handleChange}
+                  />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-600">
-                    Ghi chú (không bắt buộc)
-                  </label>
-                  <textarea
-                    className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-200 text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    name="ghi_chu"
-                    placeholder="VD: Giao giờ hành chính, gọi trước khi giao..."
-                    value={form.ghi_chu}
-                    onChange={handleChange}
-                  ></textarea>
-                </div>
+                <Field
+                  isTextArea
+                  label="Ghi chú (không bắt buộc)"
+                  name="ghi_chu"
+                  value={form.ghi_chu}
+                  onChange={handleChange}
+                />
               </div>
             </div>
 
-            {/* Box tổng kết + nút đặt hàng */}
-            <div className="bg-slate-900 text-slate-50 rounded-2xl p-4 lg:p-5 space-y-4 shadow-md">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
+            {/* SUMMARY */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-slate-700 uppercase">
                 Tóm tắt đơn hàng
               </h3>
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-300">Tạm tính</span>
-                  <span className="font-medium text-slate-50">
+                  <span>Tạm tính</span>
+                  <span className="font-semibold">
                     {(tongTien - phiShip).toLocaleString("vi-VN")}₫
                   </span>
                 </div>
+
                 <div className="flex justify-between">
-                  <span className="text-slate-300">Phí vận chuyển</span>
-                  <span className="font-medium text-slate-50">
+                  <span>Phí vận chuyển</span>
+                  <span className="font-semibold">
                     {phiShip.toLocaleString("vi-VN")}₫
                   </span>
                 </div>
-                <div className="border-t border-slate-700 my-2" />
-                <div className="flex justify-between items-center text-base">
-                  <span className="font-semibold">Tổng thanh toán</span>
-                  <span className="text-lg font-bold text-emerald-400">
-                    {tongTien.toLocaleString("vi-VN")}₫
-                  </span>
+
+                <hr className="border-slate-300" />
+
+                <div className="flex justify-between text-lg font-bold text-emerald-600">
+                  <span>Tổng thanh toán</span>
+                  <span>{tongTien.toLocaleString("vi-VN")}₫</span>
                 </div>
               </div>
 
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full inline-flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold text-sm py-3 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.35)] hover:shadow-[0_14px_40px_rgba(16,185,129,0.45)]"
+                className="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 shadow-md"
               >
                 {isSubmitting ? "Đang xử lý..." : "Xác nhận đặt hàng"}
               </button>
-
-              <p className="text-[11px] text-slate-400 text-center">
-                Bằng việc tiếp tục, bạn đồng ý với các điều khoản mua hàng của
-                Camera Shop.
-              </p>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* Reusable Input Component */
+function Field({ label, name, value, onChange, isTextArea }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-slate-600">{label}</label>
+      {isTextArea ? (
+        <textarea
+          name={name}
+          value={value}
+          onChange={onChange}
+          className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-300 text-sm min-h-[80px] focus:ring-emerald-500 focus:outline-none"
+        />
+      ) : (
+        <input
+          name={name}
+          value={value}
+          onChange={onChange}
+          className="w-full bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-emerald-500 focus:outline-none"
+        />
+      )}
     </div>
   );
 }
