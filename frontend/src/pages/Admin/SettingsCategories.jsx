@@ -67,33 +67,31 @@ const SettingsCategories = () => {
   const pag = data?.pagination ?? { page: 1, pages: 1 };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-slate-50/40 min-h-screen">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Quản lý Danh mục
-        </h2>
+        <h2 className="text-2xl font-bold text-slate-900">Quản lý Danh mục</h2>
         <button
           onClick={() => setOpen(true)}
-          className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-400 hover:to-slate-500 flex items-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
+          className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-500 to-slate-600 hover:from-emerald-400 hover:to-slate-500 flex items-center gap-2 shadow-md hover:shadow-lg cursor-pointer transition"
         >
           <Plus size={16} /> Thêm danh mục
         </button>
       </div>
 
-      <div className="rounded-3xl overflow-hidden border border-slate-200/60 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-lg">
-        <table className="w-full text-sm text-slate-800 dark:text-slate-100">
-          <thead className="bg-slate-100/80 dark:bg-slate-900/70">
+      <div className="rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-lg">
+        <table className="w-full text-sm text-slate-800">
+          <thead className="bg-slate-100/80">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 ID
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Mã
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Tên danh mục
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Hành động
               </th>
             </tr>
@@ -109,7 +107,7 @@ const SettingsCategories = () => {
               <tr>
                 <td
                   colSpan={4}
-                  className="px-4 py-6 text-center text-slate-500 dark:text-slate-400"
+                  className="px-4 py-6 text-center text-slate-500"
                 >
                   Chưa có dữ liệu.
                 </td>
@@ -118,7 +116,7 @@ const SettingsCategories = () => {
               rows.map((cat) => (
                 <tr
                   key={cat.id}
-                  className="border-t border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors"
+                  className="border-t border-slate-200 hover:bg-slate-50/80 transition-colors"
                 >
                   <td className="px-4 py-3">{cat.id}</td>
                   <td className="px-4 py-3">{cat.ma_danh_muc}</td>
@@ -126,16 +124,14 @@ const SettingsCategories = () => {
                   <td className="px-4 py-3">
                     <div className="flex gap-2 justify-end">
                       <button
-                        className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer
-                                   dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                        className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer transition"
                         onClick={() => setEditing(cat)}
                         title="Sửa"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
-                        className="p-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer
-                                   dark:bg-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-800/70"
+                        className="p-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer transition"
                         onClick={() => handleDelete(cat)}
                         title="Xóa"
                       >
@@ -151,12 +147,11 @@ const SettingsCategories = () => {
       </div>
 
       {/* Pagination đơn giản */}
-      <div className="flex justify-end items-center gap-2 mt-3 text-slate-700 dark:text-slate-200">
+      <div className="flex justify-end items-center gap-2 mt-3 text-slate-700">
         <button
           disabled={pag.page <= 1}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="px-3 py-1 rounded-lg border border-slate-300 bg-white/80 hover:bg-slate-50 disabled:opacity-50 cursor-pointer
-                     dark:bg-slate-900/70 dark:border-slate-700 dark:hover:bg-slate-800"
+          className="px-3 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition"
         >
           Trước
         </button>
@@ -166,8 +161,7 @@ const SettingsCategories = () => {
         <button
           disabled={pag.page >= (pag.pages || 1)}
           onClick={() => setPage((p) => p + 1)}
-          className="px-3 py-1 rounded-lg border border-slate-300 bg-white/80 hover:bg-slate-50 disabled:opacity-50 cursor-pointer
-                     dark:bg-slate-900/70 dark:border-slate-700 dark:hover:bg-slate-800"
+          className="px-3 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition"
         >
           Sau
         </button>

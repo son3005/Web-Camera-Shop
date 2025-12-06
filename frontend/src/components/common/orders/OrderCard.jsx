@@ -1,29 +1,26 @@
-// src/components/orders/OrderCard.jsx
+// src/components/common/orders/OrderCard.jsx
 import React from "react";
 import OrderStatusBadge from "./OrderStatusBadge";
 
-// format tiền
 const fmtVND = (n) => Number(n || 0).toLocaleString("vi-VN") + "₫";
 
-// tính tổng tiền sản phẩm
 const calcProductTotal = (order) =>
-  (order.items || []).reduce((s, i) => s + i.so_luong * i.don_gia_luc_mua, 0);
+  (order?.items || []).reduce((s, i) => s + i.so_luong * i.don_gia_luc_mua, 0);
 
-// lấy phí ship từ nhiều field
 const getShippingFee = (order) =>
   Number(
-    order.phi_van_chuyen ??
-      order.phi_ship ??
-      order.tien_ship ??
-      order.phi_ship_van_chuyen ??
+    order?.phi_van_chuyen ??
+      order?.phi_ship ??
+      order?.tien_ship ??
+      order?.phi_ship_van_chuyen ??
       0
   ) || 0;
 
-// tổng thanh toán = sản phẩm + ship
 const calcGrandTotal = (order) =>
+  order?.tong_thanh_toan ??
+  order?.tong_tien ??
   calcProductTotal(order) + getShippingFee(order);
 
-// rule button
 const canCancel = (status) => ["cho_xac_nhan", "da_xac_nhan"].includes(status);
 const canRequestReturn = (status) => status === "da_giao";
 
@@ -32,66 +29,104 @@ export default function OrderCard({
   onClick,
   onCancel,
   onRequestReturn,
-  disableActions = false,
+  onReview, // callback mở modal đánh giá
 }) {
-  const shippingFee = getShippingFee(order);
-  const total = calcGrandTotal(order);
+  const handleCardClick = () => {
+    onClick?.(order);
+  };
+
+  const handleCancel = (e) => {
+    e.stopPropagation();
+    onCancel?.(order);
+  };
+
+  const handleRequestReturn = (e) => {
+    e.stopPropagation();
+    onRequestReturn?.(order);
+  };
+
+  const handleReview = (e) => {
+    e.stopPropagation();
+    onReview?.(order);
+  };
 
   return (
     <div
-      className="p-4 border rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:border-emerald-400 cursor-pointer transition"
-      onClick={onClick}
+      className="border border-slate-200 rounded-2xl px-4 py-3 bg-white/95 hover:bg-emerald-50/60 hover:border-emerald-300 hover:shadow-md hover:-translate-y-[1px] cursor-pointer transition-all flex justify-between gap-4"
+      onClick={handleCardClick}
     >
-      {/* LEFT */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm">
-          <b>Mã đơn:</b> {order.ma_don_hang}
-        </p>
-        <p className="text-xs text-slate-500">
+      {/* LEFT: thông tin đơn hàng */}
+      <div className="flex-1">
+        <div className="flex items-center gap-3">
+          <p className="font-semibold text-sm">
+            Mã đơn:{" "}
+            <span className="font-mono">
+              {order.ma_don_hang || `DH${order.id}`}
+            </span>
+          </p>
+        </div>
+
+        <p className="text-xs text-slate-500 mt-1">
           Ngày đặt:{" "}
           {order.ngay_tao
-            ? new Date(order.ngay_tao).toLocaleDateString("vi-VN")
+            ? new Date(order.ngay_tao).toLocaleString("vi-VN")
             : "-"}
         </p>
-        <p className="text-sm mt-1 line-clamp-2">
-          {(order.items || []).map((i) => i.ten_san_pham_luc_mua).join(", ")}
-        </p>
 
-        {shippingFee > 0 && (
-          <p className="text-xs text-slate-600 mt-1">
-            Phí vận chuyển: {fmtVND(shippingFee)}
+        {order.ghi_chu && (
+          <p className="text-xs text-slate-600 mt-1 line-clamp-1">
+            {order.ghi_chu}
           </p>
         )}
+
+        <p className="text-xs text-slate-500 mt-1">
+          Phí vận chuyển: {fmtVND(getShippingFee(order))}
+        </p>
+
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-xs text-slate-500">Trạng thái:</span>
+          {/* Badge đã đổi style: chỉ chữ + chấm màu */}
+          <OrderStatusBadge trang_thai={order.trang_thai} />
+        </div>
       </div>
 
-      {/* RIGHT */}
-      <div className="flex flex-col items-end gap-2">
-        <p className="font-bold">Tổng thanh toán: {fmtVND(total)}</p>
-        <OrderStatusBadge trang_thai={order.trang_thai} />
+      {/* RIGHT: tổng tiền + action */}
+      <div className="flex flex-col items-end justify-between gap-2">
+        <div className="text-right">
+          <p className="text-xs text-slate-500">Tổng thanh toán:</p>
+          <p className="font-bold text-base">{fmtVND(calcGrandTotal(order))}</p>
+        </div>
 
-        {!disableActions && (
-          <div
-            className="flex flex-wrap gap-2 text-xs mt-1"
-            onClick={(e) => e.stopPropagation()} // tránh bubble lên card
-          >
-            {canCancel(order.trang_thai) && onCancel && (
+        <div className="flex flex-wrap justify-end gap-2 text-xs">
+          {canCancel(order.trang_thai) && (
+            <button
+              onClick={handleCancel}
+              className="px-3 py-1.5 rounded-lg border border-red-500 text-red-600 bg-white hover:bg-red-50 hover:text-red-700 hover:shadow-sm transition-colors"
+            >
+              Hủy đơn
+            </button>
+          )}
+
+          {canRequestReturn(order.trang_thai) && (
+            <>
+              {onReview && (
+                <button
+                  onClick={handleReview}
+                  className="px-3 py-1.5 rounded-lg border border-emerald-500 text-emerald-600 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:shadow-sm transition-colors"
+                >
+                  Đánh giá
+                </button>
+              )}
+
               <button
-                className="px-3 py-1 rounded-full border border-red-400 text-red-600 hover:bg-red-50"
-                onClick={() => onCancel(order)}
-              >
-                Huỷ đơn
-              </button>
-            )}
-            {canRequestReturn(order.trang_thai) && onRequestReturn && (
-              <button
-                className="px-3 py-1 rounded-full border border-amber-400 text-amber-700 hover:bg-amber-50"
-                onClick={() => onRequestReturn(order)}
+                onClick={handleRequestReturn}
+                className="px-3 py-1.5 rounded-lg border border-amber-500 text-amber-700 bg-white hover:bg-amber-50 hover:text-amber-800 hover:shadow-sm transition-colors"
               >
                 Yêu cầu đổi/trả
               </button>
-            )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

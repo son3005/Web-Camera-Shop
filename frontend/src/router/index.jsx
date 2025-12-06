@@ -1,14 +1,11 @@
+// src/router/index.jsx
 import React, { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
+
 import AdminRoutes from "./AdminRoutes";
-import MainLayout from "../layouts/MainLayout";
+import MainRoutes from "./MainRoutes";
 
-const HomePage = lazy(() => import("../pages/HomePage"));
-const ProductListPage = lazy(() => import("../pages/ProductListPage"));
-const ProductDetailPage = lazy(() => import("../pages/ProductDetailPage"));
-const CartPage = lazy(() => import("../pages/CartPage"));
-const CheckoutPage = lazy(() => import("../pages/CheckoutPage"));
-
+// Các trang auth & static
 const DangNhap = lazy(() => import("../pages/Dangnhap"));
 const DangKy = lazy(() => import("../pages/Dangky"));
 const QuenMatKhau = lazy(() => import("../pages/Quenmatkhau"));
@@ -16,75 +13,16 @@ const DoiMatKhau = lazy(() => import("../pages/Doimatkhau"));
 const ChinhSachPage = lazy(() => import("../pages/ChinhSachPage"));
 const LienHePage = lazy(() => import("../pages/LienHePage"));
 
-
 const Fallback = <div className="container mx-auto px-4 py-10">Đang tải…</div>;
 
-
 const router = createBrowserRouter([
+  // 🌟 Admin
   AdminRoutes,
-  {
-    path: "/",
-    element: <MainLayout />,
-    children: [
-      {
-        index: true,
-        element: (
-          <Suspense fallback={Fallback}>
-            <HomePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "products",
-        element: (
-          <Suspense fallback={Fallback}>
-            <ProductListPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "products/:productId",
-        element: (
-          <Suspense fallback={Fallback}>
-            <ProductDetailPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "cart",
-        element: (
-          <Suspense fallback={Fallback}>
-            <CartPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "checkout",
-        element: (
-          <Suspense fallback={Fallback}>
-            <CheckoutPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "chinh-sach",
-        element: (
-          <Suspense fallback={Fallback}>
-            <ChinhSachPage />
-          </Suspense>
-        ),
-      },
 
-      {
-        path: "lien-he",
-        element: (
-          <Suspense fallback={Fallback}>
-            <LienHePage />
-          </Suspense>
-        ),
-      },
-    ],
-  },
+  // 🌟 Client main site (/, products, cart, checkout, tai-khoan, payment-result,…)
+  MainRoutes,
+
+  // 🌟 Auth pages
   {
     path: "/dangnhap",
     element: (
@@ -118,14 +56,29 @@ const router = createBrowserRouter([
     ),
   },
 
+  // 🌟 Các trang tĩnh ngoài layout chính (nếu bạn muốn để riêng cũng được)
+  {
+    path: "/chinh-sach",
+    element: (
+      <Suspense fallback={Fallback}>
+        <ChinhSachPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/lien-he",
+    element: (
+      <Suspense fallback={Fallback}>
+        <LienHePage />
+      </Suspense>
+    ),
+  },
 
-  // Có thể thêm trang 404 nếu cần
+  // (optional) 404 custom
   // {
   //   path: "*",
   //   element: <NotFoundPage />,
   // },
-
-
 ]);
 
 export default router;

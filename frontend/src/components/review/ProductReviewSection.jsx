@@ -33,18 +33,16 @@ export default function ProductReviewSection({ sanPhamId }) {
 
       {/* Filter theo số sao */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-slate-600 dark:text-slate-300">
-          Lọc theo số sao:
-        </span>
+        <span className="text-sm text-slate-600">Lọc theo số sao:</span>
         <button
           onClick={() => {
             setStarFilter(null);
             setPage(1);
           }}
-          className={`px-3 py-1 rounded-full text-xs border ${
+          className={`px-3 py-1 rounded-full text-xs border cursor-pointer transition ${
             starFilter == null
-              ? "bg-emerald-500 text-white border-emerald-500"
-              : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+              ? "bg-emerald-500 text-white border-emerald-500 shadow-sm hover:bg-emerald-600"
+              : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
           }`}
         >
           Tất cả
@@ -56,10 +54,10 @@ export default function ProductReviewSection({ sanPhamId }) {
               setStarFilter(s);
               setPage(1);
             }}
-            className={`px-3 py-1 rounded-full text-xs border flex items-center gap-1 ${
+            className={`px-3 py-1 rounded-full text-xs border flex items-center gap-1 cursor-pointer transition ${
               starFilter === s
-                ? "bg-emerald-500 text-white border-emerald-500"
-                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                ? "bg-emerald-500 text-white border-emerald-500 shadow-sm hover:bg-emerald-600"
+                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
             }`}
           >
             {s} <span className="text-amber-400">★</span>
@@ -88,10 +86,10 @@ export default function ProductReviewSection({ sanPhamId }) {
               <button
                 key={current}
                 onClick={() => setPage(current)}
-                className={`px-3 py-1 rounded-lg text-sm border ${
+                className={`px-3 py-1 rounded-lg text-sm border cursor-pointer transition ${
                   active
-                    ? "bg-emerald-500 text-white border-emerald-500"
-                    : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                    ? "bg-emerald-500 text-white border-emerald-500 shadow-sm hover:bg-emerald-600"
+                    : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
                 }`}
               >
                 {current}

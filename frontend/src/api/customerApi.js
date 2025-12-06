@@ -18,11 +18,13 @@ const mapBackendStatusToLabel = (trang_thai) => {
   return "Active";
 };
 
+// ⚠️ Quan trọng: backend expect value của Enum (lowercase),
+// nên ta phải gửi 'kich_hoat' / 'khoa' chứ không phải 'KICH_HOAT' / 'KHOA'
 const mapLabelToBackendStatus = (status) => {
   if (!status) return null;
   const v = String(status).toLowerCase();
-  if (v === "blocked") return "KHOA";
-  if (v === "active") return "KICH_HOAT";
+  if (v === "blocked") return "khoa";
+  if (v === "active") return "kich_hoat";
   return null;
 };
 
@@ -52,9 +54,9 @@ async function fetchCustomersFromApi(params = {}) {
   }
 
   // Map filter trạng thái:
-  // - Nếu chỉ chọn Active -> KICH_HOAT
-  // - Nếu chỉ chọn Blocked -> KHOA
-  // - Nếu chọn cả 2 hoặc để trống thì không gửi filter trạng_thai
+  // - Nếu chỉ chọn Active -> kich_hoat
+  // - Nếu chỉ chọn Blocked -> khoa
+  // - Nếu chọn cả 2 hoặc để trống thì không gửi filter trang_thai
   if (Array.isArray(statuses) && statuses.length === 1) {
     const st = mapLabelToBackendStatus(statuses[0]);
     if (st) backendParams.trang_thai = st;
@@ -99,7 +101,8 @@ async function fetchCustomersFromApi(params = {}) {
   const activeCount = items.filter((c) => c.status === "Active").length;
   const blockedCount = items.filter((c) => c.status === "Blocked").length;
   const returningCount = items.filter((c) => (c.orderCount || 0) > 1).length;
-  // Tạm coi VIP là khách chi >= 10 triệu
+  // Tạm coi VIP là khách chi >= 10 triệu (UI hiện tại đã bỏ card này,
+  // nhưng vẫn giữ tính toán phòng khi dùng nơi khác)
   const vipCount = items.filter(
     (c) => (c.totalSpend || 0) >= 10_000_000
   ).length;
@@ -251,7 +254,7 @@ export async function fetchCustomerById(customerId) {
 // ======================================================
 // 4) Cập nhật trạng thái khách hàng
 //    PATCH /api/khach-hang/{id}/trang-thai
-//    body: { trang_thai: "KICH_HOAT" | "KHOA" }
+//    body: { trang_thai: "kich_hoat" | "khoa" }
 // ======================================================
 export async function updateCustomerStatus({ customerId, status }) {
   if (!customerId) throw new Error("Thiếu customerId");

@@ -1,5 +1,5 @@
 // src/components/product/ProductSpecsTable.jsx
-// Hiển thị toàn bộ thong_so_ky_thuat dạng key/value (phẳng)
+// Bảng thông số kiểu LIGHT modern
 
 export default function ProductSpecsTable({ specs }) {
   if (!specs || Object.keys(specs).length === 0) return null;
@@ -14,18 +14,21 @@ export default function ProductSpecsTable({ specs }) {
       .replace(/^\w/, (c) => c.toUpperCase());
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg">
-      <table className="min-w-full text-sm text-left border-collapse">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
+      <table className="min-w-full text-sm text-left">
         <tbody>
-          {entries.map(([k, v]) => (
+          {entries.map(([k, v], index) => (
             <tr
               key={k}
-              className="border-b border-gray-200 dark:border-slate-700"
+              className={`
+                border-b border-slate-200 
+                ${index % 2 === 0 ? "bg-slate-50/50" : "bg-white"}
+              `}
             >
-              <td className="px-4 py-2 w-1/3 text-slate-700 dark:text-slate-300">
+              <td className="px-4 py-2 w-1/3 text-slate-600 font-medium">
                 {nice(k)}
               </td>
-              <td className="px-4 py-2 font-medium text-slate-900 dark:text-slate-100">
+              <td className="px-4 py-2 text-slate-900 font-semibold">
                 {String(v ?? "—")}
               </td>
             </tr>

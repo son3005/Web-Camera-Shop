@@ -1,21 +1,19 @@
 // src/components/home/HeroCarousel.jsx
-// Banner dùng API ảnh trình chiếu; fallback nếu chưa có dữ liệu
+// Banner slideshow dùng API ảnh trình chiếu (public)
 
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { getPublicSlides } from "../../api/slideshowApi";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination } from "swiper/modules";
 
-const FALLBACK_SLIDE = {
-  image:
-    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1600",
-  title: "Tuần lễ khuyến mãi máy ảnh",
-  href: "/products",
-  subtitle: "Hàng chính hãng • Giá tốt • Giao nhanh",
-};
+import "swiper/css";
+import "swiper/css/pagination";
+
+import { getPublicSlides } from "../../api/slideshowApi";
 
 export default function HeroCarousel() {
   const {
-    data: slides,
+    data: slides = [],
     isLoading,
     isError,
   } = useQuery({
@@ -23,72 +21,93 @@ export default function HeroCarousel() {
     queryFn: getPublicSlides,
   });
 
-  const activeSlides = (slides || []).filter((s) => s.da_kich_hoat !== false);
-  const slideRaw = activeSlides[0] || slides?.[0];
+  const activeSlides = Array.isArray(slides) ? slides : [];
 
-  const slide = slideRaw
-    ? {
-        image: slideRaw.duong_dan_anh || FALLBACK_SLIDE.image,
-        title: slideRaw.tieu_de || FALLBACK_SLIDE.title,
-        subtitle: slideRaw.mo_ta || FALLBACK_SLIDE.subtitle,
-        href: slideRaw.lien_ket || FALLBACK_SLIDE.href,
-      }
-    : FALLBACK_SLIDE;
-
+  // =============== Đang tải ===============
   if (isLoading) {
     return (
-      <div className="relative rounded-2xl overflow-hidden shadow h-40 md:h-64 bg-slate-200 dark:bg-slate-800 animate-pulse" />
+      <div className="relative rounded-3xl overflow-hidden shadow-xl h-40 md:h-64 lg:h-72 bg-slate-200 animate-pulse" />
     );
   }
 
+  // =============== Lỗi API ===============
   if (isError) {
-    // fallback dùng banner mặc định
     return (
-      <div className="relative rounded-2xl overflow-hidden shadow">
-        <img
-          src={FALLBACK_SLIDE.image}
-          alt={FALLBACK_SLIDE.title}
-          className="w-full aspect-[3/1] object-cover"
-          loading="eager"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent dark:from-black/60 dark:via-black/30" />
-        <div className="absolute inset-0 flex flex-col items-start justify-center p-6 md:p-10 text-white">
-          <h3 className="text-2xl md:text-3xl font-semibold drop-shadow">
-            {FALLBACK_SLIDE.title}
-          </h3>
-          <p className="opacity-90 mt-1">{FALLBACK_SLIDE.subtitle}</p>
-          <Link
-            to={FALLBACK_SLIDE.href}
-            className="mt-4 btn-emerald rounded-full shadow-lg"
-          >
-            Xem ưu đãi
-          </Link>
-        </div>
+      <div className="relative rounded-3xl overflow-hidden shadow-xl flex items-center justify-center h-40 md:h-64 lg:h-72 bg-gradient-to-r from-rose-50 via-amber-50 to-emerald-50 border border-rose-100">
+        <p className="text-sm md:text-base text-slate-700">
+          Không tải được banner. Vui lòng thử lại sau.
+        </p>
       </div>
     );
   }
 
-  return (
-    <div className="relative rounded-2xl overflow-hidden shadow">
-      <img
-        src={slide.image}
-        alt={slide.title}
-        className="w-full aspect-[3/1] object-cover"
-        loading="eager"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent dark:from-black/60 dark:via-black/30" />
-      <div className="absolute inset-0 flex flex-col items-start justify-center p-6 md:p-10 text-white">
-        <h3 className="text-2xl md:text-3xl font-semibold drop-shadow">
-          {slide.title}
-        </h3>
-        <p className="opacity-90 mt-1">{slide.subtitle}</p>
-        <Link
-          to={slide.href}
-          className="mt-4 btn-emerald rounded-full shadow-lg"
-        >
-          Xem ưu đãi
-        </Link>
+  // =============== Không có banner nào trong DB ===============
+  if (activeSlides.length === 0) {
+    return (
+      <div className="relative rounded-3xl overflow-hidden shadow-xl flex flex-col items-center justify-center h-40 md:h-64 lg:h-72 bg-gradient-to-r from-emerald-50 via-emerald-100 to-sky-50 border border-emerald-100">
+        <p className="text-base md:text-lg font-semibold text-slate-900">
+          Chưa có banner nào được cấu hình.
+        </p>
+        <p className="mt-1 text-xs md:text-sm text-slate-500">
+          Hãy vào Admin &gt; Cài đặt &gt; Ảnh trình chiếu để thêm banner.
+        </p>
       </div>
+    );
+  }
+
+  // =============== Carousel chính dùng dữ liệu thật ===============
+  return (
+    <div className="relative rounded-3xl overflow-hidden shadow-xl">
+      <Swiper
+        modules={[Autoplay, Pagination]}
+        autoplay={{
+          delay: 2500,
+          disableOnInteraction: false,
+        }}
+        loop={activeSlides.length > 1}
+        pagination={{
+          clickable: true,
+        }}
+        className="w-full"
+      >
+        {activeSlides.map((slide, idx) => {
+          const image = slide.hinh_anh_url || "";
+          const title = slide.tieu_de || "";
+          const href = slide.lien_ket || "";
+
+          const content = (
+            <>
+              <img
+                src={image}
+                alt={title || `Banner ${idx + 1}`}
+                className="w-full aspect-[3/1] object-cover"
+                loading={idx === 0 ? "eager" : "lazy"}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-transparent" />
+              <div className="absolute inset-0 flex flex-col items-start justify-center px-6 md:px-10 lg:px-14 py-6 text-white">
+                {title && (
+                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-semibold drop-shadow max-w-xl">
+                    {title}
+                  </h3>
+                )}
+                {/* ĐÃ BỎ subtitle và nút "Khám phá ngay" */}
+              </div>
+            </>
+          );
+
+          return (
+            <SwiperSlide key={slide.id ?? idx}>
+              {href ? (
+                <Link to={href} className="block relative">
+                  {content}
+                </Link>
+              ) : (
+                <div className="relative">{content}</div>
+              )}
+            </SwiperSlide>
+          );
+        })}
+      </Swiper>
     </div>
   );
 }

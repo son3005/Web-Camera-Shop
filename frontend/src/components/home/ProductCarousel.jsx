@@ -1,32 +1,49 @@
 // src/components/home/ProductCarousel.jsx
-// Carousel sản phẩm dùng Swiper, lấy dữ liệu từ getProducts()
+// Carousel sản phẩm dùng Swiper, map thẳng API backend
 
 import { useQuery } from "@tanstack/react-query";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
-import { getProducts } from "../../api/productApi";
+
+import {
+  getProducts,
+  getFeaturedProducts,
+  getNewestProducts,
+} from "../../api/productApi";
 import ProductCard from "../common/ProductCard";
 
 export default function ProductCarousel({
   title = "Sản phẩm",
   sort = "",
   carouselId = "default",
+  mode = "list", // "list" | "featured" | "newest"
+  limit = 12,
 }) {
   const { data, isLoading } = useQuery({
-    queryKey: ["products-carousel", { sort }],
-    queryFn: () => getProducts({ sort, limit: 12 }),
+    queryKey: ["products-carousel", { mode, sort, limit }],
+    queryFn: () => {
+      if (mode === "featured") {
+        return getFeaturedProducts(limit);
+      }
+      if (mode === "newest") {
+        return getNewestProducts(limit);
+      }
+      return getProducts({ sort, limit });
+    },
   });
 
-  const products = data?.items || [];
+  const products =
+    mode === "list" ? data?.items || [] : Array.isArray(data) ? data : [];
+
   const prevId = `carousel-prev-${carouselId}`;
   const nextId = `carousel-next-${carouselId}`;
 
   return (
     <section className="relative py-6">
       <div className="flex items-end justify-between mb-5 px-2">
-        <h2 className="text-lg md:text-xl font-semibold uppercase tracking-wide text-gray-900 dark:text-slate-100">
+        <h2 className="text-lg md:text-xl font-semibold uppercase tracking-wide text-slate-900">
           {title}
         </h2>
       </div>
@@ -70,14 +87,14 @@ export default function ProductCarousel({
 
             <button
               id={prevId}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 p-3 rounded-full bg-gray-200/70 dark:bg-slate-700/70 hover:bg-emerald-500 hover:text-white shadow transition"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 p-3 rounded-full bg-white/90 border border-slate-200 text-slate-600 hover:bg-emerald-500 hover:text-white shadow-md transition"
             >
               ❮
             </button>
 
             <button
               id={nextId}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 p-3 rounded-full bg-gray-200/70 dark:bg-slate-700/70 hover:bg-emerald-500 hover:text-white shadow transition"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 p-3 rounded-full bg-white/90 border border-slate-200 text-slate-600 hover:bg-emerald-500 hover:text-white shadow-md transition"
             >
               ❯
             </button>

@@ -97,9 +97,9 @@ export default function MyReviewsSection() {
             setStarFilter("");
             setPage(1);
           }}
-          className={`px-3 py-1 rounded-full text-xs border ${
+          className={`px-3 py-1 rounded-full text-xs border cursor-pointer transition ${
             !starFilter
-              ? "bg-emerald-500 text-white border-emerald-500"
+              ? "bg-emerald-500 text-white border-emerald-500 shadow-sm hover:bg-emerald-600"
               : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
           }`}
         >
@@ -113,9 +113,9 @@ export default function MyReviewsSection() {
               setStarFilter(String(s));
               setPage(1);
             }}
-            className={`px-3 py-1 rounded-full text-xs border flex items-center gap-1 ${
+            className={`px-3 py-1 rounded-full text-xs border flex items-center gap-1 cursor-pointer transition ${
               starFilter === String(s)
-                ? "bg-emerald-500 text-white border-emerald-500"
+                ? "bg-emerald-500 text-white border-emerald-500 shadow-sm hover:bg-emerald-600"
                 : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
             }`}
           >
@@ -159,11 +159,13 @@ export default function MyReviewsSection() {
             return (
               <div
                 key={r.id}
-                className="border rounded-2xl p-4 space-y-2 bg-slate-50/60"
+                className="border border-slate-200 rounded-2xl p-4 space-y-2 bg-white/90 hover:shadow-md transition-shadow"
               >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                   <div>
-                    <p className="text-sm font-semibold">{productName}</p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {productName}
+                    </p>
                     {orderCode && (
                       <p className="text-xs text-slate-500">
                         Mã đơn: {orderCode}
@@ -188,7 +190,7 @@ export default function MyReviewsSection() {
                         onClick={() =>
                           setEditingId((prev) => (prev === r.id ? null : r.id))
                         }
-                        className="px-2 py-1 rounded-lg border border-emerald-500 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+                        className="px-2 py-1 rounded-lg border border-emerald-500 text-emerald-600 bg-white cursor-pointer hover:bg-emerald-50 hover:border-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isEditing ? "Đóng" : "Sửa đánh giá"}
                       </button>
@@ -196,7 +198,7 @@ export default function MyReviewsSection() {
                         type="button"
                         disabled={isBusy}
                         onClick={() => handleDelete(r.id)}
-                        className="px-2 py-1 rounded-lg border border-red-500 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        className="px-2 py-1 rounded-lg border border-red-500 text-red-600 bg-white cursor-pointer hover:bg-red-50 hover:border-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Xóa
                       </button>
@@ -233,7 +235,7 @@ export default function MyReviewsSection() {
             type="button"
             disabled={pagination.page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1 rounded-lg border border-slate-300 disabled:opacity-40"
+            className="px-3 py-1 rounded-lg border border-slate-300 bg-white cursor-pointer hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Trước
           </button>
@@ -250,7 +252,7 @@ export default function MyReviewsSection() {
                 Math.min(p + 1, pagination.pages || Number.MAX_SAFE_INTEGER)
               )
             }
-            className="px-3 py-1 rounded-lg border border-slate-300 disabled:opacity-40"
+            className="px-3 py-1 rounded-lg border border-slate-300 bg-white cursor-pointer hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Sau
           </button>

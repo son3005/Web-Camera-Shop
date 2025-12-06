@@ -24,18 +24,21 @@ export default function ReviewForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="surface-panel p-4 space-y-3 mt-4">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white/95 border border-slate-200 rounded-2xl p-4 space-y-3 mt-4 shadow-sm"
+    >
       <div className="flex items-center gap-3">
-        <span className="text-sm font-medium">Đánh giá của bạn:</span>
+        <span className="text-sm font-medium text-slate-800">
+          Đánh giá của bạn:
+        </span>
         <StarRating
           value={rating}
           onChange={setRating}
           readOnly={disabled || submitting}
           size={20}
         />
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {rating} / 5
-        </span>
+        <span className="text-xs text-slate-500">{rating} / 5</span>
       </div>
 
       <div>
@@ -56,7 +59,7 @@ export default function ReviewForm({
         <button
           type="submit"
           disabled={submitting || disabled}
-          className="btn-emerald disabled:opacity-60"
+          className="btn-emerald cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {submitting ? "Đang gửi..." : "Gửi đánh giá"}
         </button>

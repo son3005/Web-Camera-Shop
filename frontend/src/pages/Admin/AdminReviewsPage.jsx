@@ -1,5 +1,5 @@
 // src/pages/Admin/AdminReviewsPage.jsx
-// Trang quản lý đánh giá sản phẩm cho Admin
+// Trang quản lý đánh giá sản phẩm cho Admin — LUÔN dùng theme Light
 
 import React, { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import {
   adminMoKhoaDanhGia,
   adminKhoaDanhGia,
 } from "../../api/reviewApi";
+
 import {
   RefreshCw,
   CheckCircle2,
@@ -25,6 +26,7 @@ function formatDate(dt) {
   return d.toLocaleString("vi-VN");
 }
 
+// ================== BADGE TRẠNG THÁI ==================
 function StatusBadge({ value }) {
   const map = {
     da_duyet: {
@@ -44,6 +46,7 @@ function StatusBadge({ value }) {
     label: value || "Không rõ",
     className: "bg-slate-100 text-slate-700",
   };
+
   return (
     <span
       className={`px-2 py-1 text-xs rounded-full font-medium ${item.className}`}
@@ -53,11 +56,11 @@ function StatusBadge({ value }) {
   );
 }
 
+// ================== ICON SAO ==================
 function StarsRow({ value }) {
-  const arr = [1, 2, 3, 4, 5];
   return (
     <div className="flex items-center gap-0.5">
-      {arr.map((i) => (
+      {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
           size={14}
@@ -72,13 +75,12 @@ function StarsRow({ value }) {
   );
 }
 
+// ================== COMPONENT CHÍNH ==================
 export default function AdminReviewsPage() {
   const queryClient = useQueryClient();
-
   const [page, setPage] = useState(1);
   const perPage = 20;
 
-  // Bộ lọc
   const [filters, setFilters] = useState({
     diem_danh_gia: "",
     trang_thai: "",
@@ -90,39 +92,24 @@ export default function AdminReviewsPage() {
   });
 
   const buildParams = () => {
-    const params = {
-      page,
-      per_page: perPage,
-    };
+    const params = { page, per_page: perPage };
 
-    if (filters.diem_danh_gia) {
+    if (filters.diem_danh_gia)
       params.diem_danh_gia = Number(filters.diem_danh_gia);
-    }
-    if (filters.trang_thai) {
-      params.trang_thai = filters.trang_thai;
-    }
-    if (filters.san_pham_id) {
-      params.san_pham_id = Number(filters.san_pham_id);
-    }
-    if (filters.nguoi_dung_id) {
+    if (filters.trang_thai) params.trang_thai = filters.trang_thai;
+    if (filters.san_pham_id) params.san_pham_id = Number(filters.san_pham_id);
+    if (filters.nguoi_dung_id)
       params.nguoi_dung_id = Number(filters.nguoi_dung_id);
-    }
-    if (filters.tu_ngay) {
-      params.tu_ngay = filters.tu_ngay;
-    }
-    if (filters.den_ngay) {
-      params.den_ngay = filters.den_ngay;
-    }
-    if (filters.co_binh_luan === "co") {
-      params.co_binh_luan = true;
-    } else if (filters.co_binh_luan === "khong") {
-      params.co_binh_luan = false;
-    }
+    if (filters.tu_ngay) params.tu_ngay = filters.tu_ngay;
+    if (filters.den_ngay) params.den_ngay = filters.den_ngay;
+
+    if (filters.co_binh_luan === "co") params.co_binh_luan = true;
+    else if (filters.co_binh_luan === "khong") params.co_binh_luan = false;
 
     return params;
   };
 
-  // Query danh sách review
+  // ================== QUERY ==================
   const {
     data: listRes,
     isLoading,
@@ -142,10 +129,9 @@ export default function AdminReviewsPage() {
     per_page: perPage,
   };
 
-  // Query thống kê tổng quan
   const { data: statsRes } = useQuery({
     queryKey: ["admin-review-stats"],
-    queryFn: () => adminThongKeDanhGia(),
+    queryFn: adminThongKeDanhGia,
   });
 
   const stats = statsRes || {
@@ -155,37 +141,27 @@ export default function AdminReviewsPage() {
     phan_tram_theo_sao: {},
   };
 
-  // Mutations: duyệt / khóa
   const moKhoaMut = useMutation({
-    mutationFn: (id) => adminMoKhoaDanhGia(id),
+    mutationFn: adminMoKhoaDanhGia,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-reviews"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-review-stats"] });
-    },
-    onError: (err) => {
-      alert(
-        err?.response?.data?.error || err?.message || "Lỗi khi mở khóa đánh giá"
-      );
+      queryClient.invalidateQueries(["admin-reviews"]);
+      queryClient.invalidateQueries(["admin-review-stats"]);
     },
   });
 
   const khoaMut = useMutation({
-    mutationFn: (id) => adminKhoaDanhGia(id),
+    mutationFn: adminKhoaDanhGia,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-reviews"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-review-stats"] });
-    },
-    onError: (err) => {
-      alert(
-        err?.response?.data?.error || err?.message || "Lỗi khi khóa đánh giá"
-      );
+      queryClient.invalidateQueries(["admin-reviews"]);
+      queryClient.invalidateQueries(["admin-review-stats"]);
     },
   });
 
   const isMutating = moKhoaMut.isLoading || khoaMut.isLoading;
 
+  // ================== RESET & APPLY ==================
   const handleApplyFilter = (e) => {
-    e?.preventDefault?.();
+    e.preventDefault();
     setPage(1);
     refetch();
   };
@@ -204,208 +180,153 @@ export default function AdminReviewsPage() {
     refetch();
   };
 
+  // ================== UI ==================
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
+    <div className="p-6 space-y-6 bg-gradient-to-br from-emerald-50 via-white to-slate-100 min-h-screen">
+      {/* HEADER */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-slate-900">
             Quản lý đánh giá sản phẩm
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-slate-600">
             Xem, lọc, duyệt hoặc khóa các đánh giá của khách hàng.
           </p>
         </div>
+
         <button
-          onClick={() => refetch()}
-          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm hover:bg-black"
+          onClick={refetch}
+          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm hover:bg-black hover:shadow-md cursor-pointer transition-all"
         >
           <RefreshCw size={16} />
           Làm mới
         </button>
       </div>
 
-      {/* Thống kê tổng quan */}
+      {/* ===== THỐNG KÊ ===== */}
       <div className="grid md:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs uppercase text-slate-500 mb-1">
             Tổng số đánh giá
           </p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
-            {stats.tong_danh_gia || 0}
+          <p className="text-2xl font-bold text-slate-900">
+            {stats.tong_danh_gia}
           </p>
           <p className="text-xs text-slate-500 mt-1">
             Điểm trung bình:{" "}
             <span className="font-semibold text-amber-500">
-              {stats.trung_binh?.toFixed
-                ? stats.trung_binh.toFixed(1)
-                : stats.trung_binh || 0}
+              {stats.trung_binh?.toFixed?.(1) ?? stats.trung_binh}
             </span>{" "}
             / 5
           </p>
         </div>
 
-        {[5, 4, 3, 2, 1].map((sao) => {
-          const soLuong =
-            stats.thong_ke_theo_sao?.[sao] ||
-            stats.thong_ke_theo_sao?.[String(sao)] ||
-            0;
-          const phanTram =
-            stats.phan_tram_theo_sao?.[sao] ||
-            stats.phan_tram_theo_sao?.[String(sao)] ||
-            0;
-          return (
-            <div
-              key={sao}
-              className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex items-center justify-between"
-            >
-              <div>
-                <p className="text-xs text-slate-500 mb-1">{sao} sao</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {soLuong}
-                </p>
-              </div>
-              <div className="text-right">
-                <StarsRow value={sao} />
-                <p className="text-xs text-slate-500 mt-1">{phanTram}%</p>
-              </div>
+        {[5, 4, 3, 2, 1].map((sao) => (
+          <div
+            key={sao}
+            className="rounded-2xl border border-slate-200 bg-white p-4 flex items-center justify-between shadow-sm"
+          >
+            <div>
+              <p className="text-xs text-slate-500 mb-1">{sao} sao</p>
+              <p className="text-lg font-semibold text-slate-900">
+                {stats.thong_ke_theo_sao?.[sao] || 0}
+              </p>
             </div>
-          );
-        })}
+            <div className="text-right">
+              <StarsRow value={sao} />
+              <p className="text-xs text-slate-500 mt-1">
+                {stats.phan_tram_theo_sao?.[sao] || 0}%
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Bộ lọc */}
+      {/* ===== BỘ LỌC ===== */}
       <form
         onSubmit={handleApplyFilter}
-        className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3"
+        className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm"
       >
         <div className="flex items-center gap-2 text-sm font-semibold mb-1">
-          <Filter size={16} />
-          Bộ lọc
+          <Filter size={16} /> Bộ lọc
         </div>
 
         <div className="grid md:grid-cols-4 gap-3 text-sm">
-          <div>
-            <label className="block text-xs mb-1">Điểm đánh giá</label>
-            <select
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5"
-              value={filters.diem_danh_gia}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, diem_danh_gia: e.target.value }))
-              }
-            >
-              <option value="">Tất cả</option>
-              <option value="5">5 sao</option>
-              <option value="4">4 sao</option>
-              <option value="3">3 sao</option>
-              <option value="2">2 sao</option>
-              <option value="1">1 sao</option>
-            </select>
-          </div>
+          {/* Các input filter */}
+          {[
+            [
+              "Điểm đánh giá",
+              "diem_danh_gia",
+              "select",
+              ["5", "4", "3", "2", "1"],
+            ],
+            [
+              "Trạng thái",
+              "trang_thai",
+              "select",
+              ["da_duyet", "cho_duyet", "bi_tu_choi"],
+            ],
+            ["Sản phẩm (ID)", "san_pham_id", "number"],
+            ["Người dùng (ID)", "nguoi_dung_id", "number"],
+            ["Từ ngày", "tu_ngay", "date"],
+            ["Đến ngày", "den_ngay", "date"],
+            ["Bình luận", "co_binh_luan", "select", ["co", "khong"]],
+          ].map(([label, key, type, options]) => (
+            <div key={key}>
+              <label className="block text-xs mb-1">{label}</label>
 
-          <div>
-            <label className="block text-xs mb-1">Trạng thái</label>
-            <select
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5"
-              value={filters.trang_thai}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, trang_thai: e.target.value }))
-              }
-            >
-              <option value="">Tất cả</option>
-              <option value="da_duyet">Đã duyệt</option>
-              <option value="cho_duyet">Chờ duyệt</option>
-              <option value="bi_tu_choi">Bị từ chối</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs mb-1">Sản phẩm (ID)</label>
-            <input
-              type="number"
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5"
-              value={filters.san_pham_id}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, san_pham_id: e.target.value }))
-              }
-              placeholder="VD: 123"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs mb-1">Người dùng (ID)</label>
-            <input
-              type="number"
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5"
-              value={filters.nguoi_dung_id}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, nguoi_dung_id: e.target.value }))
-              }
-              placeholder="VD: 456"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs mb-1">Từ ngày</label>
-            <input
-              type="date"
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5"
-              value={filters.tu_ngay}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, tu_ngay: e.target.value }))
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs mb-1">Đến ngày</label>
-            <input
-              type="date"
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5"
-              value={filters.den_ngay}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, den_ngay: e.target.value }))
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs mb-1">Bình luận</label>
-            <select
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5"
-              value={filters.co_binh_luan}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, co_binh_luan: e.target.value }))
-              }
-            >
-              <option value="">Tất cả</option>
-              <option value="co">Chỉ có bình luận</option>
-              <option value="khong">Không có bình luận</option>
-            </select>
-          </div>
+              {type === "select" ? (
+                <select
+                  value={filters[key]}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, [key]: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 cursor-pointer hover:bg-slate-50 transition"
+                >
+                  <option value="">Tất cả</option>
+                  {options.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={type}
+                  value={filters[key]}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, [key]: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 hover:bg-slate-50 transition"
+                />
+              )}
+            </div>
+          ))}
         </div>
 
-        <div className="flex justify-end gap-2 mt-2">
+        {/* BUTTONS */}
+        <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={handleResetFilter}
-            className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-sm"
+            className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-sm hover:bg-slate-50 hover:shadow-sm cursor-pointer transition"
           >
             Xoá bộ lọc
           </button>
+
           <button
             type="submit"
-            className="px-4 py-1.5 rounded-lg bg-emerald-600 text-white text-sm inline-flex items-center gap-1"
+            className="px-4 py-1.5 rounded-lg bg-emerald-600 text-white text-sm inline-flex items-center gap-1 hover:bg-emerald-500 hover:shadow-md cursor-pointer transition"
           >
             <Search size={14} /> Áp dụng
           </button>
         </div>
       </form>
 
-      {/* Bảng danh sách đánh giá */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+      {/* ===== BẢNG ===== */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800">
+          <thead className="bg-slate-50">
             <tr>
               <th className="px-3 py-2 text-left w-14">ID</th>
               <th className="px-3 py-2 text-left">Sản phẩm</th>
@@ -417,43 +338,39 @@ export default function AdminReviewsPage() {
               <th className="px-3 py-2 text-right w-40">Hành động</th>
             </tr>
           </thead>
+
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center">
-                  Đang tải dữ liệu...
+                <td colSpan={8} className="text-center py-6">
+                  Đang tải...
                 </td>
               </tr>
             )}
 
-            {isError && !isLoading && (
+            {!isLoading && isError && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-red-500">
-                  Lỗi khi tải danh sách đánh giá.
+                <td colSpan={8} className="text-center py-6 text-red-500">
+                  Lỗi tải dữ liệu
                 </td>
               </tr>
             )}
 
-            {!isLoading && !isError && rows.length === 0 && (
+            {!isLoading && rows.length === 0 && (
               <tr>
-                <td
-                  colSpan={8}
-                  className="px-4 py-6 text-center text-slate-500"
-                >
-                  Chưa có đánh giá nào phù hợp.
+                <td colSpan={8} className="text-center py-6 text-slate-500">
+                  Không có đánh giá nào
                 </td>
               </tr>
             )}
 
             {!isLoading &&
-              !isError &&
+              rows.length > 0 &&
               rows.map((dg) => {
                 const productName =
                   dg.san_pham?.ten_san_pham ||
                   dg.ten_san_pham ||
                   `SP #${dg.san_pham_id}`;
-
-                const productId = dg.san_pham?.id || dg.san_pham_id;
 
                 const userName =
                   dg.nguoi_dung?.ten ||
@@ -461,79 +378,76 @@ export default function AdminReviewsPage() {
                   dg.nguoi_dung?.ten_nguoi_dung ||
                   `User #${dg.nguoi_dung_id}`;
 
-                const userId = dg.nguoi_dung?.id || dg.nguoi_dung_id;
-
                 return (
                   <tr
                     key={dg.id}
-                    className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/70 dark:hover:bg-slate-800/60"
+                    className="border-t border-slate-100 hover:bg-slate-50 transition cursor-pointer"
                   >
-                    <td className="px-3 py-2 align-top font-mono text-xs">
-                      #{dg.id}
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <div className="font-semibold text-slate-900 dark:text-slate-50">
+                    <td className="px-3 py-2 font-mono text-xs">#{dg.id}</td>
+
+                    <td className="px-3 py-2">
+                      <p className="font-semibold text-slate-900">
                         {productName}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        ID SP: {productId} • CTDH: {dg.chi_tiet_don_hang_id}
-                      </div>
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        ID SP: {dg.san_pham_id} • CTDH:{" "}
+                        {dg.chi_tiet_don_hang_id}
+                      </p>
                     </td>
-                    <td className="px-3 py-2 align-top">
-                      <div className="font-medium text-slate-900 dark:text-slate-50">
-                        {userName}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        ID: {userId}
-                        {dg.nguoi_dung?.email
-                          ? ` • ${dg.nguoi_dung.email}`
-                          : ""}
-                      </div>
+
+                    <td className="px-3 py-2">
+                      <p className="font-medium text-slate-900">{userName}</p>
+                      <p className="text-xs text-slate-500">
+                        ID: {dg.nguoi_dung_id}{" "}
+                        {dg.nguoi_dung?.email ? `• ${dg.nguoi_dung.email}` : ""}
+                      </p>
                     </td>
-                    <td className="px-3 py-2 align-top">
-                      <div className="flex items-center gap-1">
-                        <span className="font-semibold text-amber-500">
-                          {dg.diem_danh_gia}
-                        </span>
-                        <span className="text-xs text-slate-500">/ 5</span>
-                      </div>
+
+                    <td className="px-3 py-2">
+                      <span className="font-bold text-amber-500">
+                        {dg.diem_danh_gia}
+                      </span>{" "}
+                      / 5
                       <StarsRow value={dg.diem_danh_gia} />
                     </td>
-                    <td className="px-3 py-2 align-top max-w-xs">
+
+                    <td className="px-3 py-2 max-w-xs">
                       {dg.binh_luan ? (
-                        <p className="text-xs text-slate-800 dark:text-slate-100 line-clamp-3">
+                        <p className="text-xs text-slate-800 line-clamp-3">
                           {dg.binh_luan}
                         </p>
                       ) : (
                         <span className="text-xs text-slate-400">
-                          (Không có bình luận)
+                          (Không có)
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2 align-top text-xs text-slate-600 dark:text-slate-300">
+
+                    <td className="px-3 py-2 text-xs text-slate-600">
                       <div>Tạo: {formatDate(dg.ngay_tao)}</div>
                       <div>Cập nhật: {formatDate(dg.ngay_cap_nhat)}</div>
                     </td>
-                    <td className="px-3 py-2 align-top">
+
+                    <td className="px-3 py-2">
                       <StatusBadge value={dg.trang_thai} />
                     </td>
-                    <td className="px-3 py-2 align-top">
-                      <div className="flex items-center justify-end gap-2">
+
+                    <td className="px-3 py-2 text-right">
+                      <div className="flex gap-2 justify-end">
                         <button
                           disabled={isMutating}
                           onClick={() => moKhoaMut.mutate(dg.id)}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-emerald-600 text-white text-xs hover:bg-emerald-500 disabled:opacity-50"
+                          className="px-2 py-1.5 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition"
                         >
-                          <CheckCircle2 size={14} />
-                          Duyệt
+                          <CheckCircle2 size={14} /> Duyệt
                         </button>
+
                         <button
                           disabled={isMutating}
                           onClick={() => khoaMut.mutate(dg.id)}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-red-600 text-white text-xs hover:bg-red-500 disabled:opacity-50"
+                          className="px-2 py-1.5 text-xs rounded-lg bg-red-600 text-white hover:bg-red-500 hover:shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition"
                         >
-                          <XCircle size={14} />
-                          Khóa
+                          <XCircle size={14} /> Khóa
                         </button>
                       </div>
                     </td>
@@ -544,34 +458,30 @@ export default function AdminReviewsPage() {
         </table>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-200">
+        <div className="px-4 py-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 text-sm text-slate-700">
           <div>
-            Tổng:{" "}
-            <span className="font-semibold">
-              {pagination.total || 0} đánh giá
-            </span>
+            Tổng: <span className="font-semibold">{pagination.total}</span> đánh
+            giá
           </div>
+
           <div className="flex items-center gap-2">
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 disabled:opacity-40"
+              className="px-3 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 hover:shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               Trước
             </button>
+
             <span>
-              Trang{" "}
-              <span className="font-semibold">{pagination.page || page}</span> /{" "}
-              {pagination.pages || 1}
+              Trang <span className="font-semibold">{pagination.page}</span> /{" "}
+              {pagination.pages}
             </span>
+
             <button
               disabled={pagination.page >= pagination.pages}
-              onClick={() =>
-                setPage((p) =>
-                  Math.min(p + 1, pagination.pages || Number.MAX_SAFE_INTEGER)
-                )
-              }
-              className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 disabled:opacity-40"
+              onClick={() => setPage((p) => Math.min(p + 1, pagination.pages))}
+              className="px-3 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 hover:shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               Sau
             </button>

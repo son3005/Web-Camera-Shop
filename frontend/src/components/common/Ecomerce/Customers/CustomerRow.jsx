@@ -40,14 +40,11 @@ export default function CustomerRow({ item, onOpenDetail }) {
 
   const statusBadge =
     {
-      Active:
-        "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-      Blocked: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-      New: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
-      Returning:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-    }[item.status] ||
-    "bg-slate-100 text-slate-800 dark:bg-slate-900/40 dark:text-slate-300";
+      Active: "bg-emerald-100 text-emerald-800",
+      Blocked: "bg-red-100 text-red-800",
+      New: "bg-yellow-100 text-yellow-800",
+      Returning: "bg-blue-100 text-blue-800",
+    }[item.status] || "bg-slate-100 text-slate-800";
 
   const renderAvatar = () => {
     if (item?.avatar) {
@@ -61,15 +58,15 @@ export default function CustomerRow({ item, onOpenDetail }) {
     }
     const initial = (item?.name || item?.email || "?")[0]?.toUpperCase() || "?";
     return (
-      <div className="w-9 h-9 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-800 dark:text-white">
+      <div className="w-9 h-9 rounded-full bg-slate-300 flex items-center justify-center text-xs font-bold text-slate-800">
         {initial}
       </div>
     );
   };
 
   return (
-    <tr className="border-b border-black/5 dark:border-white/5 hover:bg-slate-200/40 dark:hover:bg-white/5">
-      <td className="px-4 py-3 font-bold text-slate-800 dark:text-slate-200 text-center">
+    <tr className="border-b border-black/5 hover:bg-slate-200/40">
+      <td className="px-4 py-3 font-bold text-slate-800 text-center">
         #{item?.id}
       </td>
 
@@ -77,7 +74,7 @@ export default function CustomerRow({ item, onOpenDetail }) {
         <div className="flex items-center gap-3">
           {renderAvatar()}
           <div>
-            <div className="font-semibold text-slate-900 dark:text-white">
+            <div className="font-semibold text-slate-900">
               {item?.name || "-"}
             </div>
             <div className="text-xs text-slate-500">
@@ -88,9 +85,7 @@ export default function CustomerRow({ item, onOpenDetail }) {
       </td>
 
       <td className="px-4 py-3">
-        <div className="text-slate-800 dark:text-slate-200">
-          {item?.email || "-"}
-        </div>
+        <div className="text-slate-800">{item?.email || "-"}</div>
         <div className="text-xs text-slate-500">{item?.phone || "-"}</div>
       </td>
 
@@ -109,7 +104,7 @@ export default function CustomerRow({ item, onOpenDetail }) {
         <div className="inline-flex items-center gap-2">
           <button
             onClick={onOpenDetail}
-            className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600"
+            className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800"
           >
             <div className="flex items-center gap-1">
               <Eye size={14} /> Xem
