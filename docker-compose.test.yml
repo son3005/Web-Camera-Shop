@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  camera-shop-test: # ✅ ĐỔI SERVICE NAME CHO DỄ NHỚ
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: camera-shop-test
+    environment:
+      FLASK_ENV: "testing"
+      PYTHONPATH: "/app"
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "
+        rm -rf .pytest_cache &&
+        pip install pytest pytest-flask pytest-cov &&
+        pytest tests/ -v --cov=app --cov-report=term-missing
+      "

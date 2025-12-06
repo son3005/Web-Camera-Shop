@@ -1,31 +1,136 @@
 version: "3.9"
 
+networks:
+  camera_shop_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
 services:
+  db:
+    image: mysql:8.0
+    container_name: camera-shop-db
+    command:
+      - "--default-authentication-plugin=mysql_native_password"
+      - "--log-bin-trust-function-creators=1"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "7777:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      start_period: 30s
+    networks:
+      - camera_shop_network
+
+  redis:
+    image: "redis:7-alpine"
+    container_name: camera-shop-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 5
+    networks:
+      - camera_shop_network
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    volumes:
-      - ./backend:/app
+    container_name: camera-shop-backend
     ports:
       - "5000:5000"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    command: flask run --host=0.0.0.0 --port=5000 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - camera_shop_network
+
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: camera-shop-celery-worker
+    command: celery -A app.celery_worker.celery_app worker --loglevel=info --concurrency=1
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - db
+    networks:
+      - camera_shop_network
     environment:
-      - FLASK_APP=app.main
-      - FLASK_ENV=development
-      - MYSQL_HOST=db
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
-      - MYSQL_DB=myshop
-    command: gunicorn --bind 0.0.0.0:5000 --reload "app.main:app"
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: camera-shop-celery-beat
+    command: celery -A app.celery_worker.celery_app beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - db
+    networks:
+      - camera_shop_network
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    container_name: camera-shop-frontend
+    ports:
+      - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    ports:
-      - "5173:5173"
     environment:
-      - VITE_API_URL=http://backend:5000
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+    networks:
+      - camera_shop_network

@@ -1,19 +1,31 @@
-FROM python:3.13-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
+# Install system dependencies for MySQL and build
 RUN apt-get update && apt-get install -y \
-    build-essential pkg-config default-libmysqlclient-dev gcc \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
+# Install pip, upgrade, install deps + pydantic[email]
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "pydantic[email]" 
+
+# Copy code
 COPY . .
 
+# Environment
+ENV FLASK_APP=app.main:create_app
+ENV FLASK_ENV=development
+ENV FLASK_DEBUG=1
+ENV PYTHONUNBUFFERED=1
 EXPOSE 5000
 
-ENV FLASK_APP=app.main
-ENV FLASK_ENV=development
-
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+# DÙNG flask run với reload
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--reload"]

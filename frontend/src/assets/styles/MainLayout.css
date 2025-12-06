@@ -1,0 +1,208 @@
+/* MainLayout.css — Storefront LIGHT ONLY */
+@import "tailwindcss";
+
+/* ========= BASE ========= */
+@layer base {
+  :root {
+    --auth-emerald: #10b981; /* emerald-500 */
+    --auth-emerald-dark: #047857; /* emerald-700 */
+    --auth-text: #111827; /* gray-900 */
+    --auth-subtext: #6b7280; /* gray-500 */
+    --auth-border: #d1d5db; /* gray-300 */
+    --auth-surface: #ffffff; /* white */
+    --auth-input: #ffffff;
+    --auth-placeholder: #9ca3af; /* gray-400 */
+  }
+
+  html,
+  body {
+    @apply antialiased scroll-smooth;
+  }
+
+  /* Chỉ dùng giao diện sáng */
+  body {
+    @apply bg-white text-slate-900 font-sans;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-semibold text-slate-900;
+  }
+
+  a {
+    @apply text-inherit no-underline transition duration-200;
+  }
+  a:hover {
+    @apply text-emerald-600;
+  }
+}
+
+/* ========= COMPONENTS ========= */
+@layer components {
+  /* Nền tổng thể rất nhẹ cho storefront */
+  .app-bg {
+    @apply bg-gradient-to-br from-emerald-50 via-emerald-100 to-white;
+  }
+
+  /* Header / Footer */
+  .site-header {
+    @apply fixed top-0 left-0 w-full z-50 backdrop-blur-md shadow-sm;
+    @apply bg-white/90 border-b border-slate-200;
+    height: 64px;
+  }
+
+  .site-footer {
+    @apply bg-slate-50 border-t border-slate-200 text-slate-700;
+  }
+
+  /* Surfaces */
+  .surface-panel {
+    @apply rounded-2xl border shadow;
+    @apply bg-white/95 border-slate-200;
+    @apply backdrop-blur-md;
+  }
+
+  .surface-card {
+    @apply rounded-2xl transition shadow-sm hover:shadow-lg border;
+    @apply bg-white border-slate-200;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn,
+  .btn-primary,
+  .btn-emerald,
+  .btn-outline,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5
+           font-semibold text-sm transition active:scale-95;
+  }
+
+  /* Neutral button */
+  .btn {
+    @apply border bg-white text-slate-900 border-black/10 hover:bg-slate-50;
+  }
+
+  /* Primary (đen) */
+  .btn-primary {
+    @apply bg-slate-900 text-white hover:bg-black shadow-md hover:shadow-lg;
+  }
+
+  /* Primary emerald (theo màu đăng nhập) */
+  .btn-emerald {
+    @apply text-white shadow-md hover:shadow-lg;
+    background: linear-gradient(
+      135deg,
+      var(--auth-emerald),
+      var(--auth-emerald-dark)
+    );
+  }
+  .btn-emerald:hover {
+    filter: brightness(1.03);
+  }
+
+  .btn-outline {
+    @apply bg-transparent border text-slate-700 border-slate-300 hover:bg-slate-50;
+  }
+
+  .btn-ghost {
+    @apply text-slate-700 hover:bg-slate-100;
+  }
+
+  /* Inputs / Selects */
+  .ui-input {
+    @apply w-full rounded-xl px-4 py-2 text-sm outline-none border shadow-sm;
+    @apply bg-white text-slate-900 placeholder-slate-400 border-slate-300
+           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500;
+  }
+
+  .ui-select {
+    @apply rounded-xl px-4 py-2 text-sm outline-none border shadow-sm;
+    @apply bg-white text-slate-900 border-slate-300
+           focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500;
+  }
+
+  .ui-card-thumb {
+    @apply aspect-square overflow-hidden rounded-t-2xl bg-slate-100;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-block text-xs px-2 py-1 rounded-full font-medium;
+    @apply bg-emerald-100 text-emerald-700;
+  }
+
+  /* Prose (mô tả) */
+  .prose {
+    @apply leading-relaxed text-slate-700;
+  }
+  .prose h1,
+  .prose h2,
+  .prose h3 {
+    @apply font-semibold text-slate-900 mt-4 mb-2;
+  }
+  .prose p {
+    @apply my-3;
+  }
+  .prose a {
+    @apply text-emerald-600 underline decoration-emerald-600/30 hover:text-emerald-700;
+  }
+
+  /* Skeleton */
+  .skeleton {
+    @apply relative overflow-hidden rounded-xl bg-slate-200;
+  }
+}
+
+/* Skeleton shimmer */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.7),
+    transparent
+  );
+  animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ========= UTILITIES ========= */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.grid-carousel {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
+}
+@media (max-width: 1024px) {
+  .grid-carousel {
+    grid-auto-columns: minmax(220px, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .grid-carousel {
+    grid-auto-columns: minmax(200px, 85%);
+  }
+}
+@media (max-width: 480px) {
+  .grid-carousel {
+    grid-auto-columns: minmax(170px, 80%);
+  }
+}
