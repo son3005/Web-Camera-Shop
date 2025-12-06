@@ -109,34 +109,6 @@ export default function BrandFormModal({
             />
           </div>
 
-          {/* LOGO URL */}
-          <div>
-            <label className="block text-sm mb-1 text-slate-700">
-              Logo URL (tuỳ chọn)
-            </label>
-            <input
-              value={logo}
-              onChange={(e) => setLogo(e.target.value)}
-              className="w-full rounded-lg px-3 py-2 bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
-                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
-              placeholder="https://..."
-            />
-          </div>
-
-          {/* PUBLIC ID */}
-          <div>
-            <label className="block text-sm mb-1 text-slate-700">
-              Cloudinary public_id (tuỳ chọn)
-            </label>
-            <input
-              value={publicId}
-              onChange={(e) => setPublicId(e.target.value)}
-              className="w-full rounded-lg px-3 py-2 bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-inner
-                         focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
-              placeholder="abc_xyz_123"
-            />
-          </div>
-
           {/* footer buttons */}
           <div className="flex justify-end gap-3 pt-2">
             <button

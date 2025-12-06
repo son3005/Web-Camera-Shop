@@ -61,7 +61,7 @@ export default function HeroCarousel() {
       <Swiper
         modules={[Autoplay, Pagination]}
         autoplay={{
-          delay: 4000,
+          delay: 2500,
           disableOnInteraction: false,
         }}
         loop={activeSlides.length > 1}
@@ -74,7 +74,6 @@ export default function HeroCarousel() {
           const image = slide.hinh_anh_url || "";
           const title = slide.tieu_de || "";
           const href = slide.lien_ket || "";
-          const subtitle = "Hàng chính hãng • Giá tốt • Giao nhanh";
 
           const content = (
             <>
@@ -91,14 +90,7 @@ export default function HeroCarousel() {
                     {title}
                   </h3>
                 )}
-                <p className="opacity-90 mt-2 text-sm md:text-base">
-                  {subtitle}
-                </p>
-                {href && (
-                  <span className="mt-5 inline-flex items-center px-5 py-2.5 rounded-full btn-emerald shadow-lg shadow-emerald-500/40 text-sm md:text-base font-medium">
-                    Khám phá ngay
-                  </span>
-                )}
+                {/* ĐÃ BỎ subtitle và nút "Khám phá ngay" */}
               </div>
             </>
           );
