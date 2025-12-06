@@ -115,19 +115,20 @@ def cap_nhat_trang_thai_thanh_toan(don_hang_id):
         if not don_hang.thanh_toan:
             return jsonify({"msg": "Đơn hàng chưa có thông tin thanh toán"}), 400
 
-        # ⚠️ SỬA: so sánh theo chữ thường để khớp 'cod'
+        # Chỉ cho phép cập nhật trạng thái thanh toán cho COD
         if (don_hang.thanh_toan.phuong_thuc or "").lower() != "cod":
             return jsonify({"msg": "Chỉ có thể cập nhật trạng thái thanh toán cho phương thức COD"}), 400
 
         new_payment_status = TrangThaiThanhToanEnum(data['trang_thai_thanh_toan'])
 
+        # Chỉ cho phép 2 trạng thái này từ màn admin
         if new_payment_status not in [
             TrangThaiThanhToanEnum.DA_THANH_TOAN,
             TrangThaiThanhToanEnum.THAT_BAI,
         ]:
             return jsonify({"msg": "Trạng thái thanh toán không hợp lệ"}), 400
 
-        # ⚠️ SỬA: dùng TrangThaiThanhToanEnum, không dùng TrangThaiDonHangEnum
+        # Không cho set lại y chang trạng thái cũ
         if (
             new_payment_status == TrangThaiThanhToanEnum.DA_THANH_TOAN
             and don_hang.thanh_toan.trang_thai == TrangThaiThanhToanEnum.DA_THANH_TOAN
@@ -140,12 +141,31 @@ def cap_nhat_trang_thai_thanh_toan(don_hang_id):
         ):
             return jsonify({"msg": "Thanh toán đơn hàng đã bị từ chối"}), 400
 
+        # ✅ CHỈ SỬA ĐOẠN NÀY
+        # Cho phép đánh dấu đã thanh toán khi đơn ở:
+        # - ĐÃ XÁC NHẬN
+        # - ĐANG GIAO
+        # - ĐÃ GIAO
         if new_payment_status == TrangThaiThanhToanEnum.DA_THANH_TOAN:
-            if don_hang.trang_thai != TrangThaiDonHangEnum.DA_XAC_NHAN:
-                return jsonify({"msg": "Chỉ có thể đánh dấu đã thanh toán cho đơn hàng đã xác nhận"}), 400
-            # Khi COD đã thanh toán → đẩy trạng thái đơn sang ĐÃ GIAO
-            don_hang.trang_thai = TrangThaiDonHangEnum.DA_GIAO
+            allowed_statuses = {
+                TrangThaiDonHangEnum.DA_XAC_NHAN,
+                TrangThaiDonHangEnum.DANG_GIAO,
+                TrangThaiDonHangEnum.DA_GIAO,
+            }
+            if don_hang.trang_thai not in allowed_statuses:
+                return jsonify({
+                    "msg": "Chỉ có thể đánh dấu đã thanh toán cho đơn ở trạng thái đã xác nhận / đang giao / đã giao"
+                }), 400
 
+            # Nếu đơn chưa phải ĐÃ GIAO thì khi admin xác nhận đã thanh toán
+            # ta tự động đẩy lên ĐÃ GIAO (giữ nguyên logic cũ)
+            if don_hang.trang_thai in {
+                TrangThaiDonHangEnum.DA_XAC_NHAN,
+                TrangThaiDonHangEnum.DANG_GIAO,
+            }:
+                don_hang.trang_thai = TrangThaiDonHangEnum.DA_GIAO
+
+        # Gán trạng thái thanh toán mới
         don_hang.thanh_toan.trang_thai = new_payment_status
 
         db.session.commit()
@@ -155,7 +175,6 @@ def cap_nhat_trang_thai_thanh_toan(don_hang_id):
         db.session.rollback()
         print("Lỗi cập nhật trạng thái thanh toán:", e)
         return jsonify({"msg": "Lỗi server"}), 500
-
 
 @admin_don_hang_api.route('/<int:don_hang_id>/trang-thai', methods=['PUT'])
 @admin_required
@@ -215,7 +234,7 @@ def cap_nhat_trang_thai(don_hang_id):
             if don_hang.nguoi_dung:
                 send_email(
                     to_email=don_hang.nguoi_dung.email,
-                    subject="Thông báo huỷ đơn hàng",
+                    subject="Thông báo chấp nhận đổi trả đơn hàng",
                     template="email/huy_don_hang.html",
                     data={
                         "ma_don_hang": don_hang.ma_don_hang,
@@ -230,7 +249,7 @@ def cap_nhat_trang_thai(don_hang_id):
             if don_hang.nguoi_dung:
                 send_email(
                     to_email=don_hang.nguoi_dung.email,
-                    subject="Thông báo huỷ đơn hàng",
+                    subject="Thông báo từ chối đổi trả đơn hàng",
                     template="email/huy_don_hang.html",
                     data={
                         "ma_don_hang": don_hang.ma_don_hang,
@@ -241,7 +260,7 @@ def cap_nhat_trang_thai(don_hang_id):
             if don_hang.nguoi_dung:
                 send_email_xac_nhan(
                     to_email=don_hang.nguoi_dung.email,
-                    subject="Thông báo huỷ đơn hàng",
+                    subject="Thông báo đã xác nhận đơn hàng",
                     template="email/xac_nhan_don_hang.html",
                     data={
                         "ma_don_hang": don_hang.ma_don_hang

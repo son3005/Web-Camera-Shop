@@ -11,6 +11,7 @@ from ..schemas.phieunhap import (
 )
 from ..services.phieu_nhap_service import PhieuNhapService
 from ..extensions import db
+from ..utils.decorators import admin_required
 
 # Định nghĩa blueprint và tags
 phieu_nhap_api = APIBlueprint('phieu_nhap', __name__, url_prefix='/api/phieu-nhap')
@@ -18,6 +19,7 @@ tag_phieu_nhap = Tag(name="Phiếu Nhập", description="Quản lý phiếu nh�
 
 @phieu_nhap_api.post('/', tags=[tag_phieu_nhap])
 # @jwt_required()
+@admin_required
 def tao_phieu_nhap():
     """
     Tạo phiếu thu mới
@@ -79,6 +81,7 @@ def tao_phieu_nhap():
 
 @phieu_nhap_api.put('/<int:phieu_nhap_id>', tags=[tag_phieu_nhap])
 # @jwt_required()
+@admin_required
 def cap_nhat_phieu_nhap(path: PhieuNhapPath):
     """
     Cập nhật phiếu nhập
@@ -131,6 +134,7 @@ def cap_nhat_phieu_nhap(path: PhieuNhapPath):
 
 @phieu_nhap_api.get('/<int:phieu_nhap_id>', tags=[tag_phieu_nhap])
 # @jwt_required()
+@admin_required
 def lay_chi_tiet_phieu_nhap(path: PhieuNhapPath):
     """
     Lấy thông tin chi tiết phiếu nhập với đầy đủ thông tin sản phẩm và biến thể
@@ -150,6 +154,7 @@ def lay_chi_tiet_phieu_nhap(path: PhieuNhapPath):
 
 @phieu_nhap_api.get('', tags=[tag_phieu_nhap])
 # @jwt_required()
+@admin_required
 def lay_danh_sach_phieu_nhap():
     """
     Lấy danh sách phiếu nhập với phân trang và filter
@@ -202,6 +207,7 @@ def lay_danh_sach_phieu_nhap():
 
 @phieu_nhap_api.get('/thong-ke', tags=[tag_phieu_nhap])
 # @jwt_required()
+@admin_required
 def thong_ke_nhap_hang():
     """
     Thống kê nhập hàng theo tháng/năm

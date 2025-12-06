@@ -9,7 +9,7 @@ from ..schemas.sanpham import (
     DanhMucListResponse
 )
 from ..services.danhmuc_service import DanhMucService
-
+from ..utils.decorators import admin_required
 # Tạo Blueprint cho routes danh mục
 danhmuc_api = Blueprint('danh_muc', __name__, url_prefix='/api/danh-muc')
 
@@ -59,6 +59,7 @@ def get_danh_muc_by_id(danh_muc_id: int):
 
 @danhmuc_api.route('/', methods=['POST'])
 # @jwt_required()
+@admin_required
 def create_danh_muc():
     """Tạo mới danh mục"""
     try:
@@ -77,6 +78,7 @@ def create_danh_muc():
 
 @danhmuc_api.route('/<int:danh_muc_id>', methods=['PUT'])
 # @jwt_required()
+@admin_required
 def update_danh_muc(danh_muc_id: int):
     """Cập nhật thông tin danh mục"""
     try:
@@ -98,6 +100,7 @@ def update_danh_muc(danh_muc_id: int):
 
 @danhmuc_api.route('/<int:danh_muc_id>', methods=['DELETE'])
 # @jwt_required()
+@admin_required
 def delete_danh_muc(danh_muc_id: int):
     """Xóa danh mục - CHỈ CHO PHÉP NẾU KHÔNG CÓ SẢN PHẨM NÀO SỬ DỤNG"""
     try:
