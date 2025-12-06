@@ -9,7 +9,7 @@ from ..schemas.sanpham import (
     CapDoListResponse
 )
 from ..services.capdo_service import CapDoService
-
+from ..utils.decorators import admin_required
 # Tạo Blueprint cho routes cấp độ
 capdo_api = Blueprint('cap_do', __name__, url_prefix='/api/cap-do')
 
@@ -59,7 +59,7 @@ def get_cap_do_by_id(cap_do_id: int):
         return jsonify({'error': str(e)}), 500
 
 @capdo_api.route('/', methods=['POST'])
-# @jwt_required()
+@admin_required
 def create_cap_do():
     """Tạo mới cấp độ"""
     try:
@@ -77,7 +77,7 @@ def create_cap_do():
         return jsonify({'error': str(e)}), 500
 
 @capdo_api.route('/<int:cap_do_id>', methods=['PUT'])
-# @jwt_required()
+@admin_required
 def update_cap_do(cap_do_id: int):
     """Cập nhật thông tin cấp độ"""
     try:
@@ -99,6 +99,7 @@ def update_cap_do(cap_do_id: int):
 
 @capdo_api.route('/<int:cap_do_id>', methods=['DELETE'])
 # @jwt_required()
+@admin_required
 def delete_cap_do(cap_do_id: int):
     """Xóa cấp độ - CHỈ CHO PHÉP NẾU KHÔNG CÓ SẢN PHẨM NÀO SỬ DỤNG"""
     try:

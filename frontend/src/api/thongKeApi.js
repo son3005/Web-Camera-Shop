@@ -50,7 +50,7 @@ const buildDateRangeFromYearMonth = (nam, thang) => {
     };
   }
 
-  // Chỉ có tháng (tất cả năm) -> không convert được chuẩn, cứ để backend trả tất cả
+  // Chỉ có tháng (tất cả năm) -> để backend xử lý chung, không xây range
   return {};
 };
 
@@ -64,11 +64,43 @@ export async function layTongHopThongKe() {
 
 /* =========================================================
  * 2. Doanh thu & lợi nhuận
- *    Backend: /thong-ke/doanh-thu
- *    Trả về: [{nam, thang?, ngay?, tong_doanh_thu, loi_nhuan}]
- *    FE cần: [{nam, thang?, ngay?, tongDoanhThu, loiNhuan}]
+ *
+ *  - Không chọn gì / chỉ chọn NĂM:
+ *      gọi  /thong-ke/doanh-thu?nam=...
+ *      → backend trả theo năm / theo tháng
+ *
+ *  - Chọn cả NĂM + THÁNG:
+ *      gọi  /thong-ke/danh-sach-loi-nhuan-doanh-thu?start_date&end_date
+ *      → backend trả nested: [{nam, thang: [{thang, ngay:[{ngay,...}]}]}]
+ *      → FE flatten ra từng ngày để vẽ chart (theo ngày trong tháng)
  * =======================================================*/
 export async function layDuLieuDoanhThu({ nam, thang } = {}) {
+  // Trường hợp chọn cả NĂM + THÁNG -> lấy chi tiết THEO NGÀY
+  if (nam && thang) {
+    const params = buildDateRangeFromYearMonth(nam, thang);
+    const res = await api.get("/thong-ke/danh-sach-loi-nhuan-doanh-thu", {
+      params,
+    });
+    const raw = handleResponse(res) || [];
+
+    // Tìm đúng năm + tháng trong cấu trúc nested
+    const yearItem = raw.find((y) => y.nam === nam);
+    if (!yearItem || !Array.isArray(yearItem.thang)) return [];
+
+    const monthItem = yearItem.thang.find((m) => m.thang === thang);
+    if (!monthItem || !Array.isArray(monthItem.ngay)) return [];
+
+    // Flatten: mỗi ngày là một điểm trên chart
+    return monthItem.ngay.map((d) => ({
+      nam,
+      thang,
+      ngay: d.ngay ?? null,
+      tongDoanhThu: d.tong_doanh_thu || 0,
+      loiNhuan: d.loi_nhuan || 0,
+    }));
+  }
+
+  // Các trường hợp còn lại: dùng API tổng quan /thong-ke/doanh-thu
   const res = await api.get("/thong-ke/doanh-thu", {
     params: { nam, thang },
   });
@@ -122,7 +154,6 @@ export async function layThongKeDonHangThanhCong({ nam, thang } = {}) {
 /* =========================================================
  * 5. Tỉ trọng thương hiệu
  *    Backend: /thong-ke/ti-trong-thuong-hieu
- *    Trả về: {thuong_hieu, so_luong_don, tong_doanh_thu, ti_trong_phantram}
  * =======================================================*/
 const BRAND_COLORS = [
   "#22c55e",
@@ -150,7 +181,6 @@ export async function layTiTrongThuongHieu({ nam, thang } = {}) {
 
 /* =========================================================
  * 6. Người dùng hoạt động (đăng nhập)
- *    Backend: /thong-ke/nguoi-dung-dang-nhap
  * =======================================================*/
 export async function layThongKeDangNhap({ nam, thang } = {}) {
   const res = await api.get("/thong-ke/nguoi-dung-dang-nhap", {
@@ -167,14 +197,7 @@ export async function layThongKeDangNhap({ nam, thang } = {}) {
 
 /* =========================================================
  * 7. Chất lượng đánh giá
- *    Backend mới: /thong-ke/danh-sach-danh-gia?start_date&end_date
- *    Trả về dạng phân cấp: [{nam, danh_gia_*, thang: [{thang, ...}]}]
- *
- *    Ta map về dạng cũ:
- *      - không filter -> mỗi năm 1 item
- *      - filter nam    -> 1 item cho năm đó
- *      - filter nam+thang -> 1 item cho tháng đó
- *      - filter thang (không nam) -> gộp cùng tháng của tất cả năm
+ *    Backend: /thong-ke/danh-sach-danh-gia
  * =======================================================*/
 export async function layThongKeDanhGia({ nam, thang } = {}) {
   const params = buildDateRangeFromYearMonth(nam, thang);

@@ -35,7 +35,7 @@ const menuItems = [
     icon: ShoppingBag,
     label: "Kinh doanh",
     submenu: [
-      { id: "orders", path: "/admin/orders", label: "Đặt hàng" },
+      { id: "orders", path: "/admin/orders", label: "Đơn hàng" },
       { id: "customers", path: "/admin/customers", label: "Khách hàng" },
       { id: "suppliers", path: "/admin/suppliers", label: "Nhà cung cấp" },
       { id: "reviews", path: "/admin/reviews", label: "Đánh giá sản phẩm" },

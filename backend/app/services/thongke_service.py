@@ -10,6 +10,7 @@ class ThongKeService:
     def thong_ke_doanh_thu_theo_thang_nam(nam=None, thang=None, ngay=None):
         """
         Thống kê doanh thu và lợi nhuận theo năm, tháng/năm hoặc ngày cụ thể (YYYY-MM-DD)
+        Doanh thu được tính từ ThanhToan.so_tien (tổng tiền thanh toán)
         """
         try:
             ngay_date = None
@@ -21,6 +22,17 @@ class ThongKeService:
                 else:
                     ngay_date = getattr(ngay, 'date', lambda: ngay)()
 
+            # Tính doanh thu từ ThanhToan.so_tien (không cần join chi tiết)
+            doanh_thu_query = db.session.query(
+                extract('year', DonHang.ngay_tao).label('nam'),
+                func.sum(ThanhToan.so_tien).label('tong_doanh_thu')
+            ).join(ThanhToan, DonHang.id == ThanhToan.don_hang_id
+            ).filter(
+                DonHang.trang_thai == TrangThaiDonHangEnum.DA_GIAO,
+                ThanhToan.trang_thai == TrangThaiThanhToanEnum.DA_THANH_TOAN
+            )
+
+            # Tính lợi nhuận từ chi tiết và giá nhập
             subquery_gia_nhap = db.session.query(
                 ChiTietPhieuNhap.bien_the_san_pham_id,
                 ChiTietPhieuNhap.gia_nhap_tung_vat,
@@ -32,9 +44,8 @@ class ThongKeService:
             ).join(PhieuNhap, ChiTietPhieuNhap.phieu_nhap_id == PhieuNhap.id
             ).subquery()
 
-            query = db.session.query(
+            loi_nhuan_query = db.session.query(
                 extract('year', DonHang.ngay_tao).label('nam'),
-                func.sum(ThanhToan.so_tien).label('tong_doanh_thu'),
                 func.sum(
                     (ChiTietDonHang.don_gia_luc_mua - subquery_gia_nhap.c.gia_nhap_tung_vat) *
                     ChiTietDonHang.so_luong
@@ -53,11 +64,13 @@ class ThongKeService:
                 ThanhToan.trang_thai == TrangThaiThanhToanEnum.DA_THANH_TOAN
             )
 
+            # Áp dụng filter chung
             if nam:
-                query = query.filter(extract('year', DonHang.ngay_tao) == nam)
+                doanh_thu_query = doanh_thu_query.filter(extract('year', DonHang.ngay_tao) == nam)
+                loi_nhuan_query = loi_nhuan_query.filter(extract('year', DonHang.ngay_tao) == nam)
 
             if ngay_date:
-                query = query.add_columns(
+                doanh_thu_query = doanh_thu_query.add_columns(
                     extract('month', DonHang.ngay_tao).label('thang'),
                     extract('day', DonHang.ngay_tao).label('ngay')
                 ).filter(
@@ -67,48 +80,74 @@ class ThongKeService:
                     extract('month', DonHang.ngay_tao),
                     extract('day', DonHang.ngay_tao)
                 )
-                result = query.all()
+                loi_nhuan_query = loi_nhuan_query.add_columns(
+                    extract('month', DonHang.ngay_tao).label('thang'),
+                    extract('day', DonHang.ngay_tao).label('ngay')
+                ).filter(
+                    func.date(DonHang.ngay_tao) == ngay_date
+                ).group_by(
+                    extract('year', DonHang.ngay_tao),
+                    extract('month', DonHang.ngay_tao),
+                    extract('day', DonHang.ngay_tao)
+                )
+                doanh_thu_result = doanh_thu_query.all()
+                loi_nhuan_result = loi_nhuan_query.all()
 
-                formatted_result = []
-                for item in result:
-                    formatted_result.append({
-                        'nam': int(item.nam),
-                        'thang': int(item.thang),
-                        'ngay': int(item.ngay),
-                        'tong_doanh_thu': float(item.tong_doanh_thu) if item.tong_doanh_thu else 0,
-                        'loi_nhuan': float(item.loi_nhuan) if item.loi_nhuan else 0
+                # Merge kết quả
+                result = []
+                for dt in doanh_thu_result:
+                    ln = next((l for l in loi_nhuan_result if l.nam == dt.nam and l.thang == dt.thang and l.ngay == dt.ngay), None)
+                    result.append({
+                        'nam': int(dt.nam),
+                        'thang': int(dt.thang),
+                        'ngay': int(dt.ngay),
+                        'tong_doanh_thu': float(dt.tong_doanh_thu) if dt.tong_doanh_thu else 0,
+                        'loi_nhuan': float(ln.loi_nhuan) if ln and ln.loi_nhuan else 0
                     })
-                return formatted_result
+                return result
 
             if thang:
-                query = query.filter(extract('month', DonHang.ngay_tao) == thang
-                ).group_by(
+                # Add month to select for both queries to ensure result objects have 'thang'
+                doanh_thu_query = doanh_thu_query.add_columns(extract('month', DonHang.ngay_tao).label('thang'))
+                loi_nhuan_query = loi_nhuan_query.add_columns(extract('month', DonHang.ngay_tao).label('thang'))
+                doanh_thu_query = doanh_thu_query.filter(extract('month', DonHang.ngay_tao) == thang).group_by(
                     extract('year', DonHang.ngay_tao),
                     extract('month', DonHang.ngay_tao)
                 )
-                result = query.all()
+                loi_nhuan_query = loi_nhuan_query.filter(extract('month', DonHang.ngay_tao) == thang).group_by(
+                    extract('year', DonHang.ngay_tao),
+                    extract('month', DonHang.ngay_tao)
+                )
+                doanh_thu_result = doanh_thu_query.all()
+                loi_nhuan_result = loi_nhuan_query.all()
 
-                formatted_result = []
-                for item in result:
-                    formatted_result.append({
-                        'nam': int(item.nam),
-                        'thang': int(thang),
-                        'tong_doanh_thu': float(item.tong_doanh_thu) if item.tong_doanh_thu else 0,
-                        'loi_nhuan': float(item.loi_nhuan) if item.loi_nhuan else 0
+                # Merge kết quả
+                result = []
+                for dt in doanh_thu_result:
+                    ln = next((l for l in loi_nhuan_result if l.nam == dt.nam and l.thang == dt.thang), None)
+                    result.append({
+                        'nam': int(dt.nam),
+                        'thang': int(dt.thang),
+                        'tong_doanh_thu': float(dt.tong_doanh_thu) if dt.tong_doanh_thu else 0,
+                        'loi_nhuan': float(ln.loi_nhuan) if ln and ln.loi_nhuan else 0
                     })
-                return formatted_result
+                return result
 
-            query = query.group_by(extract('year', DonHang.ngay_tao))
-            result = query.all()
+            doanh_thu_query = doanh_thu_query.group_by(extract('year', DonHang.ngay_tao))
+            loi_nhuan_query = loi_nhuan_query.group_by(extract('year', DonHang.ngay_tao))
+            doanh_thu_result = doanh_thu_query.all()
+            loi_nhuan_result = loi_nhuan_query.all()
 
-            formatted_result = []
-            for item in result:
-                formatted_result.append({
-                    'nam': int(item.nam),
-                    'tong_doanh_thu': float(item.tong_doanh_thu) if item.tong_doanh_thu else 0,
-                    'loi_nhuan': float(item.loi_nhuan) if item.loi_nhuan else 0
+            # Merge kết quả
+            result = []
+            for dt in doanh_thu_result:
+                ln = next((l for l in loi_nhuan_result if l.nam == dt.nam), None)
+                result.append({
+                    'nam': int(dt.nam),
+                    'tong_doanh_thu': float(dt.tong_doanh_thu) if dt.tong_doanh_thu else 0,
+                    'loi_nhuan': float(ln.loi_nhuan) if ln and ln.loi_nhuan else 0
                 })
-            return formatted_result
+            return result
 
         except Exception as e:
             print(f"Lỗi trong thong_ke_doanh_thu_theo_thang_nam: {str(e)}")
@@ -566,15 +605,14 @@ class ThongKeService:
             thang_nay = datetime.now().month
             nam_nay = datetime.now().year
             
-            doanh_thu_thang_nay = db.session.query(
-                func.coalesce(func.sum(ThanhToan.so_tien), 0)
-            ).join(DonHang, DonHang.id == ThanhToan.don_hang_id
-            ).filter(
-                DonHang.trang_thai == TrangThaiDonHangEnum.DA_GIAO,
-                ThanhToan.trang_thai == TrangThaiThanhToanEnum.DA_THANH_TOAN,
-                extract('month', DonHang.ngay_tao) == thang_nay,
-                extract('year', DonHang.ngay_tao) == nam_nay
-            ).scalar()
+            # Thay đổi cách tính doanh_thu_thang_nay: dùng thong_ke_doanh_thu_theo_thang_nam
+            doanh_thu_data = ThongKeService.thong_ke_doanh_thu_theo_thang_nam(nam=nam_nay, thang=thang_nay)
+            # doanh_thu_data là list các dict: [{'nam': ..., 'thang': ..., 'tong_doanh_thu': ..., 'loi_nhuan': ...}]
+            if doanh_thu_data and len(doanh_thu_data) > 0:
+                doanh_thu_thang_nay = doanh_thu_data[0].get('tong_doanh_thu', 0) or 0
+            else:
+                doanh_thu_thang_nay = 0
+
             # Tổng đơn hàng tháng này
             don_hang_thang_nay = db.session.query(
                 func.count(DonHang.id)

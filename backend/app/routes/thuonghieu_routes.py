@@ -9,6 +9,7 @@ from ..schemas.sanpham import (
     ThuongHieuListResponse
 )
 from ..services.thuonghieu_service import ThuongHieuService
+from ..utils.decorators import admin_required
 
 # Tạo Blueprint cho routes thương hiệu
 thuonghieu_api = Blueprint('thuong_hieu', __name__, url_prefix='/api/thuong-hieu')
@@ -59,6 +60,7 @@ def get_thuong_hieu_by_id(thuong_hieu_id: int):
 
 @thuonghieu_api.route('/', methods=['POST'])
 # @jwt_required()
+@admin_required
 def create_thuong_hieu():
     """Tạo mới thương hiệu"""
     try:
@@ -77,6 +79,7 @@ def create_thuong_hieu():
 
 @thuonghieu_api.route('/<int:thuong_hieu_id>', methods=['PUT'])
 # @jwt_required()
+@admin_required
 def update_thuong_hieu(thuong_hieu_id: int):
     """Cập nhật thông tin thương hiệu"""
     try:
@@ -98,6 +101,7 @@ def update_thuong_hieu(thuong_hieu_id: int):
 
 @thuonghieu_api.route('/<int:thuong_hieu_id>', methods=['DELETE'])
 # @jwt_required()
+@admin_required
 def delete_thuong_hieu(thuong_hieu_id: int):
     """Xóa thương hiệu - CHỈ CHO PHÉP NẾU KHÔNG CÓ SẢN PHẨM NÀO SỬ DỤNG"""
     try:

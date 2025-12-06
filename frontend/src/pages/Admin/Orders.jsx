@@ -110,8 +110,8 @@ export default function Orders() {
     phuong_thuc_thanh_toan: "",
     tu_ngay: "",
     den_ngay: "",
-    sap_xep_theo: "ngay_tao",
-    thu_tu: "desc",
+    sap_xep_theo: "ngay_tao", // vẫn giữ mặc định cho backend
+    thu_tu: "desc", // mới nhất trước
     search: "",
   });
 
@@ -449,25 +449,7 @@ export default function Orders() {
               />
             </div>
 
-            <select
-              className="ui-input text-xs max-w-[140px]"
-              value={filters.sap_xep_theo}
-              onChange={(e) =>
-                handleChangeFilters("sap_xep_theo", e.target.value)
-              }
-            >
-              <option value="ngay_tao">Sắp xếp: Ngày tạo</option>
-              <option value="tong_tien">Tổng tiền</option>
-            </select>
-
-            <select
-              className="ui-input text-xs max-w-[110px]"
-              value={filters.thu_tu}
-              onChange={(e) => handleChangeFilters("thu_tu", e.target.value)}
-            >
-              <option value="desc">Mới nhất</option>
-              <option value="asc">Cũ nhất</option>
-            </select>
+            {/* ĐÃ BỎ 2 Ô SẮP XẾP, nhưng vẫn giữ sort mặc định ở state */}
           </div>
         </div>
 

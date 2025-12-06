@@ -15,7 +15,7 @@ import { layDuLieuDoanhThu } from "../../../api/thongKeApi";
 
 /**
  * Biểu đồ MIỀN Doanh thu & Lợi nhuận
- * Dữ liệu: GET /api/thong-ke/doanh-thu
+ * Dữ liệu: GET /api/thong-ke/doanh-thu (+ /danh-sach-doanh-thu khi chọn tháng)
  * Backend: chỉ đơn hàng DA_GIAO + thanh toán DA_THANH_TOAN
  */
 function BieuDoDoanhThu({ nam, thang }) {
@@ -28,11 +28,27 @@ function BieuDoDoanhThu({ nam, thang }) {
   });
 
   const chartData =
-    data?.map((item) => ({
-      nhan: item.thang ? `${item.thang}/${item.nam}` : `${item.nam}`,
-      tongDoanhThu: item.tongDoanhThu,
-      loiNhuan: item.loiNhuan,
-    })) || [];
+    data?.map((item) => {
+      let nhan = "";
+      const pad = (v) => String(v).padStart(2, "0");
+
+      if (item.ngay != null && item.thang != null) {
+        // Trường hợp xem theo THÁNG: hiển thị THEO NGÀY
+        nhan = `${pad(item.ngay)}/${pad(item.thang)}`;
+      } else if (item.thang != null) {
+        // Trường hợp thống kê theo THÁNG (nhưng không chi tiết ngày)
+        nhan = `${item.thang}/${item.nam}`;
+      } else {
+        // Thống kê theo NĂM
+        nhan = `${item.nam}`;
+      }
+
+      return {
+        nhan,
+        tongDoanhThu: item.tongDoanhThu,
+        loiNhuan: item.loiNhuan,
+      };
+    }) || [];
 
   const hasData = chartData.some((x) => x.tongDoanhThu > 0 || x.loiNhuan > 0);
 
